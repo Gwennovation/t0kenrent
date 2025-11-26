@@ -238,15 +238,15 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Team
 - Shesly-Jhaey Peregrina
 - Gwyneth Manalo
-- Nash Paredes
+- Nash Benedict Paredes
 - Leiana Xylen Dilag
 - Jerick Lance Pacorales
 
 **ChibiTech**
-- Technical Lead: [GitHub Profile]
-- Smart Contract Developer: [GitHub Profile]
-- Frontend Developer: [GitHub Profile]
-- Documentation: [GitHub Profile]
+- Technical Lead: Gwyneth Manalo
+- Smart Contract Developer: Shesly-Jhaey Peregrina & Jerick Lance Pacorales
+- Frontend Developer: Nash Benedict Paredes
+- Documentation: Leiana Xylen Dilag
 
 ## Acknowledgments
 
@@ -256,9 +256,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Contact
 
-- Website: [https://tokenrent.io](https://tokenrent.io)
-- Email: team@tokenrent.io
-- Twitter: [@tokenrent](https://twitter.com/tokenrent)
+- Website: 
+- Email: 
+- Twitter: 
 
 ---
 
