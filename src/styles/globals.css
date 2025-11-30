@@ -2,8 +2,22 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Google Fonts Import - Premium Typography */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+/* Google Fonts Import - Optimized with preconnect in _document */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* Performance: Reduce layout shift */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Performance: Hardware acceleration for animations */
+.animate-slide-up,
+.animate-slide-down,
+.animate-fade-in,
+.animate-scale-in {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+}
 
 /* CSS Variables - Light Mode */
 :root {

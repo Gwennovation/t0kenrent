@@ -26,7 +26,7 @@ interface EscrowModalProps {
   rentalDetails: RentalDetails
   demoMode?: boolean
   onClose: () => void
-  onSuccess: () => void
+  onSuccess: (rental?: any) => void
 }
 
 export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = false, onClose, onSuccess }: EscrowModalProps) {
@@ -131,21 +131,53 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
     }
   }
 
-  function handleDemoEscrow() {
+  async function handleDemoEscrow() {
     setStep('creating')
     
-    setTimeout(() => {
-      const demoEscrowId = 'demo_escrow_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(7)
-      const demoAddress = '1Demo' + Math.random().toString(36).substring(2, 10).toUpperCase() + 'EscrowAddr'
+    try {
+      // Create actual rental in demo mode too
+      const response = await fetch('/api/rentals/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          assetId: asset.id,
+          renterKey: userKey,
+          startDate: new Date(startDate).toISOString(),
+          endDate: new Date(endDate).toISOString(),
+          rentalDays,
+          rentalFee,
+          depositAmount,
+          totalAmount
+        })
+      })
+
+      const result = await response.json()
       
+      if (response.ok && result.rental) {
+        setEscrowId(result.rental.escrowId)
+        setEscrowAddress('Demo_' + result.rental.id.slice(0, 10))
+        setStep('funding')
+        
+        setTimeout(() => {
+          setStep('success')
+          // Pass the rental back to parent
+          setTimeout(() => onSuccess(result.rental), 500)
+        }, 1000)
+      } else {
+        throw new Error(result.error || 'Failed to create rental')
+      }
+    } catch (err) {
+      console.error('Demo rental error:', err)
+      // Fallback to simulated demo
+      const demoEscrowId = 'demo_escrow_' + Date.now().toString(36)
       setEscrowId(demoEscrowId)
-      setEscrowAddress(demoAddress)
+      setEscrowAddress('Demo_' + demoEscrowId.slice(0, 10))
       setStep('funding')
       
       setTimeout(() => {
         setStep('success')
-      }, 1500)
-    }, 1500)
+      }, 1000)
+    }
   }
 
   const minDate = new Date()

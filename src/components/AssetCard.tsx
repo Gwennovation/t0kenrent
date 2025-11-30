@@ -29,7 +29,7 @@ interface AssetCardProps {
   isOwner?: boolean
   demoMode?: boolean
   viewMode?: 'grid' | 'list'
-  onRent: () => void
+  onRent: (rental?: any) => void
 }
 
 // Category icons mapping
@@ -418,9 +418,9 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
           rentalDetails={rentalDetails}
           demoMode={demoMode}
           onClose={() => setShowEscrowModal(false)}
-          onSuccess={() => {
+          onSuccess={(rental) => {
             setShowEscrowModal(false)
-            onRent()
+            onRent(rental)
           }}
         />
       )}

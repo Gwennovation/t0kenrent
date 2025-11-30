@@ -1,6 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import connectDB from '@/lib/mongodb'
-import RentalAsset from '@/models/RentalAsset'
+import { storage } from '@/lib/storage'
 
 export default async function handler(
   req: NextApiRequest,
@@ -11,23 +10,18 @@ export default async function handler(
   }
 
   try {
-    await connectDB()
-
     const { owner } = req.query
 
     if (!owner) {
       return res.status(400).json({ error: 'Owner public key is required' })
     }
 
-    // Fetch user's assets (include rental details since they're the owner)
-    const assets = await RentalAsset.find({ ownerKey: owner })
-      .select('-http402Payments')
-      .sort({ createdAt: -1 })
-      .lean()
+    // Get user's assets from storage
+    const assets = storage.getAssetsByOwner(owner as string)
 
-    // Transform for response
-    const transformedAssets = assets.map((asset: any) => ({
-      id: asset._id.toString(),
+    // Transform for response (include rental details since they're the owner)
+    const transformedAssets = assets.map(asset => ({
+      id: asset.id,
       tokenId: asset.tokenId,
       name: asset.name,
       description: asset.description,

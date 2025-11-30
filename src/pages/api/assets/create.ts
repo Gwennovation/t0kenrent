@@ -1,8 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import connectDB from '@/lib/mongodb'
-import RentalAsset from '@/models/RentalAsset'
-import { createAction } from 'babbage-sdk'
-import { storeStageOnOverlay } from '@/lib/overlay'
+import { storage } from '@/lib/storage'
 
 export default async function handler(
   req: NextApiRequest,
@@ -13,8 +10,6 @@ export default async function handler(
   }
 
   try {
-    await connectDB()
-
     const {
       name,
       description,
@@ -34,45 +29,25 @@ export default async function handler(
 
     // Validate required fields
     if (!name || !description || !category || !ownerKey) {
-      return res.status(400).json({ error: 'Missing required fields' })
+      return res.status(400).json({ error: 'Missing required fields: name, description, category, ownerKey' })
     }
 
     if (!location?.city || !location?.state || !location?.address) {
-      return res.status(400).json({ error: 'Location information is required' })
+      return res.status(400).json({ error: 'Location information is required (city, state, address)' })
     }
 
-    // Generate unique token ID
-    const tokenId = `t0ken_${Date.now()}_${Math.random().toString(36).substring(7)}`
+    // Ensure user exists
+    storage.getOrCreateUser(ownerKey)
 
-    // Create BRC-76 compliant metadata
-    const brc76Metadata = {
-      protocol: 'BRC-76',
-      type: 'rental-asset',
-      tokenId,
-      name,
-      category,
-      rentalRate: rentalRatePerDay,
-      deposit: depositAmount,
-      currency,
-      condition,
-      unlockFee,
-      createdAt: new Date().toISOString(),
-      owner: ownerKey
-    }
-
-    // Create rental asset document
-    const rentalAsset = await RentalAsset.create({
-      tokenId,
+    // Create the asset
+    const asset = storage.createAsset({
       name,
       description,
       category,
       imageUrl,
-      rentalRatePerDay,
-      depositAmount,
+      rentalRatePerDay: parseFloat(rentalRatePerDay) || 0,
+      depositAmount: parseFloat(depositAmount) || 0,
       currency,
-      unlockFee,
-      condition,
-      accessories,
       location: {
         city: location.city,
         state: location.state
@@ -86,46 +61,33 @@ export default async function handler(
         accessCode,
         specialInstructions
       },
-      ownerKey,
       status: 'available',
-      brc76Metadata
+      unlockFee: parseFloat(unlockFee) || 0.0001,
+      ownerKey,
+      condition,
+      accessories,
+      rating: undefined
     })
-
-    // Try to store on overlay network (non-blocking)
-    try {
-      const txid = await storeStageOnOverlay({
-        chainId: tokenId,
-        stageIndex: 0,
-        title: name,
-        metadata: brc76Metadata
-      })
-      
-      rentalAsset.mintTransactionId = txid
-      await rentalAsset.save()
-    } catch (overlayError) {
-      console.error('Overlay storage failed (non-critical):', overlayError)
-    }
 
     return res.status(201).json({
       success: true,
-      tokenId: rentalAsset.tokenId,
+      tokenId: asset.tokenId,
       asset: {
-        id: rentalAsset._id,
-        tokenId: rentalAsset.tokenId,
-        name: rentalAsset.name,
-        description: rentalAsset.description,
-        category: rentalAsset.category,
-        imageUrl: rentalAsset.imageUrl,
-        rentalRatePerDay: rentalAsset.rentalRatePerDay,
-        depositAmount: rentalAsset.depositAmount,
-        currency: rentalAsset.currency,
-        location: rentalAsset.location,
-        status: rentalAsset.status,
-        unlockFee: rentalAsset.unlockFee,
-        ownerKey: rentalAsset.ownerKey,
-        createdAt: rentalAsset.createdAt
-      },
-      brc76Compliant: true
+        id: asset.id,
+        tokenId: asset.tokenId,
+        name: asset.name,
+        description: asset.description,
+        category: asset.category,
+        imageUrl: asset.imageUrl,
+        rentalRatePerDay: asset.rentalRatePerDay,
+        depositAmount: asset.depositAmount,
+        currency: asset.currency,
+        location: asset.location,
+        status: asset.status,
+        unlockFee: asset.unlockFee,
+        ownerKey: asset.ownerKey,
+        createdAt: asset.createdAt
+      }
     })
 
   } catch (error: any) {
