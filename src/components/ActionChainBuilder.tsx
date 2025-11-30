@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { getPublicKey } from 'babbage-sdk'
 import StageCard from './StageCard'
 import { rentService } from '@/lib/rentService'
+import { getErrorMessage } from '@/lib/error-utils'
 
 interface Stage {
   id: string
@@ -125,7 +126,7 @@ export default function ActionChainBuilder({
       setShowStageForm(false)
     } catch (error) {
       console.error('Failed to add stage:', error)
-      alert('Failed to add stage: ' + error.message)
+      alert('Failed to add stage: ' + getErrorMessage(error))
     }
   }
 
@@ -159,7 +160,7 @@ export default function ActionChainBuilder({
       alert('Action chain finalized successfully!')
     } catch (error) {
       console.error('Failed to finalize chain:', error)
-      alert('Failed to finalize chain: ' + error.message)
+      alert('Failed to finalize chain: ' + getErrorMessage(error))
     }
   }
 

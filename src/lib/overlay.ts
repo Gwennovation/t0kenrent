@@ -1,16 +1,21 @@
 import { createAction } from 'babbage-sdk'
+import { Script } from '@bsv/sdk'
+import { Buffer } from 'buffer'
 
-const OVERLAY_URL = process.env.OVERLAY_URL || 'https://overlay-us-1.bsvb.tech'
+const OVERLAY_URL: string =
+  process.env.OVERLAY_URL || 'https://overlay-us-1.bsvb.tech'
+
+export interface OverlayTransactionOutput {
+  vout: number
+  satoshis: number
+  script: string
+  spent: boolean
+}
 
 export interface OverlayTransaction {
   txid: string
   rawTx: string
-  outputs: Array<{
-    vout: number
-    satoshis: number
-    script: string
-    spent: boolean
-  }>
+  outputs: OverlayTransactionOutput[]
   timestamp: number
 }
 
@@ -38,9 +43,10 @@ export async function broadcastToOverlay(
 
     const data = await response.json()
     return { txid: data.txid }
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Overlay broadcast error:', error)
-    throw error
+    const message = error instanceof Error ? error.message : String(error)
+    throw new Error(`Overlay broadcast error: ${message}`)
   }
 }
 
@@ -65,8 +71,8 @@ export async function getChainTransactions(
     }
 
     const data = await response.json()
-    return data.transactions || []
-  } catch (error) {
+    return (data.transactions as OverlayTransaction[]) || []
+  } catch (error: unknown) {
     console.error('Overlay lookup error:', error)
     return []
   }
@@ -85,8 +91,8 @@ export async function getTransactionByTxid(
       return null
     }
 
-    return await response.json()
-  } catch (error) {
+    return (await response.json()) as OverlayTransaction
+  } catch (error: unknown) {
     console.error('Failed to fetch transaction:', error)
     return null
   }
@@ -104,8 +110,7 @@ export async function storeStageOnOverlay(stageData: {
   rentAmount?: number
 }): Promise<string> {
   try {
-    // Create PushDrop transaction for stage data
-    const result = await createAction({
+    const result: any = await createAction({
       description: `Supply Chain Stage: ${stageData.title}`,
       outputs: [
         {
@@ -116,24 +121,28 @@ export async function storeStageOnOverlay(stageData: {
       ]
     })
 
-    // Broadcast to overlay
     await broadcastToOverlay(result, stageData.chainId)
 
     return result.txid
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Failed to store stage on overlay:', error)
-    throw error
+    const message = error instanceof Error ? error.message : String(error)
+    throw new Error(`Failed to store stage on overlay: ${message}`)
   }
 }
 
 /**
  * Create locking script for supply chain stage
  */
-async function createStageScript(stageData: any): Promise<string> {
-  const { Script } = await import('@bsv/sdk')
-
-  // Encode stage data as PushDrop
-  const fields = [
+async function createStageScript(stageData: {
+  chainId: string
+  stageIndex: number
+  title: string
+  metadata: Record<string, any>
+  requiresPayment?: boolean
+  rentAmount?: number
+}): Promise<string> {
+  const fields: Buffer[] = [
     Buffer.from('STAGE'),
     Buffer.from(stageData.chainId),
     Buffer.from(String(stageData.stageIndex)),
@@ -143,17 +152,18 @@ async function createStageScript(stageData: any): Promise<string> {
 
   if (stageData.requiresPayment) {
     fields.push(Buffer.from('RENT'))
-    fields.push(Buffer.from(String(stageData.rentAmount)))
+    fields.push(Buffer.from(String(stageData.rentAmount ?? 0)))
   }
 
-  // Create OP_RETURN script with all fields
   const hexFields = fields.map(f => f.toString('hex')).join(' ')
-  
-  const script = Script.fromASM(`
-    OP_FALSE
-    OP_RETURN
-    ${hexFields}
-  `)
+
+  const script = Script.fromASM(
+    `
+      OP_FALSE
+      OP_RETURN
+      ${hexFields}
+    `.trim()
+  )
 
   return script.toHex()
 }
@@ -161,17 +171,18 @@ async function createStageScript(stageData: any): Promise<string> {
 /**
  * Parse stage data from overlay transaction
  */
-export function parseStageTransaction(tx: OverlayTransaction): any {
+export function parseStageTransaction(tx: OverlayTransaction): any | null {
   try {
-    const { Script } = require('@bsv/sdk')
     const script = Script.fromHex(tx.outputs[0].script)
     const chunks = script.chunks
 
     // Extract fields from OP_RETURN data
-    const fields = []
+    const fields: string[] = []
     for (const chunk of chunks) {
       if (chunk.data) {
-        fields.push(chunk.data.toString('utf8'))
+        // chunk.data is typically a number[]/Uint8Array
+        const buf = Buffer.from(chunk.data as number[])
+        fields.push(buf.toString('utf8'))
       }
     }
 
@@ -188,14 +199,13 @@ export function parseStageTransaction(tx: OverlayTransaction): any {
       timestamp: tx.timestamp
     }
 
-    // Check for rent data
     if (fields[5] === 'RENT') {
       stageData.requiresPayment = true
       stageData.rentAmount = parseInt(fields[6])
     }
 
     return stageData
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Failed to parse stage transaction:', error)
     return null
   }
@@ -220,8 +230,8 @@ export async function getChainPayments(chainId: string): Promise<any[]> {
     }
 
     const data = await response.json()
-    return data.payments || []
-  } catch (error) {
+    return (data.payments as any[]) || []
+  } catch (error: unknown) {
     console.error('Failed to fetch chain payments:', error)
     return []
   }
@@ -236,21 +246,18 @@ export async function verifyPaymentOnOverlay(
 ): Promise<boolean> {
   try {
     const tx = await getTransactionByTxid(txid)
-    
+
     if (!tx) {
       return false
     }
 
-    // Check transaction is confirmed
     if (tx.timestamp === 0) {
-      return false // Not confirmed yet
+      return false
     }
 
-    // Verify amount (implementation depends on MNEE format)
-    // TODO: Parse MNEE amount from outputs
-    
+    // TODO: Parse actual MNEE payment amount and compare to expectedAmount
     return true
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Payment verification failed:', error)
     return false
   }

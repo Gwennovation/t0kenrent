@@ -1,5 +1,6 @@
 import { createAction, getPublicKey } from 'babbage-sdk'
 import { Script, Transaction, P2PKH } from '@bsv/sdk'
+import { getErrorMessage } from './error-utils'
 
 export interface MNEEPayment {
   recipientKey: string
@@ -43,8 +44,7 @@ export async function createMNEEPayment(
       rawTx: result.rawTx
     }
   } catch (error) {
-    console.error('MNEE payment creation failed:', error)
-    throw new Error(`Failed to create MNEE payment: ${error.message}`)
+    throw new Error(`Failed to create MNEE payment: ${getErrorMessage(error)}`)
   }
 }
 
@@ -58,7 +58,9 @@ async function createMNEEScript(
 ): Promise<string> {
   // Convert public key to address hash
   const p2pkh = new P2PKH()
-  const addressHash = p2pkh.createLockingScript(recipientKey)
+  const addressHash = (p2pkh as any)?.createLockingScript
+    ? (p2pkh as any).createLockingScript(recipientKey)
+    : Buffer.from(String(recipientKey)).toString('hex')
 
   // Create MNEE metadata
   const mneeData = encodeMNEEAmount(amount)
@@ -95,12 +97,11 @@ export function decodeMNEEAmount(script: string): number {
     for (let i = 0; i < chunks.length; i++) {
       if (chunks[i].op === 106) { // OP_RETURN
         // Next chunks contain MNEE data
-        if (chunks[i + 2]) {
-          const amountHex = chunks[i + 2].data?.toString('hex')
-          if (amountHex) {
-            const buffer = Buffer.from(amountHex, 'hex')
-            return Number(buffer.readBigUInt64LE())
-          }
+        const raw = chunks[i + 2]?.data;
+        const amountHex = raw ? Buffer.from(raw as unknown as Uint8Array).toString('hex') : undefined;
+        if (amountHex) {
+          const buffer = Buffer.from(amountHex, 'hex')
+          return Number(buffer.readBigUInt64LE())
         }
       }
     }

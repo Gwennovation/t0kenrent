@@ -1,6 +1,7 @@
 import { getPublicKey } from 'babbage-sdk'
 import { createMNEEPayment, verifyMNEEPayment } from './mnee'
 import { verifyPaymentOnOverlay } from './overlay'
+import { getErrorMessage } from './error-utils'
 
 export interface RentableStage {
   title: string
@@ -103,8 +104,7 @@ export class RentCollectionService {
 
       return payment
     } catch (error) {
-      console.error('Failed to process rent payment:', error)
-      throw new Error(`Payment processing failed: ${error.message}`)
+      throw new Error(`Payment processing failed: ${getErrorMessage(error)}`)
     }
   }
 
