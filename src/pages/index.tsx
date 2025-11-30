@@ -135,7 +135,7 @@ export default function Home() {
               {/* Logo */}
               <div className="flex items-center gap-3 group cursor-pointer" onClick={() => { setShowMarketplace(false); setDemoMode(false); setActiveView('marketplace'); }}>
                 <div className="relative">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white dark:bg-surface-800 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25 group-hover:shadow-xl group-hover:shadow-primary-500/30 transition-all duration-300 group-hover:scale-105 p-1.5">
                     <img 
                       src="/genspark-logo.png" 
                       alt="GenSpark Logo" 
@@ -534,7 +534,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center">
+                <div className="w-8 h-8 bg-white dark:bg-surface-800 rounded-lg flex items-center justify-center shadow-md p-1">
                   <img 
                     src="/genspark-logo.png" 
                     alt="GenSpark Logo" 
