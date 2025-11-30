@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { getErrorMessage } from '@/lib/error-utils'
+import Portal from './Portal'
 
 interface Asset {
   id: string
@@ -210,8 +211,9 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
   const minDateStr = minDate.toISOString().split('T')[0]
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal-content max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
+    <Portal>
+      <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+        <div className="modal-content max-w-lg">
         {/* Header */}
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-emerald-700 dark:from-emerald-600 dark:to-emerald-800" />
@@ -519,8 +521,9 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
               </button>
             </div>
           )}
+          </div>
         </div>
       </div>
-    </div>
+    </Portal>
   )
 }

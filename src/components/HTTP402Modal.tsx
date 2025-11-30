@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { getErrorMessage } from '@/lib/error-utils'
+import Portal from './Portal'
 
 interface Asset {
   id: string
@@ -152,8 +153,9 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
   }
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal-content max-w-md animate-scale-in">
+    <Portal>
+      <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+        <div className="modal-content max-w-md">
         {/* Header */}
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-accent-500 to-accent-700 dark:from-accent-600 dark:to-accent-800" />
@@ -432,8 +434,9 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
               </button>
             </div>
           )}
+          </div>
         </div>
       </div>
-    </div>
+    </Portal>
   )
 }
