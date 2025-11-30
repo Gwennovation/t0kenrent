@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import WalletAuth from '@/components/WalletAuth'
+import WalletSelector from '@/components/WalletSelector'
 import RentalMarketplace from '@/components/RentalMarketplace'
 import ChainDashboard from '@/components/ChainDashboard'
 import { ThemeToggle } from '@/context/ThemeContext'
@@ -8,6 +9,7 @@ import { ThemeToggle } from '@/context/ThemeContext'
 export default function Home() {
   const [authenticated, setAuthenticated] = useState(false)
   const [userKey, setUserKey] = useState('')
+  const [walletType, setWalletType] = useState('')
   const [demoMode, setDemoMode] = useState(false)
   const [showMarketplace, setShowMarketplace] = useState(false)
   const [activeView, setActiveView] = useState<'marketplace' | 'chains'>('marketplace')
@@ -24,8 +26,9 @@ export default function Home() {
     }
   }, [])
 
-  function handleAuthenticated(publicKey: string) {
+  function handleAuthenticated(publicKey: string, wallet: string = 'metanet') {
     setUserKey(publicKey)
+    setWalletType(wallet)
     setAuthenticated(true)
     setShowMarketplace(true)
   }
@@ -105,12 +108,17 @@ export default function Home() {
                       <span className="hidden sm:inline">Exit Demo</span>
                     </button>
                   ) : !showMarketplace ? (
-                    <div className="hidden sm:block">
-                      <WalletAuth onAuthenticated={handleAuthenticated} />
+                    <div className="hidden sm:flex items-center gap-2">
+                      <WalletSelector onAuthenticated={handleAuthenticated} compact />
                     </div>
                   ) : (
                     <div className="flex items-center gap-2 px-3 py-2 bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-xl">
                       <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                      {walletType && (
+                        <span className="text-[10px] px-1.5 py-0.5 bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300 rounded font-medium uppercase">
+                          {walletType === 'handcash' ? 'HC' : walletType === 'metanet' ? 'MN' : 'PM'}
+                        </span>
+                      )}
                       <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400 truncate max-w-[100px] sm:max-w-[200px]">
                         {userKey.slice(0, 8)}...{userKey.slice(-6)}
                       </span>
@@ -187,10 +195,29 @@ export default function Home() {
                   Protected payments, secure deposits, no middleman fees.
                 </p>
 
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up animation-delay-200">
+                {/* Wallet Connection Options */}
+                <div className="max-w-md mx-auto mb-8 animate-slide-up animation-delay-200">
+                  <div className="glass-card p-6">
+                    <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-4 flex items-center gap-2">
+                      <svg className="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                      </svg>
+                      Connect Your Wallet
+                    </h3>
+                    <WalletSelector onAuthenticated={handleAuthenticated} />
+                  </div>
+                </div>
+
+                {/* Demo Mode Button */}
+                <div className="flex flex-col items-center gap-3 animate-slide-up animation-delay-300">
+                  <div className="flex items-center gap-4">
+                    <div className="h-px w-16 bg-surface-300 dark:bg-surface-700" />
+                    <span className="text-sm text-surface-500 dark:text-surface-400">or</span>
+                    <div className="h-px w-16 bg-surface-300 dark:bg-surface-700" />
+                  </div>
                   <button
                     onClick={enableDemoMode}
-                    className="w-full sm:w-auto btn-primary text-lg px-8 py-4 flex items-center justify-center gap-3"
+                    className="btn-secondary text-base px-6 py-3 flex items-center justify-center gap-2"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
@@ -198,14 +225,10 @@ export default function Home() {
                     </svg>
                     Try Demo Mode
                   </button>
-                  <div className="hidden sm:block">
-                    <WalletAuth onAuthenticated={handleAuthenticated} />
-                  </div>
+                  <p className="text-sm text-surface-500 dark:text-surface-500">
+                    No wallet? No problem. Explore the full experience without connecting.
+                  </p>
                 </div>
-
-                <p className="text-sm text-surface-500 dark:text-surface-500 mt-4 animate-slide-up animation-delay-300">
-                  No wallet? No problem. Try demo mode to explore the full experience.
-                </p>
               </div>
 
               {/* Feature Cards */}
