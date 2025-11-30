@@ -26,9 +26,10 @@ interface RentalAsset {
 
 interface RentalMarketplaceProps {
   userKey: string
+  demoMode?: boolean
 }
 
-export default function RentalMarketplace({ userKey }: RentalMarketplaceProps) {
+export default function RentalMarketplace({ userKey, demoMode = false }: RentalMarketplaceProps) {
   const [assets, setAssets] = useState<RentalAsset[]>([])
   const [myAssets, setMyAssets] = useState<RentalAsset[]>([])
   const [loading, setLoading] = useState(true)
@@ -201,6 +202,7 @@ export default function RentalMarketplace({ userKey }: RentalMarketplaceProps) {
                   key={asset.id}
                   asset={asset}
                   userKey={userKey}
+                  demoMode={demoMode}
                   onRent={() => loadAssets()}
                 />
               ))}
@@ -228,6 +230,7 @@ export default function RentalMarketplace({ userKey }: RentalMarketplaceProps) {
                   asset={asset}
                   userKey={userKey}
                   isOwner={true}
+                  demoMode={demoMode}
                   onRent={() => loadAssets()}
                 />
               ))}

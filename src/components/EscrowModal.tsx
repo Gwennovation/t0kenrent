@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { createAction } from 'babbage-sdk'
 import { getErrorMessage } from '@/lib/error-utils'
 
 interface Asset {
@@ -14,21 +13,23 @@ interface Asset {
 interface RentalDetails {
   pickupLocation: {
     address: string
-    coordinates?: [number, number]
+    coordinates?: { lat: number; lng: number }
   }
   accessCode?: string
   ownerContact?: any
+  specialInstructions?: string
 }
 
 interface EscrowModalProps {
   asset: Asset
   userKey: string
   rentalDetails: RentalDetails
+  demoMode?: boolean
   onClose: () => void
   onSuccess: () => void
 }
 
-export default function EscrowModal({ asset, userKey, rentalDetails, onClose, onSuccess }: EscrowModalProps) {
+export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = false, onClose, onSuccess }: EscrowModalProps) {
   const [step, setStep] = useState<'configure' | 'creating' | 'funding' | 'success' | 'error'>('configure')
   const [error, setError] = useState('')
   const [escrowId, setEscrowId] = useState('')
@@ -62,10 +63,19 @@ export default function EscrowModal({ asset, userKey, rentalDetails, onClose, on
       return
     }
 
+    if (demoMode) {
+      // Demo mode - simulate escrow creation
+      handleDemoEscrow()
+      return
+    }
+
     setStep('creating')
     setError('')
 
     try {
+      // Dynamic import for babbage-sdk
+      const { createAction } = await import('babbage-sdk')
+
       // Step 1: Create escrow contract on server
       const response = await fetch('/api/escrow/create', {
         method: 'POST',
@@ -128,6 +138,25 @@ export default function EscrowModal({ asset, userKey, rentalDetails, onClose, on
     }
   }
 
+  function handleDemoEscrow() {
+    setStep('creating')
+    
+    // Simulate escrow creation
+    setTimeout(() => {
+      const demoEscrowId = 'demo_escrow_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(7)
+      const demoAddress = '1Demo' + Math.random().toString(36).substring(2, 10).toUpperCase() + 'EscrowAddr'
+      
+      setEscrowId(demoEscrowId)
+      setEscrowAddress(demoAddress)
+      setStep('funding')
+      
+      // Simulate funding
+      setTimeout(() => {
+        setStep('success')
+      }, 1500)
+    }, 1500)
+  }
+
   // Get min date (tomorrow)
   const minDate = new Date()
   minDate.setDate(minDate.getDate() + 1)
@@ -147,7 +176,9 @@ export default function EscrowModal({ asset, userKey, rentalDetails, onClose, on
               </div>
               <div>
                 <h2 className="text-lg font-bold text-white">Create Escrow</h2>
-                <p className="text-green-200 text-sm">Secure your rental deposit</p>
+                <p className="text-green-200 text-sm">
+                  {demoMode ? 'Demo Mode - Simulated' : 'Secure your rental deposit'}
+                </p>
               </div>
             </div>
             <button
@@ -161,6 +192,18 @@ export default function EscrowModal({ asset, userKey, rentalDetails, onClose, on
           </div>
         </div>
 
+        {/* Demo Mode Banner */}
+        {demoMode && (
+          <div className="bg-yellow-50 border-b border-yellow-200 px-6 py-3">
+            <div className="flex items-center gap-2 text-yellow-800">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+              <span className="text-sm font-medium">Demo Mode: No real escrow will be created</span>
+            </div>
+          </div>
+        )}
+
         {/* Content */}
         <div className="p-6">
           {step === 'configure' && (
@@ -168,7 +211,10 @@ export default function EscrowModal({ asset, userKey, rentalDetails, onClose, on
               {/* Asset Summary */}
               <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
                 <div className="w-16 h-16 bg-gray-200 rounded-lg flex items-center justify-center text-2xl">
-                  📷
+                  <svg className="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
                 </div>
                 <div>
                   <h3 className="font-semibold text-gray-900">{asset.name}</h3>
@@ -183,6 +229,11 @@ export default function EscrowModal({ asset, userKey, rentalDetails, onClose, on
                 {rentalDetails.accessCode && (
                   <p className="text-sm text-blue-800 mt-1">
                     <strong>Access Code:</strong> {rentalDetails.accessCode}
+                  </p>
+                )}
+                {rentalDetails.specialInstructions && (
+                  <p className="text-sm text-blue-700 mt-2 italic">
+                    {rentalDetails.specialInstructions}
                   </p>
                 )}
               </div>
@@ -233,7 +284,9 @@ export default function EscrowModal({ asset, userKey, rentalDetails, onClose, on
                   </div>
                   <div className="border-t border-gray-200 pt-3 flex justify-between">
                     <span className="font-semibold text-gray-900">Total to Escrow</span>
-                    <span className="font-bold text-green-600">${totalAmount.toFixed(2)}</span>
+                    <span className="font-bold text-green-600">
+                      {demoMode ? '(Simulated) ' : ''}${totalAmount.toFixed(2)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -270,7 +323,7 @@ export default function EscrowModal({ asset, userKey, rentalDetails, onClose, on
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
-                Create Escrow & Fund ${totalAmount.toFixed(2)}
+                {demoMode ? 'Simulate Escrow Creation' : `Create Escrow & Fund $${totalAmount.toFixed(2)}`}
               </button>
             </div>
           )}
@@ -278,8 +331,12 @@ export default function EscrowModal({ asset, userKey, rentalDetails, onClose, on
           {step === 'creating' && (
             <div className="text-center py-8">
               <div className="animate-spin w-16 h-16 border-4 border-green-600 border-t-transparent rounded-full mx-auto mb-4"></div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Creating Escrow</h3>
-              <p className="text-gray-600">Generating smart contract...</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {demoMode ? 'Simulating Escrow Creation' : 'Creating Escrow'}
+              </h3>
+              <p className="text-gray-600">
+                {demoMode ? 'Simulating smart contract...' : 'Generating smart contract...'}
+              </p>
             </div>
           )}
 
@@ -290,11 +347,15 @@ export default function EscrowModal({ asset, userKey, rentalDetails, onClose, on
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Funding Escrow</h3>
-              <p className="text-gray-600 mb-4">Please confirm the transaction in your wallet...</p>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {demoMode ? 'Simulating Funding' : 'Funding Escrow'}
+              </h3>
+              <p className="text-gray-600 mb-4">
+                {demoMode ? 'Simulating transaction...' : 'Please confirm the transaction in your wallet...'}
+              </p>
               {escrowAddress && (
                 <div className="bg-gray-100 rounded-lg p-3">
-                  <p className="text-xs text-gray-500">Escrow Address</p>
+                  <p className="text-xs text-gray-500">Escrow Address {demoMode && '(Demo)'}</p>
                   <p className="text-sm font-mono text-gray-700 truncate">{escrowAddress}</p>
                 </div>
               )}
@@ -308,9 +369,14 @@ export default function EscrowModal({ asset, userKey, rentalDetails, onClose, on
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Rental Confirmed!</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                {demoMode ? 'Demo Rental Complete!' : 'Rental Confirmed!'}
+              </h3>
               <p className="text-gray-600 mb-4">
-                Your escrow has been created and funded. The asset is now reserved for you.
+                {demoMode 
+                  ? 'This is a simulated escrow for demo purposes.'
+                  : 'Your escrow has been created and funded. The asset is now reserved for you.'
+                }
               </p>
               
               <div className="bg-gray-50 rounded-lg p-4 text-left mb-4">
@@ -318,9 +384,18 @@ export default function EscrowModal({ asset, userKey, rentalDetails, onClose, on
                 <div className="space-y-2 text-sm">
                   <p><strong>Pickup:</strong> {rentalDetails.pickupLocation.address}</p>
                   <p><strong>Dates:</strong> {startDate} to {endDate}</p>
-                  <p><strong>Escrow ID:</strong> <span className="font-mono">{escrowId.slice(0, 16)}...</span></p>
+                  <p><strong>Escrow ID:</strong> <span className="font-mono">{escrowId.slice(0, 20)}...</span></p>
+                  {rentalDetails.accessCode && (
+                    <p><strong>Access Code:</strong> {rentalDetails.accessCode}</p>
+                  )}
                 </div>
               </div>
+
+              {demoMode && (
+                <p className="text-sm text-yellow-600 mb-4">
+                  This was a simulated rental for demo purposes. No real transaction occurred.
+                </p>
+              )}
 
               <button
                 onClick={onSuccess}

@@ -84,7 +84,7 @@ export default function Home() {
         {/* Main Content */}
         <div className="py-8">
           {showMarketplace ? (
-            <RentalMarketplace userKey={userKey} />
+            <RentalMarketplace userKey={userKey} demoMode={demoMode} />
           ) : (
             <div className="max-w-4xl mx-auto px-4">
               {/* Hero Section */}

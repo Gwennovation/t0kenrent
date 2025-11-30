@@ -27,10 +27,11 @@ interface AssetCardProps {
   asset: RentalAsset
   userKey: string
   isOwner?: boolean
+  demoMode?: boolean
   onRent: () => void
 }
 
-export default function AssetCard({ asset, userKey, isOwner = false, onRent }: AssetCardProps) {
+export default function AssetCard({ asset, userKey, isOwner = false, demoMode = false, onRent }: AssetCardProps) {
   const [showUnlockModal, setShowUnlockModal] = useState(false)
   const [showEscrowModal, setShowEscrowModal] = useState(false)
   const [unlocked, setUnlocked] = useState(false)
@@ -58,11 +59,33 @@ export default function AssetCard({ asset, userKey, isOwner = false, onRent }: A
   }
 
   function handleRentClick() {
-    if (unlocked) {
+    if (demoMode) {
+      // In demo mode, simulate unlocking without payment
+      handleDemoUnlock()
+    } else if (unlocked) {
       setShowEscrowModal(true)
     } else {
       setShowUnlockModal(true)
     }
+  }
+
+  function handleDemoUnlock() {
+    // Simulate rental details for demo mode
+    const mockDetails = {
+      pickupLocation: {
+        address: '123 Demo Street, San Francisco, CA 94102',
+        coordinates: { lat: 37.7749, lng: -122.4194 }
+      },
+      accessCode: 'DEMO-1234',
+      ownerContact: {
+        name: 'Demo Owner',
+        phone: '(555) 123-4567',
+        email: 'demo@t0kenrent.com'
+      },
+      specialInstructions: 'This is demo mode - no real rental is being created.'
+    }
+    setRentalDetails(mockDetails)
+    setUnlocked(true)
   }
 
   return (
@@ -207,6 +230,7 @@ export default function AssetCard({ asset, userKey, isOwner = false, onRent }: A
         <HTTP402Modal
           asset={asset}
           userKey={userKey}
+          demoMode={demoMode}
           onClose={() => setShowUnlockModal(false)}
           onSuccess={handleUnlockSuccess}
         />
@@ -218,6 +242,7 @@ export default function AssetCard({ asset, userKey, isOwner = false, onRent }: A
           asset={asset}
           userKey={userKey}
           rentalDetails={rentalDetails}
+          demoMode={demoMode}
           onClose={() => setShowEscrowModal(false)}
           onSuccess={() => {
             setShowEscrowModal(false)

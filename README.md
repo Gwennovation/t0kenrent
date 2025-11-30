@@ -9,7 +9,7 @@
 
 T0kenRent is a decentralized platform built on the BSV blockchain that enables tokenization and rental of everyday assets. By leveraging BRC-76 compliant tokens, HTTP 402 micropayment gating, sCrypt smart contracts, and payment channels, T0kenRent creates a trustless, efficient, and globally accessible rental marketplace.
 
-## 🌟 Key Features
+## Key Features
 
 - **Asset Tokenization**: Mint BRC-76 compliant tokens representing rentable items (cameras, tools, vehicles, etc.)
 - **HTTP 402 Payment Gating**: Micropayments unlock detailed rental information, filtering serious renters
@@ -18,22 +18,22 @@ T0kenRent is a decentralized platform built on the BSV blockchain that enables t
 - **Custom Overlay Network**: Full Topic Manager (tm_tokenrent) and Lookup Service (ls_tokenrent) implementation
 - **Near-Zero Fees**: BSV's low transaction costs enable micropayment economics
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [Quick Start](#-quick-start)
-- [Demo Mode](#-demo-mode)
-- [Architecture](#-architecture)
-- [Smart Contracts](#-smart-contracts)
-- [Overlay Network](#-overlay-network)
-- [HTTP 402 Protocol](#-http-402-protocol)
-- [Escrow System](#-escrow-system)
-- [API Reference](#-api-reference)
-- [Development](#-development)
-- [Workshop Alignment](#-workshop-alignment)
-- [Contributing](#-contributing)
-- [License](#-license)
+- [Quick Start](#quick-start)
+- [Demo Mode](#demo-mode)
+- [Architecture](#architecture)
+- [Smart Contracts](#smart-contracts)
+- [Overlay Network](#overlay-network)
+- [HTTP 402 Protocol](#http-402-protocol)
+- [Escrow System](#escrow-system)
+- [API Reference](#api-reference)
+- [Development](#development)
+- [Workshop Alignment](#workshop-alignment)
+- [Contributing](#contributing)
+- [License](#license)
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -74,9 +74,9 @@ MOCK_WALLET=true    # Enable for demo mode
 
 ### Access the Application
 
-Open [http://localhost:3000](http://localhost:3000) and connect your BSV wallet or use Demo Mode!
+Open [http://localhost:3000](http://localhost:3000) and connect your BSV wallet or use Demo Mode.
 
-## 🎮 Demo Mode
+## Demo Mode
 
 Test T0kenRent without a wallet, MongoDB, or real BSV transactions:
 
@@ -85,10 +85,12 @@ Test T0kenRent without a wallet, MongoDB, or real BSV transactions:
 3. Or add `?demo=true` to any URL
 
 **Demo Mode Features:**
-- ✅ Browse marketplace with mock rental assets
-- ✅ View HTTP 402 payment flow (simulated)
-- ✅ Test escrow creation UI
-- ✅ No wallet or MongoDB required
+- Browse marketplace with mock rental assets
+- View HTTP 402 payment flow (simulated - no real payment required)
+- Test escrow creation UI
+- View rental details without payment
+- Full UI/UX testing without any blockchain interaction
+- No wallet or MongoDB required
 
 **Mock Assets Available:**
 - Canon EOS R5 Camera Kit (50 MNEE/day)
@@ -97,36 +99,34 @@ Test T0kenRent without a wallet, MongoDB, or real BSV transactions:
 - Epson Home Cinema Projector (35 MNEE/day)
 - 4-Person Camping Tent (20 MNEE/day)
 
-## 🏗️ Architecture
+## Architecture
 
 T0kenRent follows the BSV 3-Layer Mandala Network architecture:
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    Layer 3: Application                      │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │  Frontend   │  │  HTTP 402   │  │  Wallet Interface   │ │
-│  │  (Next.js)  │  │  Gateway    │  │  (Babbage SDK)      │ │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
-└────────────────────────────┬────────────────────────────────┘
-                             │
-┌────────────────────────────▼────────────────────────────────┐
-│                  Layer 2: Overlay Services                   │
-│  ┌─────────────────┐  ┌─────────────────────────────────┐  │
-│  │  Topic Manager  │  │  Lookup Service (UTXO Set)      │  │
-│  │  (tm_tokenrent) │  │  - Asset tokens                 │  │
-│  └─────────────────┘  │  - Escrow status               │  │
-│                       │  - Payment verification         │  │
-│                       └─────────────────────────────────┘  │
-└────────────────────────────┬────────────────────────────────┘
-                             │
-┌────────────────────────────▼────────────────────────────────┐
-│                Layer 1: BSV Protocol                         │
-│  ┌─────────────────┐  ┌─────────────────────────────────┐  │
-│  │  BRC-76 Tokens  │  │  sCrypt Smart Contracts         │  │
-│  │  (Asset NFTs)   │  │  (RentalEscrow, PaymentChannel) │  │
-│  └─────────────────┘  └─────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────┘
++-------------------------------------------------------------+
+|                    Layer 3: Application                      |
+|  +-----------+  +-----------+  +---------------------+      |
+|  |  Frontend |  |  HTTP 402 |  |  Wallet Interface   |      |
+|  |  (Next.js)|  |  Gateway  |  |  (Babbage SDK)      |      |
++-------------------------------------------------------------+
+                             |
++-------------------------------------------------------------+
+|                  Layer 2: Overlay Services                   |
+|  +-----------------+  +-----------------------------+       |
+|  |  Topic Manager  |  |  Lookup Service (UTXO Set)  |       |
+|  |  (tm_tokenrent) |  |  - Asset tokens             |       |
+|  +-----------------+  |  - Escrow status            |       |
+|                       |  - Payment verification      |       |
+|                       +-----------------------------+       |
++-------------------------------------------------------------+
+                             |
++-------------------------------------------------------------+
+|                Layer 1: BSV Protocol                         |
+|  +-----------------+  +-----------------------------+       |
+|  |  BRC-76 Tokens  |  |  sCrypt Smart Contracts     |       |
+|  |  (Asset NFTs)   |  |  (RentalEscrow, PaymentChannel)|    |
++-------------------------------------------------------------+
 ```
 
 ### Components
@@ -141,7 +141,7 @@ T0kenRent follows the BSV 3-Layer Mandala Network architecture:
 | **RentalEscrow** | sCrypt 2-of-2 multisig escrow contract |
 | **PaymentChannel** | sCrypt streaming payment channel |
 
-## 📜 Smart Contracts
+## Smart Contracts
 
 ### RentalEscrow Contract
 
@@ -206,7 +206,7 @@ export class PaymentChannel extends SmartContract {
 - Cooperative and unilateral close
 - Dispute timeout protection
 
-## 🌐 Overlay Network
+## Overlay Network
 
 ### Topic Manager (tm_tokenrent)
 
@@ -244,21 +244,21 @@ await lookupService.getActiveEscrows(userKey)
 await lookupService.verifyPayment(txid, expectedAmount)
 ```
 
-## 💳 HTTP 402 Protocol
+## HTTP 402 Protocol
 
 T0kenRent implements the HTTP 402 "Payment Required" status code:
 
 ```
 Renter                          T0kenRent                       BSV Network
-  │                                 │                                │
-  │──── GET /rental/xyz ───────────▶│                                │
-  │◀─── 402 Payment Required ──────│                                │
-  │     {amount: 0.0001 BSV}        │                                │
-  │                                 │                                │
-  │──── Create Payment ─────────────────────────────────────────────▶│
-  │                                 │                                │
-  │──── POST /payment/verify ──────▶│──── Verify ──────────────────▶│
-  │◀─── 200 OK + Details ──────────│                                │
+  |                                 |                                |
+  |---- GET /rental/xyz ----------->|                                |
+  |<--- 402 Payment Required -------|                                |
+  |     {amount: 0.0001 BSV}        |                                |
+  |                                 |                                |
+  |---- Create Payment -------------------------------------------->|
+  |                                 |                                |
+  |---- POST /payment/verify ------>|---- Verify ------------------>|
+  |<--- 200 OK + Details -----------|                                |
 ```
 
 **Benefits:**
@@ -266,20 +266,20 @@ Renter                          T0kenRent                       BSV Network
 - Owner revenue from information access
 - Demonstrates serious rental intent
 
-## 🔒 Escrow System
+## Escrow System
 
 ### Escrow States
 
 ```
-┌──────────┐    Fund     ┌────────┐   Co-sign   ┌───────────┐
-│ CREATED  │────────────▶│ FUNDED │────────────▶│ RELEASED  │
-└──────────┘             └────────┘             └───────────┘
-                              │
-                              │ Timeout/Dispute
-                              ▼
-                        ┌───────────┐
-                        │ DISPUTED  │
-                        └───────────┘
++----------+    Fund     +--------+   Co-sign   +-----------+
+| CREATED  |------------>| FUNDED |------------>| RELEASED  |
++----------+             +--------+             +-----------+
+                              |
+                              | Timeout/Dispute
+                              v
+                        +-----------+
+                        | DISPUTED  |
+                        +-----------+
 ```
 
 ### Script Structure
@@ -297,7 +297,7 @@ OP_ELSE
 OP_ENDIF
 ```
 
-## 📡 API Reference
+## API Reference
 
 ### Asset Endpoints
 
@@ -324,7 +324,7 @@ OP_ENDIF
 
 See [docs/api.md](docs/api.md) for complete API documentation.
 
-## 🛠️ Development
+## Development
 
 ### Project Structure
 
@@ -386,7 +386,7 @@ node scripts/wallet-bridge.js
 # 4. Export public key
 ```
 
-## 📊 Workshop Alignment
+## Workshop Alignment
 
 T0kenRent achieves **100% alignment** with all Open Run Asia workshops:
 
@@ -400,7 +400,7 @@ T0kenRent achieves **100% alignment** with all Open Run Asia workshops:
 
 See [docs/WORKSHOP_ALIGNMENT.md](docs/WORKSHOP_ALIGNMENT.md) for detailed alignment report.
 
-## 🤝 Contributing
+## Contributing
 
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
@@ -410,11 +410,11 @@ We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guid
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **BSV Blockchain** - For scalable, low-cost transactions
 - **Babbage SDK** - For seamless wallet integration
@@ -425,4 +425,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Team ChibiTech** | Open Run Asia - BSV Hackathon 2025
 
-Built with ❤️ on Bitcoin SV
+Built on Bitcoin SV
