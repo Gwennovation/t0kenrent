@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import WalletAuth from '@/components/WalletAuth'
 import RentalMarketplace from '@/components/RentalMarketplace'
+import ChainDashboard from '@/components/ChainDashboard'
 import { ThemeToggle } from '@/context/ThemeContext'
 
 export default function Home() {
@@ -9,6 +10,7 @@ export default function Home() {
   const [userKey, setUserKey] = useState('')
   const [demoMode, setDemoMode] = useState(false)
   const [showMarketplace, setShowMarketplace] = useState(false)
+  const [activeView, setActiveView] = useState<'marketplace' | 'chains'>('marketplace')
   const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
@@ -16,6 +18,9 @@ export default function Home() {
     const urlParams = new URLSearchParams(window.location.search)
     if (urlParams.get('demo') === 'true') {
       enableDemoMode()
+    }
+    if (urlParams.get('view') === 'chains') {
+      setActiveView('chains')
     }
   }, [])
 
@@ -121,7 +126,37 @@ export default function Home() {
         <main className="relative">
           {showMarketplace ? (
             <div className="animate-fade-in">
-              <RentalMarketplace userKey={userKey} demoMode={demoMode} />
+              {/* View Toggle */}
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+                <div className="flex items-center justify-center gap-2 p-1 bg-surface-100 dark:bg-surface-800 rounded-xl w-fit mx-auto">
+                  <button
+                    onClick={() => setActiveView('marketplace')}
+                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
+                      activeView === 'marketplace'
+                        ? 'bg-white dark:bg-surface-700 text-primary-600 dark:text-primary-400 shadow-sm'
+                        : 'text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
+                    }`}
+                  >
+                    Marketplace
+                  </button>
+                  <button
+                    onClick={() => setActiveView('chains')}
+                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
+                      activeView === 'chains'
+                        ? 'bg-white dark:bg-surface-700 text-primary-600 dark:text-primary-400 shadow-sm'
+                        : 'text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
+                    }`}
+                  >
+                    Supply Chains
+                  </button>
+                </div>
+              </div>
+              
+              {activeView === 'marketplace' ? (
+                <RentalMarketplace userKey={userKey} demoMode={demoMode} />
+              ) : (
+                <ChainDashboard userKey={userKey} demoMode={demoMode} />
+              )}
             </div>
           ) : (
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">

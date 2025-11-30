@@ -3,7 +3,7 @@ import mongoose from 'mongoose'
 const MONGODB_URI = process.env.MONGODB_URI
 
 // Check if we're in mock mode (no MongoDB required)
-const MOCK_MODE = process.env.MOCK_PAYMENTS === 'true' || !MONGODB_URI
+export const MOCK_MODE = process.env.MOCK_PAYMENTS === 'true' || !MONGODB_URI
 
 /**
  * Global is used here to maintain a cached connection across hot reloads

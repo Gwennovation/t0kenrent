@@ -464,3 +464,11 @@ class InMemoryStorage {
 
 // Singleton instance
 export const storage = new InMemoryStorage()
+
+// Simple chains storage for demo mode
+export const inMemoryStorage = {
+  chains: [] as any[],
+  assets: [] as any[],
+  rentals: [] as any[],
+  users: [] as any[]
+}
