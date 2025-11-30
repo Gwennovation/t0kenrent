@@ -11,59 +11,59 @@ Technical architecture documentation for the T0kenRent decentralized rental plat
 T0kenRent is built on the BSV blockchain following the 3-Layer Mandala Network architecture, providing scalability, security, and efficiency for peer-to-peer asset rentals.
 
 ### New in v1.1.0
-- ✅ sCrypt Smart Contracts (RentalEscrow, PaymentChannel)
-- ✅ Custom Overlay Network (tm_tokenrent, ls_tokenrent)
-- ✅ Payment Channels for streaming rentals
-- ✅ BSV Desktop Wallet Bridge
+- sCrypt Smart Contracts (RentalEscrow, PaymentChannel)
+- Custom Overlay Network (tm_tokenrent, ls_tokenrent)
+- Payment Channels for streaming rentals
+- BSV Desktop Wallet Bridge
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         T0kenRent Architecture                           │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                          │
-│  ┌────────────────────────────────────────────────────────────────────┐ │
-│  │                    Layer 3: Application Layer                       │ │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌──────────────────────────┐ │ │
-│  │  │   Next.js    │  │  HTTP 402    │  │    Wallet Interface      │ │ │
-│  │  │   Frontend   │  │   Gateway    │  │    (Babbage SDK)         │ │ │
-│  │  └──────┬───────┘  └──────┬───────┘  └────────────┬─────────────┘ │ │
-│  │         │                 │                        │               │ │
-│  │         └────────────────┼────────────────────────┘               │ │
-│  │                          │                                         │ │
-│  │  ┌───────────────────────▼───────────────────────────────────────┐ │ │
-│  │  │                    API Routes (Next.js)                        │ │ │
-│  │  │  /api/assets  │  /api/payment  │  /api/escrow                 │ │ │
-│  │  └───────────────────────┬───────────────────────────────────────┘ │ │
-│  └──────────────────────────┼─────────────────────────────────────────┘ │
-│                             │                                            │
-│  ┌──────────────────────────▼─────────────────────────────────────────┐ │
-│  │                    Layer 2: Overlay Services                        │ │
-│  │  ┌────────────────────────────┐  ┌──────────────────────────────┐ │ │
-│  │  │      Topic Manager         │  │     Lookup Service           │ │ │
-│  │  │      (tm_tokenrent)        │  │     (ls_tokenrent)           │ │ │
-│  │  │                            │  │                              │ │ │
-│  │  │  • Protocol validation     │  │  • Asset token registry      │ │ │
-│  │  │  • Transaction monitoring  │  │  • Escrow UTXO tracking      │ │ │
-│  │  │  • State transition rules  │  │  • Payment verification      │ │ │
-│  │  └────────────────────────────┘  └──────────────────────────────┘ │ │
-│  └──────────────────────────┬─────────────────────────────────────────┘ │
-│                             │                                            │
-│  ┌──────────────────────────▼─────────────────────────────────────────┐ │
-│  │                    Layer 1: BSV Protocol                            │ │
-│  │  ┌──────────────────────┐  ┌─────────────────────────────────────┐ │ │
-│  │  │   BRC-76 Tokens      │  │      sCrypt Smart Contracts         │ │ │
-│  │  │   (Asset NFTs)       │  │      (RentalEscrow, PaymentChannel) │ │ │
-│  │  │                      │  │                                     │ │ │
-│  │  │  ┌────────────────┐  │  │  ┌─────────────────────────────┐   │ │ │
-│  │  │  │ PushDrop Data  │  │  │  │  2-of-2 Multisig Script    │   │ │ │
-│  │  │  │ • Token ID     │  │  │  │  • Owner key               │   │ │ │
-│  │  │  │ • Metadata     │  │  │  │  • Renter key              │   │ │ │
-│  │  │  │ • Owner Key    │  │  │  │  • Timeout fallback        │   │ │ │
-│  │  │  └────────────────┘  │  │  └─────────────────────────────┘   │ │ │
-│  │  └──────────────────────┘  └─────────────────────────────────────┘ │ │
-│  └────────────────────────────────────────────────────────────────────┘ │
-│                                                                          │
-└─────────────────────────────────────────────────────────────────────────┘
++-------------------------------------------------------------------------+
+|                         T0kenRent Architecture                          |
++-------------------------------------------------------------------------+
+|                                                                         |
+|  +--------------------------------------------------------------------+ |
+|  |                    Layer 3: Application Layer                      | |
+|  |  +--------------+  +--------------+  +--------------------------+  | |
+|  |  |   Next.js    |  |  HTTP 402    |  |    Wallet Interface      |  | |
+|  |  |   Frontend   |  |   Gateway    |  |    (Babbage SDK)         |  | |
+|  |  +------+-------+  +------+-------+  +------------+-------------+  | |
+|  |         |                 |                       |                | |
+|  |         +-----------------+------------------------                | |
+|  |                           |                                        | |
+|  |  +------------------------v--------------------------------------+ | |
+|  |  |                    API Routes (Next.js)                       | | |
+|  |  |  /api/assets  |  /api/payment  |  /api/escrow                 | | |
+|  |  +------------------------+--------------------------------------+ | |
+|  +---------------------------+----------------------------------------+ |
+|                              |                                          |
+|  +---------------------------v----------------------------------------+ |
+|  |                    Layer 2: Overlay Services                       | |
+|  |  +----------------------------+  +------------------------------+  | |
+|  |  |      Topic Manager         |  |     Lookup Service           |  | |
+|  |  |      (tm_tokenrent)        |  |     (ls_tokenrent)           |  | |
+|  |  |                            |  |                              |  | |
+|  |  |  - Protocol validation     |  |  - Asset token registry      |  | |
+|  |  |  - Transaction monitoring  |  |  - Escrow UTXO tracking      |  | |
+|  |  |  - State transition rules  |  |  - Payment verification      |  | |
+|  |  +----------------------------+  +------------------------------+  | |
+|  +---------------------------+----------------------------------------+ |
+|                              |                                          |
+|  +---------------------------v----------------------------------------+ |
+|  |                    Layer 1: BSV Protocol                           | |
+|  |  +----------------------+  +-------------------------------------+ | |
+|  |  |   BRC-76 Tokens      |  |      sCrypt Smart Contracts         | | |
+|  |  |   (Asset NFTs)       |  |      (RentalEscrow, PaymentChannel) | | |
+|  |  |                      |  |                                     | | |
+|  |  |  +----------------+  |  |  +-----------------------------+    | | |
+|  |  |  | PushDrop Data  |  |  |  |  2-of-2 Multisig Script    |    | | |
+|  |  |  | - Token ID     |  |  |  |  - Owner key               |    | | |
+|  |  |  | - Metadata     |  |  |  |  - Renter key              |    | | |
+|  |  |  | - Owner Key    |  |  |  |  - Timeout fallback        |    | | |
+|  |  |  +----------------+  |  |  +-----------------------------+    | | |
+|  |  +----------------------+  +-------------------------------------+ | |
+|  +--------------------------------------------------------------------+ |
+|                                                                         |
++-------------------------------------------------------------------------+
 ```
 
 ## Layer 1: BSV Protocol
@@ -217,26 +217,26 @@ src/
 ### API Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    API Gateway                               │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │   Assets    │  │  Payments   │  │      Escrow         │ │
-│  │   Service   │  │   Service   │  │      Service        │ │
-│  └──────┬──────┘  └──────┬──────┘  └──────────┬──────────┘ │
-│         │                │                     │            │
-│         └────────────────┼─────────────────────┘            │
-│                          │                                   │
-│  ┌───────────────────────▼───────────────────────────────┐ │
-│  │                 Service Layer                          │ │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌─────────────┐ │ │
-│  │  │  MongoDB     │  │   Overlay    │  │  Babbage    │ │ │
-│  │  │  (State)     │  │   Network    │  │    SDK      │ │ │
-│  │  └──────────────┘  └──────────────┘  └─────────────┘ │ │
-│  └───────────────────────────────────────────────────────┘ │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
++-------------------------------------------------------------+
+|                    API Gateway                              |
++-------------------------------------------------------------+
+|                                                             |
+|  +-------------+  +-------------+  +---------------------+  |
+|  |   Assets    |  |  Payments   |  |      Escrow         |  |
+|  |   Service   |  |   Service   |  |      Service        |  |
+|  +------+------+  +------+------+  +----------+----------+  |
+|         |                |                    |              |
+|         +----------------+--------------------+              |
+|                          |                                  |
+|  +-----------------------v-------------------------------+  |
+|  |                 Service Layer                         |  |
+|  |  +--------------+  +--------------+  +-------------+  |  |
+|  |  |  MongoDB     |  |   Overlay    |  |  Babbage    |  |  |
+|  |  |  (State)     |  |   Network    |  |    SDK      |  |  |
+|  |  +--------------+  +--------------+  +-------------+  |  |
+|  +-------------------------------------------------------+  |
+|                                                             |
++-------------------------------------------------------------+
 ```
 
 ## Data Flow
@@ -244,58 +244,58 @@ src/
 ### Asset Listing Flow
 
 ```
-User Input → CreateAssetModal → POST /api/assets/create
-                                        │
-                                        ▼
-                              ┌─────────────────────┐
-                              │  Create BRC-76 Token │
-                              │  via Babbage SDK    │
-                              └──────────┬──────────┘
-                                        │
-                              ┌─────────▼──────────┐
-                              │  Store in MongoDB   │
-                              │  (off-chain state)  │
-                              └──────────┬──────────┘
-                                        │
-                              ┌─────────▼──────────┐
-                              │  Broadcast to       │
-                              │  Overlay Network    │
-                              └──────────┬──────────┘
-                                        │
-                                        ▼
+User Input -> CreateAssetModal -> POST /api/assets/create
+                                        |
+                                        v
+                              +---------------------+
+                              |  Create BRC-76 Token |
+                              |  via Babbage SDK    |
+                              +----------+----------+
+                                        |
+                              +---------v----------+
+                              |  Store in MongoDB   |
+                              |  (off-chain state)  |
+                              +----------+----------+
+                                        |
+                              +---------v----------+
+                              |  Broadcast to       |
+                              |  Overlay Network    |
+                              +----------+----------+
+                                        |
+                                        v
                               Return tokenId to User
 ```
 
 ### Rental Flow
 
 ```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                           Rental Flow                                    │
-├─────────────────────────────────────────────────────────────────────────┤
-│                                                                          │
-│  1. Browse Marketplace                                                   │
-│     User → GET /api/assets/list → Display available assets              │
-│                                                                          │
-│  2. HTTP 402 Payment (Unlock Details)                                   │
-│     User → POST /api/payment/initiate → 402 Response                    │
-│     User → Create BSV micropayment → POST /api/payment/verify           │
-│     User ← Receive rental details (location, access code)               │
-│                                                                          │
-│  3. Create Escrow                                                        │
-│     User → POST /api/escrow/create → Generate multisig contract         │
-│     User → Fund escrow (BSV transaction)                                │
-│     User → POST /api/escrow/confirm → Rental becomes active             │
-│                                                                          │
-│  4. Rental Period                                                        │
-│     Asset status: "rented"                                              │
-│     Renter uses asset                                                   │
-│                                                                          │
-│  5. Return & Release                                                     │
-│     Owner → POST /api/escrow/release (sign)                             │
-│     Renter → POST /api/escrow/release (sign)                            │
-│     Both signed → Escrow released → Funds distributed                   │
-│                                                                          │
-└─────────────────────────────────────────────────────────────────────────┘
++-------------------------------------------------------------------------+
+|                           Rental Flow                                   |
++-------------------------------------------------------------------------+
+|                                                                         |
+|  1. Browse Marketplace                                                  |
+|     User -> GET /api/assets/list -> Display available assets            |
+|                                                                         |
+|  2. HTTP 402 Payment (Unlock Details)                                   |
+|     User -> POST /api/payment/initiate -> 402 Response                  |
+|     User -> Create BSV micropayment -> POST /api/payment/verify         |
+|     User <- Receive rental details (location, access code)              |
+|                                                                         |
+|  3. Create Escrow                                                       |
+|     User -> POST /api/escrow/create -> Generate multisig contract       |
+|     User -> Fund escrow (BSV transaction)                               |
+|     User -> POST /api/escrow/confirm -> Rental becomes active           |
+|                                                                         |
+|  4. Rental Period                                                       |
+|     Asset status: "rented"                                              |
+|     Renter uses asset                                                   |
+|                                                                         |
+|  5. Return & Release                                                    |
+|     Owner -> POST /api/escrow/release (sign)                            |
+|     Renter -> POST /api/escrow/release (sign)                           |
+|     Both signed -> Escrow released -> Funds distributed                 |
+|                                                                         |
++-------------------------------------------------------------------------+
 ```
 
 ## Database Schema
@@ -420,16 +420,16 @@ User Input → CreateAssetModal → POST /api/assets/create
 ### Authentication
 
 ```
-┌──────────────┐     ┌───────────────┐     ┌────────────────┐
-│   User       │────▶│  BSV Wallet   │────▶│  Babbage SDK   │
-│              │     │  (Signing)    │     │  (Auth)        │
-└──────────────┘     └───────────────┘     └────────────────┘
-                                                  │
-                                                  ▼
-                                          ┌────────────────┐
-                                          │  JWT Token     │
-                                          │  Generation    │
-                                          └────────────────┘
++--------------+     +---------------+     +----------------+
+|   User       |---->|  BSV Wallet   |---->|  Babbage SDK   |
+|              |     |  (Signing)    |     |  (Auth)        |
++--------------+     +---------------+     +----------------+
+                                                  |
+                                                  v
+                                          +----------------+
+                                          |  JWT Token     |
+                                          |  Generation    |
+                                          +----------------+
 ```
 
 ### Transaction Security
@@ -458,21 +458,21 @@ User Input → CreateAssetModal → POST /api/assets/create
 
 ```
                     Load Balancer
-                         │
-         ┌───────────────┼───────────────┐
-         │               │               │
-    ┌────▼────┐    ┌────▼────┐    ┌────▼────┐
-    │ App     │    │ App     │    │ App     │
-    │ Server  │    │ Server  │    │ Server  │
-    │   #1    │    │   #2    │    │   #3    │
-    └────┬────┘    └────┬────┘    └────┬────┘
-         │               │               │
-         └───────────────┼───────────────┘
-                         │
-                    ┌────▼────┐
-                    │ MongoDB │
-                    │ Cluster │
-                    └─────────┘
+                         |
+         +---------------+---------------+
+         |               |               |
+    +----v----+    +----v----+    +----v----+
+    | App     |    | App     |    | App     |
+    | Server  |    | Server  |    | Server  |
+    |   #1    |    |   #2    |    |   #3    |
+    +----+----+    +----+----+    +----+----+
+         |               |               |
+         +---------------+---------------+
+                         |
+                    +----v----+
+                    | MongoDB |
+                    | Cluster |
+                    +---------+
 ```
 
 ## Deployment Architecture
@@ -561,17 +561,17 @@ export class RentalEscrow extends SmartContract {
 **State Machine:**
 ```
          fund()
- CREATED ──────▶ FUNDED
-                   │
-         activate()│
-                   ▼
+ CREATED -------> FUNDED
+                   |
+         activate()|
+                   v
                  ACTIVE
-                   │
-    ┌──────────────┼──────────────┐
-    │              │              │
+                   |
+    +--------------+--------------+
+    |              |              |
 release()      timeout()      refund()
-    │              │              │
-    ▼              ▼              ▼
+    |              |              |
+    v              v              v
  RELEASED      DISPUTED       REFUNDED
 ```
 
@@ -626,13 +626,13 @@ export class PaymentChannel extends SmartContract {
 **Use Case: Hourly Rentals**
 ```
 Renter funds channel with 10 hours capacity
-  │
-  ├── Hour 1: Update balance (renter: 9h, owner: 1h)
-  ├── Hour 2: Update balance (renter: 8h, owner: 2h)
-  ├── ... (off-chain, no fees)
-  ├── Hour 5: Rental ends early
-  │
-  └── Cooperative close: owner gets 5h, renter gets 5h refund
+  |
+  +-- Hour 1: Update balance (renter: 9h, owner: 1h)
+  +-- Hour 2: Update balance (renter: 8h, owner: 2h)
+  +-- ... (off-chain, no fees)
+  +-- Hour 5: Rental ends early
+  |
+  +-- Cooperative close: owner gets 5h, renter gets 5h refund
 ```
 
 ## Custom Overlay Network

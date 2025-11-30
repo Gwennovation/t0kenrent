@@ -18,10 +18,10 @@ This guide explains how to connect your BSV wallet to T0kenRent for testing and 
 ## Overview
 
 T0kenRent uses the **Babbage SDK** (BRC-100 WalletInterface) for:
-- 🔐 User authentication via wallet signatures
-- 💰 MNEE token payments for rental access
-- 📝 On-chain data storage and transactions
-- 🎫 Identity certificates and attestations
+- User authentication via wallet signatures
+- MNEE token payments for rental access
+- On-chain data storage and transactions
+- Identity certificates and attestations
 
 ### What is BRC-100?
 
@@ -35,26 +35,26 @@ BRC-100 is a standard interface for BSV wallets that enables:
 
 ## Compatible Wallets
 
-### ✅ Natively Compatible
+### Natively Compatible
 
 | Wallet | Platform | Status |
 |--------|----------|--------|
-| **MetaNet Client** | Windows, macOS, Linux | ✅ Full Support |
-| **Metanet Mobile** | iOS, Android | ✅ Full Support |
+| **MetaNet Client** | Windows, macOS, Linux | Full Support |
+| **Metanet Mobile** | iOS, Android | Full Support |
 
 **Download:** [projectbabbage.com](https://projectbabbage.com)
 
-### ❌ Not Directly Compatible
+### Not Directly Compatible
 
 These wallets don't implement BRC-100 natively:
 
 | Wallet | Workaround |
 |--------|------------|
 | ElectrumSV | Use BabbageBridge (see below) |
-| HandCash | Export keys → BabbageBridge |
-| Centbee | Export keys → BabbageBridge |
-| Simply Cash | Export keys → BabbageBridge |
-| Exodus BSV | Export keys → BabbageBridge |
+| HandCash | Export keys to BabbageBridge |
+| Centbee | Export keys to BabbageBridge |
+| Simply Cash | Export keys to BabbageBridge |
+| Exodus BSV | Export keys to BabbageBridge |
 | RelayX | Not supported |
 
 ---
@@ -67,13 +67,13 @@ If you have an existing BSV wallet (ElectrumSV, etc.), you can bridge it to work
 
 #### From ElectrumSV:
 1. Open ElectrumSV
-2. Go to **Wallet** → **Private Keys** → **Export**
+2. Go to **Wallet** > **Private Keys** > **Export**
 3. Enter your password
 4. Copy the WIF private key (starts with `K`, `L`, or `5`)
 
 #### From Exodus:
 1. Open Exodus Desktop
-2. Go to **Settings** → **Security** → **View Private Keys**
+2. Go to **Settings** > **Security** > **View Private Keys**
 3. Select Bitcoin SV
 4. Copy the WIF private key
 
@@ -128,10 +128,10 @@ BabbageBridge is a compatibility layer that implements the Babbage SDK interface
 ### How It Works
 
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   Your BSV      │────▶│  BabbageBridge  │────▶│    T0kenRent    │
-│ Desktop Wallet  │     │  (BRC-100 API)  │     │   Application   │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
++-----------------+     +-----------------+     +-----------------+
+|   Your BSV      |---->|  BabbageBridge  |---->|    T0kenRent    |
+| Desktop Wallet  |     |  (BRC-100 API)  |     |   Application   |
++-----------------+     +-----------------+     +-----------------+
      Private Key         Implements SDK         Calls getPublicKey,
      (WIF/Hex)          Interface              createAction, etc.
 ```
@@ -231,7 +231,7 @@ const attestation = {
 Spend a small amount from your old address to prove control:
 
 ```
-Old Address → Small TX → New Identity Address
+Old Address -> Small TX -> New Identity Address
 ```
 
 ### Trust Certificates (BRC-53)
@@ -304,7 +304,7 @@ cat Config/babbage-identity.json
 
 1. Verify your private key is correct
 2. Check the console for detailed errors
-3. Try regenerating identity: `node scripts/wallet-bridge.js` → Option 3
+3. Try regenerating identity: `node scripts/wallet-bridge.js` > Option 3
 
 ### "Transaction failed"
 
@@ -334,7 +334,7 @@ node scripts/wallet-bridge.js --import-hex YOUR_HEX_PRIVATE_KEY
 
 ## Security Best Practices
 
-⚠️ **CRITICAL**: Never share your private key!
+**CRITICAL**: Never share your private key!
 
 1. **Development Only**: The bridge exposes private keys - never use in production
 2. **Test Keys**: Use testnet keys or generate new keys for testing
@@ -357,9 +357,9 @@ node scripts/wallet-bridge.js --import-hex YOUR_HEX_PRIVATE_KEY
 
 | Task | Command |
 |------|---------|
-| Import WIF key | `node scripts/wallet-bridge.js` → Option 1 |
+| Import WIF key | `node scripts/wallet-bridge.js` > Option 1 |
 | View identity | `node scripts/wallet-bridge.js --view` |
-| Export for MetaNet | `node scripts/wallet-bridge.js` → Option 5 |
+| Export for MetaNet | `node scripts/wallet-bridge.js` > Option 5 |
 | Enable mock mode | `MOCK_WALLET=true npm run dev` |
 | Test API | `curl http://localhost:3000/api/bridge/identity` |
 
