@@ -2,7 +2,7 @@
 {
   "name": "t0kenrent",
   "version": "1.0.0",
-  "description": "Blockchain-based supply chain with MNEE token rent payments",
+  "description": "T0kenRent - Decentralized Rental Tokenization and Escrow Platform built on BSV blockchain with HTTP 402 payment gating",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

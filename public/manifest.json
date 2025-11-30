@@ -1,51 +1,88 @@
 {
   "babbage": {
-    "name": "Dynamic Supply Chain with Token Rent",
+    "name": "T0kenRent",
     "version": "1.0.0",
-    "description": "Blockchain-based supply chain management with MNEE token rent payments",
-    "author": "Open Run Asia",
+    "description": "Decentralized Rental Tokenization and Escrow Platform - Tokenize and rent everyday assets on BSV blockchain with HTTP 402 payment gating",
+    "author": "ChibiTech",
     "icon": "/logo.png",
     "groupPermissions": {
       "protocolPermissions": [
         {
           "protocolID": [2, "Pay MNEE"],
           "counterparty": "self",
-          "description": "Create receive addresses for MNEE token rent payments"
+          "description": "Create receive addresses for rental payments and deposits"
+        },
+        {
+          "protocolID": [2, "HTTP 402"],
+          "counterparty": "anyone",
+          "description": "Process HTTP 402 micropayments to unlock rental details"
         },
         {
           "protocolID": [1, "messagebox"],
           "counterparty": "self",
-          "description": "Decrypt inbound payment notifications"
+          "description": "Decrypt inbound rental notifications and escrow updates"
         },
         {
           "protocolID": [1, "messagebox advertisement"],
           "counterparty": "anyone",
-          "description": "Advertise payment receiving capability"
+          "description": "Advertise rental asset availability"
         },
         {
-          "protocolID": ["tm_supplychain"],
+          "protocolID": ["tm_tokenrent"],
           "counterparty": "anyone",
-          "description": "Record supply chain actions on overlay network"
+          "description": "Record rental transactions on T0kenRent overlay network"
+        },
+        {
+          "protocolID": ["BRC-76"],
+          "counterparty": "anyone",
+          "description": "Mint and transfer BRC-76 compliant rental asset tokens"
         }
       ],
       "basketAccess": [
         {
           "basket": "MNEE tokens",
-          "description": "For holding and spending MNEE stablecoin tokens for rent payments"
+          "description": "For rental payments and security deposits"
         },
         {
-          "basket": "Supply Chain Actions",
-          "description": "For storing supply chain stage transactions"
+          "basket": "Rental Asset Tokens",
+          "description": "For BRC-76 tokens representing rentable assets"
+        },
+        {
+          "basket": "HTTP 402 Payments",
+          "description": "For micropayments to unlock rental details"
+        },
+        {
+          "basket": "Rental Escrows",
+          "description": "For security deposit escrow transactions"
         }
       ],
       "certificateAccess": [
         {
-          "type": "...",
-          "fields": ["Name", "Email"],
+          "type": "identity",
+          "fields": ["Name", "Email", "Phone"],
           "verifierPublicKey": "...",
-          "description": "For identity verification of supply chain participants"
+          "description": "For identity verification of rental participants"
         }
       ]
     }
-  }
+  },
+  "name": "T0kenRent",
+  "short_name": "T0kenRent",
+  "description": "Decentralized Rental Tokenization Platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "/logo-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/logo-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
 }
