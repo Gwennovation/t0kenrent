@@ -1,4 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import connectDB, { isMockMode } from '@/lib/mongodb'
+import { Rental } from '@/models'
 import { storage } from '@/lib/storage'
 
 export default async function handler(
@@ -16,10 +18,32 @@ export default async function handler(
       return res.status(400).json({ error: 'User key is required' })
     }
 
-    // Get rentals based on role
-    const rentals = role === 'owner' 
-      ? storage.getRentalsByOwner(userKey as string)
-      : storage.getRentalsByRenter(userKey as string)
+    // Connect to MongoDB
+    await connectDB()
+
+    let rentals: any[] = []
+
+    if (isMockMode()) {
+      // Use in-memory storage for demo
+      rentals = role === 'owner' 
+        ? storage.getRentalsByOwner(userKey as string)
+        : storage.getRentalsByRenter(userKey as string)
+    } else {
+      // Use MongoDB
+      const query = role === 'owner' 
+        ? { ownerKey: userKey }
+        : { renterKey: userKey }
+      
+      rentals = await Rental.find(query)
+        .sort({ createdAt: -1 })
+        .lean()
+      
+      // Transform MongoDB _id to id
+      rentals = rentals.map((rental: any) => ({
+        ...rental,
+        id: rental._id?.toString() || rental.id
+      }))
+    }
 
     return res.status(200).json({
       rentals,

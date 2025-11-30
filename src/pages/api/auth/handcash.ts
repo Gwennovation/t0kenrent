@@ -3,11 +3,13 @@
  * POST /api/auth/handcash
  * 
  * Handles HandCash Connect callback and exchanges auth token for access token.
- * Creates or updates user record in database.
+ * Creates or updates user record in MongoDB database.
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { exchangeAuthCode, getHandCashProfile, getBalance } from '@/lib/handcash'
+import connectDB, { isMockMode } from '@/lib/mongodb'
+import { User } from '@/models'
 import { storage } from '@/lib/storage'
 
 interface AuthResponse {
@@ -46,19 +48,34 @@ export default async function handler(
     const balanceInfo = await getBalance(accessToken)
     const balance = balanceInfo.spendableSatoshiBalance / 100000000 // Convert to BSV
 
-    // Create or update user in storage
-    let user = storage.getUserByKey(profile.publicKey)
-    if (!user) {
-      user = storage.createUser(profile.publicKey, {
-        displayName: profile.displayName || profile.handle,
-        email: undefined, // HandCash doesn't share email by default
-        avatar: profile.avatarUrl
-      })
+    // Connect to MongoDB
+    await connectDB()
+    
+    // Check if using mock mode or real MongoDB
+    if (isMockMode()) {
+      // Fallback to in-memory storage for demo
+      console.log('📦 Using in-memory storage (MongoDB not connected)')
+      let user = storage.getUserByKey(profile.publicKey)
+      if (!user) {
+        user = storage.createUser(profile.publicKey, {
+          displayName: profile.displayName || profile.handle,
+          email: undefined,
+          avatar: profile.avatarUrl
+        })
+      } else {
+        storage.updateUser(profile.publicKey, {
+          displayName: profile.displayName || profile.handle,
+          avatar: profile.avatarUrl
+        })
+      }
     } else {
-      // Update existing user
-      storage.updateUser(profile.publicKey, {
-        displayName: profile.displayName || profile.handle,
-        avatar: profile.avatarUrl
+      // Use MongoDB
+      console.log('✅ Using MongoDB for user storage')
+      await User.findOrCreate(profile.publicKey, 'handcash', {
+        handle: profile.handle,
+        displayName: profile.displayName,
+        avatarUrl: profile.avatarUrl,
+        paymail: profile.paymail
       })
     }
 

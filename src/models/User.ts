@@ -1,6 +1,51 @@
-import mongoose from 'mongoose'
+import mongoose, { Document, Model, Schema } from 'mongoose'
 
-const UserSchema = new mongoose.Schema({
+// Interface for User document
+export interface IUser extends Document {
+  publicKey: string
+  walletType: 'handcash' | 'metanet' | 'paymail' | 'demo'
+  handle?: string
+  displayName?: string
+  email?: string
+  avatarUrl?: string
+  paymail?: string
+  bio?: string
+  location?: {
+    city?: string
+    state?: string
+    country?: string
+  }
+  totalListings: number
+  totalRentals: number
+  totalEarnings: number
+  totalSpent: number
+  rating: number
+  reviewCount: number
+  lastLoginAt: Date
+  createdAt: Date
+  updatedAt: Date
+  // Instance methods
+  incrementListings(): Promise<IUser>
+  recordRental(amount: number): Promise<IUser>
+  recordEarning(amount: number): Promise<IUser>
+}
+
+// Interface for User model with statics
+interface IUserModel extends Model<IUser> {
+  findOrCreate(
+    publicKey: string,
+    walletType: string,
+    profileData?: {
+      handle?: string
+      displayName?: string
+      email?: string
+      avatarUrl?: string
+      paymail?: string
+    }
+  ): Promise<IUser>
+}
+
+const UserSchema = new Schema<IUser>({
   // Unique identifier from wallet
   publicKey: {
     type: String,
@@ -121,7 +166,7 @@ UserSchema.statics.findOrCreate = async function(
     avatarUrl?: string
     paymail?: string
   }
-) {
+): Promise<IUser> {
   let user = await this.findOne({ publicKey })
   
   if (!user) {
@@ -148,5 +193,7 @@ UserSchema.statics.findOrCreate = async function(
   return user
 }
 
-export default mongoose.models.User || 
-  mongoose.model('User', UserSchema)
+const User = (mongoose.models.User as IUserModel) || 
+  mongoose.model<IUser, IUserModel>('User', UserSchema)
+
+export default User
