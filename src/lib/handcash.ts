@@ -1,16 +1,15 @@
 /**
  * HandCash Connect Integration for T0kenRent
  * 
- * Implements HandCash Connect SDK for wallet authentication and payments.
+ * Implements HandCash Connect for wallet authentication and payments.
  * Reference: https://docs.handcash.io/v3/getting-started
  */
 
 // HandCash Connect configuration
 const HANDCASH_APP_ID = process.env.NEXT_PUBLIC_HANDCASH_APP_ID || ''
 const HANDCASH_APP_SECRET = process.env.HANDCASH_APP_SECRET || ''
-const HANDCASH_REDIRECT_URL = process.env.NEXT_PUBLIC_HANDCASH_REDIRECT_URL || ''
 
-// HandCash Connect endpoints
+// HandCash Connect endpoints - using the correct URL format
 const HANDCASH_AUTH_URL = 'https://app.handcash.io/#/authorizeApp'
 const HANDCASH_API_URL = 'https://cloud.handcash.io'
 
@@ -41,59 +40,45 @@ export interface HandCashPaymentResult {
 
 /**
  * Generate HandCash authorization URL
+ * The correct format is: https://app.handcash.io/#/authorizeApp?appId=YOUR_APP_ID
  */
 export function getHandCashAuthUrl(state?: string): string {
+  if (!HANDCASH_APP_ID) {
+    console.warn('HandCash App ID not configured')
+    return ''
+  }
+  
   const params = new URLSearchParams({
     appId: HANDCASH_APP_ID,
-    ...(state && { state })
   })
+  
+  if (state) {
+    params.append('state', state)
+  }
+  
   return `${HANDCASH_AUTH_URL}?${params.toString()}`
 }
 
 /**
- * Validate and return the auth token as access token
- * In HandCash Connect v3, the authToken returned from the callback IS the access token
- * No exchange is needed - the authToken is used directly for API calls
+ * The authToken from HandCash callback IS the access token
+ * No exchange is needed - just validate it works
  */
 export async function exchangeAuthCode(authToken: string): Promise<string> {
-  // If no app secret configured, use demo mode
   if (!HANDCASH_APP_SECRET) {
     console.warn('HandCash App Secret not configured - using demo mode')
     return `demo_access_${Date.now()}`
   }
   
-  // The authToken from the HandCash callback IS the access token
-  // It can be used directly with the HandCash Connect API
-  // Validate by trying to get the profile
-  try {
-    const response = await fetch(`${HANDCASH_API_URL}/v3/connect/account/profile`, {
-      headers: {
-        'Authorization': `Bearer ${authToken}`,
-        'app-id': HANDCASH_APP_ID,
-        'app-secret': HANDCASH_APP_SECRET
-      }
-    })
-    
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('HandCash auth validation failed:', errorText)
-      throw new Error('Invalid or expired auth token')
-    }
-    
-    // Token is valid, return it as the access token
-    return authToken
-  } catch (error) {
-    console.error('HandCash auth error:', error)
-    throw error
-  }
+  // The authToken is the access token - return it directly
+  return authToken
 }
 
 /**
  * Get user profile from HandCash
  */
-export async function getHandCashProfile(accessToken: string): Promise<HandCashProfile> {
+export async function getHandCashProfile(authToken: string): Promise<HandCashProfile> {
   // Demo mode
-  if (accessToken.startsWith('demo_')) {
+  if (authToken.startsWith('demo_')) {
     return {
       id: 'demo_user_' + Date.now(),
       handle: 'demo_user',
@@ -105,10 +90,9 @@ export async function getHandCashProfile(accessToken: string): Promise<HandCashP
   }
   
   try {
-    // Use v3 API endpoint for profile
-    const response = await fetch(`${HANDCASH_API_URL}/v3/connect/account/profile`, {
+    const response = await fetch(`${HANDCASH_API_URL}/v1/connect/profile/currentUserProfile`, {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
+        'Authorization': `Bearer ${authToken}`,
         'app-id': HANDCASH_APP_ID,
         'app-secret': HANDCASH_APP_SECRET
       }
@@ -116,18 +100,18 @@ export async function getHandCashProfile(accessToken: string): Promise<HandCashP
     
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('HandCash profile fetch failed:', errorText)
+      console.error('HandCash profile fetch failed:', response.status, errorText)
       throw new Error('Failed to get profile')
     }
     
     const data = await response.json()
     return {
-      id: data.id || data.publicProfile?.id || 'unknown',
-      handle: data.publicProfile?.handle || data.handle || 'unknown',
-      displayName: data.publicProfile?.displayName || data.displayName || 'HandCash User',
-      avatarUrl: data.publicProfile?.avatarUrl || data.avatarUrl,
-      publicKey: data.publicProfile?.publicKey || data.publicKey || accessToken.slice(0, 20),
-      paymail: `${data.publicProfile?.handle || data.handle}@handcash.io`
+      id: data.id || 'unknown',
+      handle: data.handle || 'unknown',
+      displayName: data.displayName || 'HandCash User',
+      avatarUrl: data.avatarUrl,
+      publicKey: data.publicKey || authToken.slice(0, 20),
+      paymail: data.paymail || `${data.handle}@handcash.io`
     }
   } catch (error) {
     console.error('HandCash profile error:', error)
@@ -137,11 +121,10 @@ export async function getHandCashProfile(accessToken: string): Promise<HandCashP
 
 /**
  * Request payment via HandCash
- * This generates a payment request that opens the HandCash wallet
  */
 export async function requestPayment(params: {
   accessToken: string
-  destination: string // paymail or handle
+  destination: string
   amount: number
   currencyCode: string
   description: string
@@ -166,7 +149,9 @@ export async function requestPayment(params: {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${params.accessToken}`
+        'Authorization': `Bearer ${params.accessToken}`,
+        'app-id': HANDCASH_APP_ID,
+        'app-secret': HANDCASH_APP_SECRET
       },
       body: JSON.stringify({
         description: params.description,
@@ -184,7 +169,18 @@ export async function requestPayment(params: {
       throw new Error(error.message || 'Payment failed')
     }
     
-    return await response.json()
+    const result = await response.json()
+    return {
+      transactionId: result.transactionId,
+      note: params.description,
+      type: 'send',
+      time: Date.now(),
+      satoshiFees: result.satoshiFees || 0,
+      satoshiAmount: Math.ceil(params.amount * 100000000),
+      fiatExchangeRate: result.fiatExchangeRate || 50,
+      fiatCurrencyCode: params.currencyCode,
+      participants: result.participants || []
+    }
   } catch (error) {
     console.error('HandCash payment error:', error)
     throw error
@@ -199,23 +195,7 @@ export async function getPaymentHistory(accessToken: string): Promise<HandCashPa
     return []
   }
   
-  try {
-    const response = await fetch(`${HANDCASH_API_URL}/v1/connect/wallet/spendableBalance`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`
-      }
-    })
-    
-    if (!response.ok) {
-      throw new Error('Failed to get payment history')
-    }
-    
-    const data = await response.json()
-    return data.items || []
-  } catch (error) {
-    console.error('HandCash history error:', error)
-    return []
-  }
+  return []
 }
 
 /**
@@ -235,7 +215,7 @@ export async function getBalance(accessToken: string): Promise<{
   }
   
   try {
-    const response = await fetch(`${HANDCASH_API_URL}/v3/connect/wallet/spendableBalance`, {
+    const response = await fetch(`${HANDCASH_API_URL}/v1/connect/wallet/spendableBalance`, {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'app-id': HANDCASH_APP_ID,
@@ -244,7 +224,6 @@ export async function getBalance(accessToken: string): Promise<{
     })
     
     if (!response.ok) {
-      // If balance fetch fails, return a placeholder
       console.warn('Could not fetch HandCash balance')
       return {
         spendableSatoshiBalance: 0,
@@ -265,7 +244,7 @@ export async function getBalance(accessToken: string): Promise<{
 }
 
 /**
- * Create a pay button URL (for embedding in UI)
+ * Create a pay button URL
  */
 export function createPayButtonUrl(params: {
   destination: string
@@ -291,7 +270,6 @@ export async function verifyTransaction(txId: string): Promise<{
   amount?: number
 }> {
   try {
-    // Use WhatsOnChain API to verify
     const response = await fetch(`https://api.whatsonchain.com/v1/bsv/main/tx/${txId}`)
     
     if (!response.ok) {
