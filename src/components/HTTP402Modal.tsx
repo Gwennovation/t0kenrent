@@ -38,14 +38,15 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
     setError('')
 
     try {
-      const { createAction } = await import('babbage-sdk')
-
+      // Initialize payment request
       const initResponse = await fetch('/api/payment/initiate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           resourceId: asset.tokenId,
-          resourceType: 'rental_details'
+          resourceType: 'rental_details',
+          userKey,
+          walletType
         })
       })
 
@@ -53,28 +54,71 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
         throw new Error('Unexpected response from payment initiation')
       }
 
-      const paymentDetails = await initResponse.json()
+      const paymentInfo = await initResponse.json()
+      let txid = ''
 
-      const result = await createAction({
-        description: `HTTP 402 payment to unlock ${asset.name} rental details`,
-        outputs: [
-          {
-            satoshis: Math.ceil(asset.unlockFee * 100000000),
-            script: paymentDetails.payment.script || await createPaymentScript(asset.ownerKey),
-            basket: 'HTTP 402 Payments'
-          }
-        ]
-      })
+      // Handle payment based on wallet type
+      if (walletType === 'handcash') {
+        // HandCash payment via API
+        const handcashToken = sessionStorage.getItem('handcash_token')
+        if (!handcashToken) {
+          throw new Error('HandCash session expired. Please reconnect your wallet.')
+        }
 
-      setTxid(result.txid)
+        const payResponse = await fetch('/api/payment/handcash', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            accessToken: handcashToken,
+            amount: asset.unlockFee,
+            destination: asset.ownerKey,
+            description: `Unlock ${asset.name} rental details`,
+            paymentReference: paymentInfo.payment.reference
+          })
+        })
+
+        if (!payResponse.ok) {
+          const err = await payResponse.json()
+          throw new Error(err.error || 'HandCash payment failed')
+        }
+
+        const payResult = await payResponse.json()
+        txid = payResult.transactionId
+
+      } else if (walletType === 'metanet') {
+        // MetaNet/Babbage payment via SDK
+        const { createAction } = await import('babbage-sdk')
+
+        const result = await createAction({
+          description: `HTTP 402 payment to unlock ${asset.name} rental details`,
+          outputs: [
+            {
+              satoshis: Math.ceil(asset.unlockFee * 100000000),
+              script: paymentInfo.payment.script || await createPaymentScript(asset.ownerKey),
+              basket: 'HTTP 402 Payments'
+            }
+          ]
+        })
+        txid = result.txid
+
+      } else if (walletType === 'paymail') {
+        // Paymail - show QR code or redirect to wallet
+        // For now, use the generic payment flow
+        throw new Error('Please scan the QR code with your BSV wallet to complete payment')
+      } else {
+        throw new Error('Unknown wallet type')
+      }
+
+      setTxid(txid)
       setStep('verifying')
 
+      // Verify payment
       const verifyResponse = await fetch('/api/payment/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          paymentReference: paymentDetails.payment.reference,
-          transactionId: result.txid,
+          paymentReference: paymentInfo.payment.reference,
+          transactionId: txid,
           amount: asset.unlockFee,
           resourceId: asset.tokenId
         })

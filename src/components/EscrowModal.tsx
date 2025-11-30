@@ -72,8 +72,7 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
     setError('')
 
     try {
-      const { createAction } = await import('babbage-sdk')
-
+      // Create escrow contract
       const response = await fetch('/api/escrow/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -86,7 +85,8 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
             endDate: new Date(endDate).toISOString()
           },
           depositAmount: depositAmount,
-          rentalFee: rentalFee
+          rentalFee: rentalFee,
+          walletType
         })
       })
 
@@ -100,23 +100,64 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
       setEscrowAddress(escrowData.escrowAddress)
       setStep('funding')
 
-      const fundResult = await createAction({
-        description: `Escrow deposit for ${asset.name} rental`,
-        outputs: [
-          {
-            satoshis: Math.ceil(totalAmount * 100),
-            script: escrowData.escrowScript,
-            basket: 'Rental Escrows'
-          }
-        ]
-      })
+      let fundingTxid = ''
 
+      // Fund escrow based on wallet type
+      if (walletType === 'handcash') {
+        // HandCash payment
+        const handcashToken = sessionStorage.getItem('handcash_token')
+        if (!handcashToken) {
+          throw new Error('HandCash session expired. Please reconnect your wallet.')
+        }
+
+        const payResponse = await fetch('/api/payment/handcash', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            accessToken: handcashToken,
+            amount: totalAmount / 100, // Convert cents to BSV
+            destination: escrowData.escrowAddress,
+            description: `Escrow deposit for ${asset.name} rental`
+          })
+        })
+
+        if (!payResponse.ok) {
+          const err = await payResponse.json()
+          throw new Error(err.error || 'HandCash payment failed')
+        }
+
+        const payResult = await payResponse.json()
+        fundingTxid = payResult.transactionId
+
+      } else if (walletType === 'metanet') {
+        // MetaNet/Babbage SDK
+        const { createAction } = await import('babbage-sdk')
+
+        const fundResult = await createAction({
+          description: `Escrow deposit for ${asset.name} rental`,
+          outputs: [
+            {
+              satoshis: Math.ceil(totalAmount * 100),
+              script: escrowData.escrowScript,
+              basket: 'Rental Escrows'
+            }
+          ]
+        })
+        fundingTxid = fundResult.txid
+
+      } else if (walletType === 'paymail') {
+        throw new Error('Please scan the QR code with your BSV wallet to fund the escrow')
+      } else {
+        throw new Error('Unknown wallet type')
+      }
+
+      // Confirm escrow funding
       const confirmResponse = await fetch('/api/escrow/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           escrowId: escrowData.escrowId,
-          fundingTxid: fundResult.txid
+          fundingTxid
         })
       })
 
