@@ -1,7 +1,15 @@
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { getPublicKey, waitForAuthentication, isAuthenticated } from 'babbage-sdk'
 import { getErrorMessage } from '@/lib/error-utils'
 import { getHandCashAuthUrl } from '@/lib/handcash'
+
+// Wallet logo paths
+const WALLET_LOGOS = {
+  handcash: '/wallets/handcash.svg',
+  metanet: '/wallets/metanet.svg',
+  relysia: '/wallets/relysia.svg'
+}
 
 interface WalletSelectorProps {
   onAuthenticated: (publicKey: string, handle: string, walletType: string, balance?: number) => void
@@ -187,60 +195,61 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
           type="button"
           onClick={connectHandCash}
           disabled={loading}
-          className={`p-2.5 rounded-xl transition-all duration-200 ${
+          className={`p-2 rounded-xl transition-all duration-200 ${
             loading && selectedWallet === 'handcash'
-              ? 'bg-emerald-500 text-white'
-              : 'bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 hover:border-emerald-500/50'
+              ? 'bg-emerald-500/20 ring-2 ring-emerald-500'
+              : 'bg-white/80 dark:bg-surface-800/80 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 border border-surface-200 dark:border-surface-700 hover:border-emerald-400'
           }`}
           title="Connect HandCash"
         >
           {loading && selectedWallet === 'handcash' ? (
-            <svg className="w-5 h-5 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg className="w-7 h-7 text-emerald-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
           ) : (
-            <svg className="w-5 h-5 text-emerald-500" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-            </svg>
+            <Image src={WALLET_LOGOS.handcash} alt="HandCash" width={28} height={28} className="rounded-lg" />
           )}
         </button>
         <button
           type="button"
           onClick={connectMetaNet}
           disabled={loading}
-          className={`p-2.5 rounded-xl transition-all duration-200 ${
+          className={`p-2 rounded-xl transition-all duration-200 ${
             loading && selectedWallet === 'metanet'
-              ? 'bg-blue-500 text-white'
-              : 'bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 hover:border-blue-500/50'
+              ? 'bg-blue-500/20 ring-2 ring-blue-500'
+              : 'bg-white/80 dark:bg-surface-800/80 hover:bg-blue-50 dark:hover:bg-blue-900/30 border border-surface-200 dark:border-surface-700 hover:border-blue-400'
           }`}
           title="Connect MetaNet"
         >
           {loading && selectedWallet === 'metanet' ? (
-            <svg className="w-5 h-5 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg className="w-7 h-7 text-blue-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
             </svg>
           ) : (
-            <svg className="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-            </svg>
+            <Image src={WALLET_LOGOS.metanet} alt="MetaNet" width={28} height={28} className="rounded-lg" />
           )}
         </button>
         <button
           type="button"
           onClick={connectPaymail}
           disabled={loading}
-          className={`p-2.5 rounded-xl transition-all duration-200 ${
+          className={`p-2 rounded-xl transition-all duration-200 ${
             loading && selectedWallet === 'paymail'
-              ? 'bg-purple-500 text-white'
-              : 'bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 hover:border-purple-500/50'
+              ? 'bg-purple-500/20 ring-2 ring-purple-500'
+              : 'bg-white/80 dark:bg-surface-800/80 hover:bg-purple-50 dark:hover:bg-purple-900/30 border border-surface-200 dark:border-surface-700 hover:border-purple-400'
           }`}
-          title="Use Paymail"
+          title="Use Relysia/Paymail"
         >
-          <svg className="w-5 h-5 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-          </svg>
+          {loading && selectedWallet === 'paymail' ? (
+            <svg className="w-7 h-7 text-purple-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+          ) : (
+            <Image src={WALLET_LOGOS.relysia} alt="Relysia" width={28} height={28} className="rounded-lg" />
+          )}
         </button>
       </div>
     )
@@ -262,22 +271,18 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
               : 'border-surface-200 dark:border-surface-700 hover:border-emerald-400 dark:hover:border-emerald-600 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10'
           }`}
         >
-          <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all overflow-hidden ${
             selectedWallet === 'handcash' && loading
-              ? 'bg-emerald-500 shadow-lg shadow-emerald-500/30'
-              : 'bg-emerald-100 dark:bg-emerald-900/30 group-hover:bg-emerald-500 group-hover:shadow-lg group-hover:shadow-emerald-500/30'
+              ? 'bg-emerald-500/20 shadow-lg shadow-emerald-500/30 ring-2 ring-emerald-500'
+              : 'bg-white dark:bg-surface-800 group-hover:shadow-lg group-hover:shadow-emerald-500/30'
           }`}>
             {loading && selectedWallet === 'handcash' ? (
-              <svg className="w-6 h-6 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-emerald-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             ) : (
-              <svg className={`w-7 h-7 transition-colors ${
-                selectedWallet === 'handcash' && loading ? 'text-white' : 'text-emerald-600 dark:text-emerald-400 group-hover:text-white'
-              }`} viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-              </svg>
+              <Image src={WALLET_LOGOS.handcash} alt="HandCash" width={40} height={40} className="rounded-lg" />
             )}
           </div>
           <div className="flex-1 text-left">
@@ -317,22 +322,18 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
               : 'border-surface-200 dark:border-surface-700 hover:border-blue-400 dark:hover:border-blue-600 hover:bg-blue-50/50 dark:hover:bg-blue-900/10'
           }`}
         >
-          <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all overflow-hidden ${
             selectedWallet === 'metanet' && loading
-              ? 'bg-blue-500 shadow-lg shadow-blue-500/30'
-              : 'bg-blue-100 dark:bg-blue-900/30 group-hover:bg-blue-500 group-hover:shadow-lg group-hover:shadow-blue-500/30'
+              ? 'bg-blue-500/20 shadow-lg shadow-blue-500/30 ring-2 ring-blue-500'
+              : 'bg-white dark:bg-surface-800 group-hover:shadow-lg group-hover:shadow-blue-500/30'
           }`}>
             {loading && selectedWallet === 'metanet' ? (
-              <svg className="w-6 h-6 text-white animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg className="w-6 h-6 text-blue-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             ) : (
-              <svg className={`w-7 h-7 transition-colors ${
-                selectedWallet === 'metanet' && loading ? 'text-white' : 'text-blue-600 dark:text-blue-400 group-hover:text-white'
-              }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-              </svg>
+              <Image src={WALLET_LOGOS.metanet} alt="MetaNet" width={40} height={40} className="rounded-lg" />
             )}
           </div>
           <div className="flex-1 text-left">
@@ -367,16 +368,19 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
               : 'border-surface-200 dark:border-surface-700 hover:border-purple-400 dark:hover:border-purple-600 hover:bg-purple-50/50 dark:hover:bg-purple-900/10'
           }`}
         >
-          <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all ${
+          <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-all overflow-hidden ${
             selectedWallet === 'paymail'
-              ? 'bg-purple-500 shadow-lg shadow-purple-500/30'
-              : 'bg-purple-100 dark:bg-purple-900/30 group-hover:bg-purple-500 group-hover:shadow-lg group-hover:shadow-purple-500/30'
+              ? 'bg-purple-500/20 shadow-lg shadow-purple-500/30 ring-2 ring-purple-500'
+              : 'bg-white dark:bg-surface-800 group-hover:shadow-lg group-hover:shadow-purple-500/30'
           }`}>
-            <svg className={`w-7 h-7 transition-colors ${
-              selectedWallet === 'paymail' ? 'text-white' : 'text-purple-600 dark:text-purple-400 group-hover:text-white'
-            }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-            </svg>
+            {loading && selectedWallet === 'paymail' ? (
+              <svg className="w-6 h-6 text-purple-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            ) : (
+              <Image src={WALLET_LOGOS.relysia} alt="Relysia" width={40} height={40} className="rounded-lg" />
+            )}
           </div>
           <div className="flex-1 text-left">
             <span className={`font-semibold ${
@@ -384,7 +388,7 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
                 ? 'text-purple-700 dark:text-purple-300' 
                 : 'text-surface-900 dark:text-white group-hover:text-purple-700 dark:group-hover:text-purple-300'
             }`}>
-              Paymail / QR Code
+              Relysia / Paymail
             </span>
             <p className="text-sm text-surface-600 dark:text-surface-400">
               Any BSV wallet via paymail or QR
