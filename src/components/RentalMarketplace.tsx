@@ -49,9 +49,10 @@ interface Rental {
 interface RentalMarketplaceProps {
   userKey: string
   demoMode?: boolean
+  walletType?: 'handcash' | 'metanet' | 'paymail' | 'demo'
 }
 
-export default function RentalMarketplace({ userKey, demoMode = false }: RentalMarketplaceProps) {
+export default function RentalMarketplace({ userKey, demoMode = false, walletType = 'demo' }: RentalMarketplaceProps) {
   const [assets, setAssets] = useState<RentalAsset[]>([])
   const [myAssets, setMyAssets] = useState<RentalAsset[]>([])
   const [myRentals, setMyRentals] = useState<Rental[]>([])
@@ -336,6 +337,7 @@ export default function RentalMarketplace({ userKey, demoMode = false }: RentalM
                     asset={asset}
                     userKey={userKey}
                     demoMode={demoMode}
+                    walletType={walletType}
                     viewMode={viewMode}
                     onRent={handleRentalCreated}
                   />
@@ -411,6 +413,7 @@ export default function RentalMarketplace({ userKey, demoMode = false }: RentalM
                     userKey={userKey}
                     isOwner={true}
                     demoMode={demoMode}
+                    walletType={walletType}
                     viewMode={viewMode}
                     onRent={() => loadAssets()}
                   />

@@ -28,6 +28,7 @@ interface AssetCardProps {
   userKey: string
   isOwner?: boolean
   demoMode?: boolean
+  walletType?: 'handcash' | 'metanet' | 'paymail' | 'demo'
   viewMode?: 'grid' | 'list'
   onRent: (rental?: any) => void
 }
@@ -68,7 +69,7 @@ const categoryIcons: Record<string, JSX.Element> = {
   )
 }
 
-export default function AssetCard({ asset, userKey, isOwner = false, demoMode = false, viewMode = 'grid', onRent }: AssetCardProps) {
+export default function AssetCard({ asset, userKey, isOwner = false, demoMode = false, walletType = 'demo', viewMode = 'grid', onRent }: AssetCardProps) {
   const [showUnlockModal, setShowUnlockModal] = useState(false)
   const [showEscrowModal, setShowEscrowModal] = useState(false)
   const [unlocked, setUnlocked] = useState(false)
@@ -218,6 +219,7 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
             asset={asset}
             userKey={userKey}
             demoMode={demoMode}
+            walletType={walletType}
             onClose={() => setShowUnlockModal(false)}
             onSuccess={handleUnlockSuccess}
           />
@@ -229,6 +231,7 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
             userKey={userKey}
             rentalDetails={rentalDetails}
             demoMode={demoMode}
+            walletType={walletType}
             onClose={() => setShowEscrowModal(false)}
             onSuccess={() => {
               setShowEscrowModal(false)
@@ -405,6 +408,7 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
           asset={asset}
           userKey={userKey}
           demoMode={demoMode}
+          walletType={walletType}
           onClose={() => setShowUnlockModal(false)}
           onSuccess={handleUnlockSuccess}
         />
@@ -417,6 +421,7 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
           userKey={userKey}
           rentalDetails={rentalDetails}
           demoMode={demoMode}
+          walletType={walletType}
           onClose={() => setShowEscrowModal(false)}
           onSuccess={(rental) => {
             setShowEscrowModal(false)

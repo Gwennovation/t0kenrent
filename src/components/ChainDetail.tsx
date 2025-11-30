@@ -35,12 +35,12 @@ interface ChainDetailProps {
   chain: Chain
   userKey: string
   demoMode?: boolean
-  walletType?: 'handcash' | 'metanet' | 'generic'
+  walletType?: 'handcash' | 'metanet' | 'paymail' | 'demo'
   onBack: () => void
   onUpdate: (chain: Chain) => void
 }
 
-export default function ChainDetail({ chain, userKey, demoMode = false, walletType = 'generic', onBack, onUpdate }: ChainDetailProps) {
+export default function ChainDetail({ chain, userKey, demoMode = false, walletType = 'demo', onBack, onUpdate }: ChainDetailProps) {
   const [showAddStage, setShowAddStage] = useState(false)
   const [payingStage, setPayingStage] = useState<Stage | null>(null)
   const [loading, setLoading] = useState(false)

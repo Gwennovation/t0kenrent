@@ -10,7 +10,7 @@ interface Stage {
 interface PaymentModalProps {
   stage: Stage
   chainId: string
-  walletType: 'handcash' | 'metanet' | 'generic'
+  walletType: 'handcash' | 'metanet' | 'paymail' | 'demo'
   demoMode?: boolean
   onClose: () => void
   onPay: (data: { txid?: string; paidBy: string }) => void
@@ -18,7 +18,7 @@ interface PaymentModalProps {
 }
 
 export default function PaymentModal({ stage, chainId, walletType, demoMode = false, onClose, onPay, loading = false }: PaymentModalProps) {
-  const [selectedWallet, setSelectedWallet] = useState<'handcash' | 'metanet' | 'generic'>(walletType)
+  const [selectedWallet, setSelectedWallet] = useState<'handcash' | 'metanet' | 'paymail' | 'demo'>(walletType === 'demo' ? 'handcash' : walletType)
   const [processing, setProcessing] = useState(false)
   const [step, setStep] = useState<'select' | 'processing' | 'success'>('select')
   const [txid, setTxid] = useState('')
@@ -30,26 +30,26 @@ export default function PaymentModal({ stage, chainId, walletType, demoMode = fa
       description: 'Pay with HandCash wallet',
       icon: (
         <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14h-2v-2h2v2zm0-4h-2V7h2v5zm4 4h-2v-2h2v2zm0-4h-2V7h2v5z"/>
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
         </svg>
       ),
-      color: 'from-green-500 to-green-600'
+      color: 'from-emerald-500 to-emerald-600'
     },
     {
       id: 'metanet' as const,
       name: 'MetaNet (Babbage)',
       description: 'Pay with MetaNet wallet',
       icon: (
-        <svg className="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
-          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
         </svg>
       ),
       color: 'from-blue-500 to-blue-600'
     },
     {
-      id: 'generic' as const,
-      name: 'QR Code / Paymail',
-      description: 'Scan QR or use paymail',
+      id: 'paymail' as const,
+      name: 'Paymail / QR Code',
+      description: 'Pay via paymail or scan QR',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />

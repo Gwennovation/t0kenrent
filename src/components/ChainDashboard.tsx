@@ -36,10 +36,10 @@ interface Chain {
 interface ChainDashboardProps {
   userKey: string
   demoMode?: boolean
-  walletType?: 'handcash' | 'metanet' | 'generic'
+  walletType?: 'handcash' | 'metanet' | 'paymail' | 'demo'
 }
 
-export default function ChainDashboard({ userKey, demoMode = false, walletType = 'generic' }: ChainDashboardProps) {
+export default function ChainDashboard({ userKey, demoMode = false, walletType = 'demo' }: ChainDashboardProps) {
   const [chains, setChains] = useState<Chain[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)

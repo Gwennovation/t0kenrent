@@ -13,11 +13,12 @@ interface HTTP402ModalProps {
   asset: Asset
   userKey: string
   demoMode?: boolean
+  walletType?: 'handcash' | 'metanet' | 'paymail' | 'demo'
   onClose: () => void
   onSuccess: (details: any) => void
 }
 
-export default function HTTP402Modal({ asset, userKey, demoMode = false, onClose, onSuccess }: HTTP402ModalProps) {
+export default function HTTP402Modal({ asset, userKey, demoMode = false, walletType = 'demo', onClose, onSuccess }: HTTP402ModalProps) {
   const [step, setStep] = useState<'info' | 'paying' | 'verifying' | 'success' | 'error'>('info')
   const [error, setError] = useState('')
   const [txid, setTxid] = useState('')
@@ -237,8 +238,15 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, onClose
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                {demoMode ? 'Simulate Payment' : `Pay ${asset.unlockFee} BSV`}
+                {demoMode ? 'Simulate Payment' : `Pay with ${walletType === 'handcash' ? 'HandCash' : walletType === 'metanet' ? 'MetaNet' : 'Paymail'}`}
               </button>
+
+              {/* Wallet indicator */}
+              {!demoMode && (
+                <p className="text-xs text-center text-surface-500 dark:text-surface-400 mt-2">
+                  Using: <span className="font-medium">{walletType === 'handcash' ? 'HandCash' : walletType === 'metanet' ? 'MetaNet/Babbage' : 'Paymail/QR'}</span>
+                </p>
+              )}
             </div>
           )}
 

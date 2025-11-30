@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import Head from 'next/head'
-import WalletAuth from '@/components/WalletAuth'
 import WalletSelector from '@/components/WalletSelector'
 import RentalMarketplace from '@/components/RentalMarketplace'
 import ChainDashboard from '@/components/ChainDashboard'
@@ -9,7 +8,7 @@ import { ThemeToggle } from '@/context/ThemeContext'
 export default function Home() {
   const [authenticated, setAuthenticated] = useState(false)
   const [userKey, setUserKey] = useState('')
-  const [walletType, setWalletType] = useState('')
+  const [walletType, setWalletType] = useState<'handcash' | 'metanet' | 'paymail' | 'demo'>('demo')
   const [demoMode, setDemoMode] = useState(false)
   const [showMarketplace, setShowMarketplace] = useState(false)
   const [activeView, setActiveView] = useState<'marketplace' | 'chains'>('marketplace')
@@ -28,15 +27,24 @@ export default function Home() {
 
   function handleAuthenticated(publicKey: string, wallet: string = 'metanet') {
     setUserKey(publicKey)
-    setWalletType(wallet)
+    setWalletType(wallet as 'handcash' | 'metanet' | 'paymail' | 'demo')
     setAuthenticated(true)
     setShowMarketplace(true)
   }
 
   function enableDemoMode() {
-    setUserKey('04813250da3d3f1b3ee46f0c9062813bee38e54fcd66e7cb944ae7445dda3a536653a8612d47e44b54368afda1b8685e1aec0063f4d943300bfc8133bf1571d18e')
+    setUserKey('demo_user_' + Date.now().toString(36))
+    setWalletType('demo')
     setDemoMode(true)
     setShowMarketplace(true)
+  }
+
+  function disconnectWallet() {
+    setUserKey('')
+    setWalletType('demo')
+    setAuthenticated(false)
+    setDemoMode(false)
+    setShowMarketplace(false)
   }
 
   return (
@@ -96,32 +104,35 @@ export default function Home() {
                 )}
 
                 {/* Wallet / Demo Status */}
-                <div className="w-auto sm:w-80">
-                  {demoMode ? (
-                    <button 
-                      onClick={() => { setDemoMode(false); setShowMarketplace(false); }}
-                      className="btn-ghost text-sm flex items-center gap-2"
-                    >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                      </svg>
-                      <span className="hidden sm:inline">Exit Demo</span>
-                    </button>
-                  ) : !showMarketplace ? (
-                    <div className="hidden sm:flex items-center gap-2">
-                      <WalletSelector onAuthenticated={handleAuthenticated} compact />
+                <div className="w-auto">
+                  {showMarketplace ? (
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 px-3 py-2 bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-xl">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium uppercase ${
+                          demoMode 
+                            ? 'bg-amber-200 dark:bg-amber-800 text-amber-700 dark:text-amber-300'
+                            : 'bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300'
+                        }`}>
+                          {demoMode ? 'DEMO' : walletType === 'handcash' ? 'HC' : walletType === 'metanet' ? 'MN' : 'PM'}
+                        </span>
+                        <span className="hidden sm:inline text-xs font-medium text-emerald-700 dark:text-emerald-400 truncate max-w-[120px]">
+                          {demoMode ? 'Demo User' : `${userKey.slice(0, 6)}...${userKey.slice(-4)}`}
+                        </span>
+                      </div>
+                      <button 
+                        onClick={disconnectWallet}
+                        className="p-2 rounded-lg bg-surface-100 dark:bg-surface-800 hover:bg-red-100 dark:hover:bg-red-900/30 text-surface-600 dark:text-surface-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+                        title="Disconnect"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                      </button>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-2 px-3 py-2 bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-xl">
-                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                      {walletType && (
-                        <span className="text-[10px] px-1.5 py-0.5 bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300 rounded font-medium uppercase">
-                          {walletType === 'handcash' ? 'HC' : walletType === 'metanet' ? 'MN' : 'PM'}
-                        </span>
-                      )}
-                      <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400 truncate max-w-[100px] sm:max-w-[200px]">
-                        {userKey.slice(0, 8)}...{userKey.slice(-6)}
-                      </span>
+                    <div className="hidden sm:flex items-center gap-2">
+                      <WalletSelector onAuthenticated={handleAuthenticated} compact />
                     </div>
                   )}
                 </div>
@@ -161,9 +172,9 @@ export default function Home() {
               </div>
               
               {activeView === 'marketplace' ? (
-                <RentalMarketplace userKey={userKey} demoMode={demoMode} />
+                <RentalMarketplace userKey={userKey} demoMode={demoMode} walletType={walletType} />
               ) : (
-                <ChainDashboard userKey={userKey} demoMode={demoMode} />
+                <ChainDashboard userKey={userKey} demoMode={demoMode} walletType={walletType} />
               )}
             </div>
           ) : (
