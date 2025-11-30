@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import HTTP402Modal from './HTTP402Modal'
 import EscrowModal from './EscrowModal'
+import EditAssetModal from './EditAssetModal'
+import AssetStatsModal from './AssetStatsModal'
 
 interface RentalAsset {
   id: string
@@ -17,10 +19,21 @@ interface RentalAsset {
     city: string
     state: string
   }
+  rentalDetails?: {
+    pickupLocation?: {
+      address: string
+    }
+    accessCode?: string
+    specialInstructions?: string
+  }
   status: 'available' | 'rented' | 'pending'
   rating?: number
   unlockFee: number
   createdAt: Date
+  totalRentals?: number
+  totalEarnings?: number
+  condition?: string
+  accessories?: string[]
 }
 
 interface AssetCardProps {
@@ -31,6 +44,7 @@ interface AssetCardProps {
   walletType?: 'handcash' | 'metanet' | 'paymail' | 'demo'
   viewMode?: 'grid' | 'list'
   onRent: (rental?: any) => void
+  onUpdate?: (asset: RentalAsset) => void
 }
 
 // Category icons mapping
@@ -69,12 +83,25 @@ const categoryIcons: Record<string, JSX.Element> = {
   )
 }
 
-export default function AssetCard({ asset, userKey, isOwner = false, demoMode = false, walletType = 'demo', viewMode = 'grid', onRent }: AssetCardProps) {
+// Categories for edit modal
+const categories = [
+  { id: 'photography', name: 'Photography' },
+  { id: 'tools', name: 'Tools & Equipment' },
+  { id: 'electronics', name: 'Electronics' },
+  { id: 'sports', name: 'Sports & Outdoors' },
+  { id: 'vehicles', name: 'Vehicles' },
+  { id: 'other', name: 'Other' }
+]
+
+export default function AssetCard({ asset, userKey, isOwner = false, demoMode = false, walletType = 'demo', viewMode = 'grid', onRent, onUpdate }: AssetCardProps) {
   const [showUnlockModal, setShowUnlockModal] = useState(false)
   const [showEscrowModal, setShowEscrowModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [showStatsModal, setShowStatsModal] = useState(false)
   const [unlocked, setUnlocked] = useState(false)
   const [rentalDetails, setRentalDetails] = useState<any>(null)
   const [isHovered, setIsHovered] = useState(false)
+  const [currentAsset, setCurrentAsset] = useState(asset)
 
   const statusConfig = {
     available: {
@@ -100,12 +127,44 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
     }
   }
 
-  const status = statusConfig[asset.status]
+  const status = statusConfig[currentAsset.status]
 
   async function handleUnlockSuccess(details: any) {
     setRentalDetails(details)
     setUnlocked(true)
     setShowUnlockModal(false)
+  }
+
+  async function handleSaveEdit(updatedData: Partial<RentalAsset>) {
+    try {
+      const response = await fetch('/api/assets/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...updatedData,
+          ownerKey: userKey
+        })
+      })
+
+      const result = await response.json()
+
+      if (response.ok && result.success) {
+        // Update local state
+        setCurrentAsset(prev => ({ ...prev, ...result.asset }))
+        setShowEditModal(false)
+        // Notify parent component
+        if (onUpdate) {
+          onUpdate(result.asset)
+        }
+        // Also call onRent to refresh the list
+        onRent()
+      } else {
+        throw new Error(result.error || 'Failed to update asset')
+      }
+    } catch (error) {
+      console.error('Failed to save asset:', error)
+      alert('Failed to save changes: ' + (error as Error).message)
+    }
   }
 
   function handleRentClick() {
@@ -281,7 +340,7 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
-              Unlock for ~${(asset.unlockFee * 50).toFixed(2)}
+              Unlock for ~${(currentAsset.unlockFee * 50).toFixed(2)}
             </div>
           )}
 
@@ -300,26 +359,26 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
         <div className="p-5">
           <div className="flex items-start justify-between gap-2 mb-2">
             <h3 className="text-lg font-semibold text-surface-900 dark:text-white line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
-              {asset.name}
+              {currentAsset.name}
             </h3>
-            {asset.rating && (
+            {currentAsset.rating && (
               <div className="flex items-center gap-1 flex-shrink-0 px-2 py-0.5 bg-amber-100/80 dark:bg-amber-900/30 rounded-lg">
                 <svg className="w-3.5 h-3.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
-                <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">{asset.rating.toFixed(1)}</span>
+                <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">{currentAsset.rating.toFixed(1)}</span>
               </div>
             )}
           </div>
 
-          <p className="text-sm text-surface-600 dark:text-surface-400 mb-4 line-clamp-2">{asset.description}</p>
+          <p className="text-sm text-surface-600 dark:text-surface-400 mb-4 line-clamp-2">{currentAsset.description}</p>
 
           <div className="flex items-center gap-2 text-sm text-surface-500 dark:text-surface-400 mb-4">
             <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            <span className="truncate">{asset.location.city}, {asset.location.state}</span>
+            <span className="truncate">{currentAsset.location.city}, {currentAsset.location.state}</span>
           </div>
 
           {/* Pricing */}
@@ -327,13 +386,13 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
             <div>
               <p className="text-xs text-surface-500 dark:text-surface-400 mb-0.5">Daily Rate</p>
               <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                ${asset.rentalRatePerDay}
+                ${currentAsset.rentalRatePerDay}
                 <span className="text-sm font-normal text-surface-500 dark:text-surface-400">/day</span>
               </p>
             </div>
             <div className="text-right">
               <p className="text-xs text-surface-500 dark:text-surface-400 mb-0.5">Deposit</p>
-              <p className="text-base font-semibold text-surface-700 dark:text-surface-300">${asset.depositAmount}</p>
+              <p className="text-base font-semibold text-surface-700 dark:text-surface-300">${currentAsset.depositAmount}</p>
             </div>
           </div>
 
@@ -359,14 +418,28 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
           <div>
             {isOwner ? (
               <div className="flex gap-2">
-                <button type="button" className="flex-1 px-4 py-2.5 bg-surface-100 dark:bg-surface-800 hover:bg-surface-200 dark:hover:bg-surface-700 text-surface-700 dark:text-surface-300 font-medium rounded-xl transition-all duration-200 text-sm border border-surface-200 dark:border-surface-700">
+                <button 
+                  type="button" 
+                  onClick={() => setShowEditModal(true)}
+                  className="flex-1 px-4 py-2.5 bg-surface-100 dark:bg-surface-800 hover:bg-primary-100 dark:hover:bg-primary-900/30 text-surface-700 dark:text-surface-300 hover:text-primary-700 dark:hover:text-primary-400 font-medium rounded-xl transition-all duration-200 text-sm border border-surface-200 dark:border-surface-700 hover:border-primary-300 dark:hover:border-primary-700 flex items-center justify-center gap-1.5"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
                   Edit
                 </button>
-                <button type="button" className="flex-1 px-4 py-2.5 bg-surface-100 dark:bg-surface-800 hover:bg-surface-200 dark:hover:bg-surface-700 text-surface-700 dark:text-surface-300 font-medium rounded-xl transition-all duration-200 text-sm border border-surface-200 dark:border-surface-700">
+                <button 
+                  type="button" 
+                  onClick={() => setShowStatsModal(true)}
+                  className="flex-1 px-4 py-2.5 bg-surface-100 dark:bg-surface-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-surface-700 dark:text-surface-300 hover:text-emerald-700 dark:hover:text-emerald-400 font-medium rounded-xl transition-all duration-200 text-sm border border-surface-200 dark:border-surface-700 hover:border-emerald-300 dark:hover:border-emerald-700 flex items-center justify-center gap-1.5"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                  </svg>
                   Stats
                 </button>
               </div>
-            ) : asset.status === 'available' ? (
+            ) : currentAsset.status === 'available' ? (
               <button
                 type="button"
                 onClick={handleRentClick}
@@ -407,7 +480,7 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
       {/* Unlock Modal */}
       {showUnlockModal && (
         <HTTP402Modal
-          asset={asset}
+          asset={currentAsset}
           userKey={userKey}
           demoMode={demoMode}
           walletType={walletType}
@@ -419,7 +492,7 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
       {/* Rental Modal */}
       {showEscrowModal && rentalDetails && (
         <EscrowModal
-          asset={asset}
+          asset={currentAsset}
           userKey={userKey}
           rentalDetails={rentalDetails}
           demoMode={demoMode}
@@ -429,6 +502,26 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
             setShowEscrowModal(false)
             onRent(rental)
           }}
+        />
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <EditAssetModal
+          asset={currentAsset}
+          onClose={() => setShowEditModal(false)}
+          onSave={handleSaveEdit}
+          categories={categories}
+          demoMode={demoMode}
+        />
+      )}
+
+      {/* Stats Modal */}
+      {showStatsModal && (
+        <AssetStatsModal
+          asset={currentAsset}
+          onClose={() => setShowStatsModal(false)}
+          demoMode={demoMode}
         />
       )}
     </>

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import AssetCard from './AssetCard'
 import CreateAssetModal from './CreateAssetModal'
 import RentalCard from './RentalCard'
+import { SkeletonGrid } from './SkeletonCard'
 import { getErrorMessage } from '@/lib/error-utils'
 
 interface RentalAsset {
@@ -126,9 +127,11 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
         throw new Error(result.error || result.message || 'Failed to create asset')
       }
 
+      // Add to both my assets and all assets
       setMyAssets(prev => [result.asset, ...prev])
+      setAssets(prev => [result.asset, ...prev])
       setShowCreateModal(false)
-      setSuccessMessage(`"${result.asset.name}" listed successfully!`)
+      setSuccessMessage(`"${result.asset.name}" listed successfully! It's now visible in the marketplace.`)
       setTimeout(() => setSuccessMessage(''), 5000)
       
       // Switch to My Assets tab
@@ -323,13 +326,7 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
 
           {/* Asset Grid */}
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <div className="relative">
-                <div className="w-16 h-16 border-4 border-primary-200 dark:border-primary-900 rounded-full"></div>
-                <div className="absolute top-0 left-0 w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
-              </div>
-              <p className="mt-4 text-surface-600 dark:text-surface-400">Loading items...</p>
-            </div>
+            <SkeletonGrid count={6} viewMode={viewMode} />
           ) : filteredAssets.length > 0 ? (
             <div className={`grid gap-6 ${viewMode === 'grid' ? 'sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
               {filteredAssets.map((asset, index) => (

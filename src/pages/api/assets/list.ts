@@ -15,7 +15,7 @@ export default async function handler(
     const {
       category,
       maxPrice,
-      status = 'available',
+      status,
       page = '1',
       limit = '20'
     } = req.query
@@ -72,7 +72,9 @@ export default async function handler(
       rating: asset.rating,
       unlockFee: asset.unlockFee,
       ownerKey: asset.ownerKey,
-      createdAt: asset.createdAt
+      createdAt: asset.createdAt,
+      totalRentals: asset.totalRentals || 0,
+      totalEarnings: asset.totalEarnings || 0
     }))
 
     return res.status(200).json({
