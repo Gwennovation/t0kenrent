@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { getPublicKey, waitForAuthentication, isAuthenticated } from 'babbage-sdk'
 import { getErrorMessage } from '@/lib/error-utils'
+import { getHandCashAuthUrl } from '@/lib/handcash'
 
 interface WalletSelectorProps {
-  onAuthenticated: (publicKey: string, walletType: string) => void
+  onAuthenticated: (publicKey: string, handle: string, walletType: string, balance?: number) => void
   compact?: boolean
 }
 
@@ -20,14 +21,11 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
     // Check for HandCash OAuth callback
     if (typeof window !== 'undefined') {
       const urlParams = new URLSearchParams(window.location.search)
-      const handcashToken = urlParams.get('handcash_token')
-      const handcashHandle = urlParams.get('handcash_handle')
+      const authToken = urlParams.get('authToken')
       
-      if (handcashToken && handcashHandle) {
-        sessionStorage.setItem('handcash_token', handcashToken)
-        sessionStorage.setItem('handcash_handle', handcashHandle)
-        const pseudoPublicKey = `hc_${handcashHandle}_${Date.now()}`
-        onAuthenticated(pseudoPublicKey, 'handcash')
+      if (authToken) {
+        handleHandCashCallback(authToken)
+        // Clean up URL
         window.history.replaceState({}, '', window.location.pathname)
       }
     }
@@ -36,19 +34,49 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
     checkMetaNetAuth()
   }, [])
 
+  async function handleHandCashCallback(authToken: string) {
+    setLoading(true)
+    setSelectedWallet('handcash')
+    try {
+      // Exchange auth token for access token and get profile via API
+      const response = await fetch('/api/auth/handcash', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ authToken })
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        // Store the access token for future API calls
+        sessionStorage.setItem('handcash_token', data.accessToken)
+        sessionStorage.setItem('handcash_handle', data.handle)
+        onAuthenticated(data.publicKey, data.handle, 'handcash', data.balance)
+      } else {
+        const errorData = await response.json()
+        throw new Error(errorData.error || 'Failed to authenticate with HandCash')
+      }
+    } catch (err) {
+      setError(getErrorMessage(err))
+    } finally {
+      setLoading(false)
+    }
+  }
+
   async function checkMetaNetAuth() {
     try {
       const authed = await isAuthenticated()
       if (authed) {
         const pubKey = await getPublicKey({
-          protocolID: [2, 'Pay MNEE'],
+          protocolID: [2, 'T0kenRent'],
           keyID: '1',
           counterparty: 'self'
         })
-        onAuthenticated(pubKey, 'metanet')
+        // For MetaNet, we use the public key as the handle
+        onAuthenticated(pubKey, pubKey.slice(0, 12), 'metanet')
       }
     } catch (err) {
-      console.log('Not authenticated with MetaNet')
+      // Not authenticated with MetaNet - this is expected
+      console.log('MetaNet wallet not detected or not authenticated')
     }
   }
 
@@ -58,17 +86,17 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
     setError('')
     
     try {
-      // Simulate HandCash connection for demo
-      // In production, this would redirect to HandCash OAuth
-      await new Promise(resolve => setTimeout(resolve, 1200))
+      // Generate the HandCash authorization URL with redirect
+      const authUrl = getHandCashAuthUrl()
       
-      const demoHandle = 'demo_' + Math.random().toString(36).substring(2, 6)
-      const pseudoPublicKey = `hc_${demoHandle}_${Date.now()}`
-      sessionStorage.setItem('handcash_handle', demoHandle)
-      onAuthenticated(pseudoPublicKey, 'handcash')
+      if (!authUrl || authUrl.includes('appId=&')) {
+        throw new Error('HandCash App ID not configured. Please set NEXT_PUBLIC_HANDCASH_APP_ID in your environment.')
+      }
+      
+      // Redirect to HandCash for authentication
+      window.location.href = authUrl
     } catch (err) {
       setError(getErrorMessage(err))
-    } finally {
       setLoading(false)
     }
   }
@@ -79,16 +107,29 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
     setError('')
     
     try {
-      // For demo, simulate the connection
-      // In production with actual MetaNet wallet installed:
-      // await waitForAuthentication()
-      await new Promise(resolve => setTimeout(resolve, 1200))
+      // Check if MetaNet/Babbage wallet is available
+      const authed = await isAuthenticated()
       
-      // Generate a demo public key (in production this comes from the wallet)
-      const demoPubKey = `mn_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`
-      onAuthenticated(demoPubKey, 'metanet')
+      if (!authed) {
+        // Wait for user to authenticate with their wallet
+        await waitForAuthentication()
+      }
+      
+      // Get the user's public key
+      const pubKey = await getPublicKey({
+        protocolID: [2, 'T0kenRent'],
+        keyID: '1',
+        counterparty: 'self'
+      })
+      
+      onAuthenticated(pubKey, pubKey.slice(0, 12), 'metanet')
     } catch (err) {
-      setError(getErrorMessage(err))
+      const errorMsg = getErrorMessage(err)
+      if (errorMsg.includes('No wallet') || errorMsg.includes('not available') || errorMsg.includes('undefined')) {
+        setError('MetaNet/Babbage wallet not detected. Please install a compatible wallet extension.')
+      } else {
+        setError(errorMsg)
+      }
     } finally {
       setLoading(false)
     }
@@ -110,13 +151,29 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
     setError('')
     
     try {
+      // Resolve the paymail to get the public key
+      const response = await fetch(`/api/auth/paymail`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymail })
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        sessionStorage.setItem('user_paymail', paymail)
+        onAuthenticated(data.publicKey, paymail, 'paymail')
+      } else {
+        // If paymail resolution fails, we still allow connection with paymail as identifier
+        // This enables QR code payment flows
+        const pseudoPublicKey = `pm_${paymail.replace('@', '_at_')}_${Date.now()}`
+        sessionStorage.setItem('user_paymail', paymail)
+        onAuthenticated(pseudoPublicKey, paymail, 'paymail')
+      }
+    } catch (err) {
+      // Fallback - allow paymail connection for QR payments
       const pseudoPublicKey = `pm_${paymail.replace('@', '_at_')}_${Date.now()}`
       sessionStorage.setItem('user_paymail', paymail)
-      
-      await new Promise(resolve => setTimeout(resolve, 800))
-      onAuthenticated(pseudoPublicKey, 'paymail')
-    } catch (err) {
-      setError(getErrorMessage(err))
+      onAuthenticated(pseudoPublicKey, paymail, 'paymail')
     } finally {
       setLoading(false)
     }
@@ -127,6 +184,7 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
     return (
       <div className="flex items-center gap-1.5">
         <button
+          type="button"
           onClick={connectHandCash}
           disabled={loading}
           className={`p-2.5 rounded-xl transition-all duration-200 ${
@@ -148,6 +206,7 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
           )}
         </button>
         <button
+          type="button"
           onClick={connectMetaNet}
           disabled={loading}
           className={`p-2.5 rounded-xl transition-all duration-200 ${
@@ -169,6 +228,7 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
           )}
         </button>
         <button
+          type="button"
           onClick={connectPaymail}
           disabled={loading}
           className={`p-2.5 rounded-xl transition-all duration-200 ${
@@ -193,6 +253,7 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
       <div className="grid grid-cols-1 gap-3">
         {/* HandCash */}
         <button
+          type="button"
           onClick={connectHandCash}
           disabled={loading}
           className={`group relative flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-300 ${
@@ -247,6 +308,7 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
 
         {/* MetaNet / Babbage */}
         <button
+          type="button"
           onClick={connectMetaNet}
           disabled={loading}
           className={`group relative flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-300 ${
@@ -296,6 +358,7 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
 
         {/* Paymail / QR Code */}
         <button
+          type="button"
           onClick={connectPaymail}
           disabled={loading}
           className={`group relative flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-300 ${
@@ -354,6 +417,7 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
                 className="flex-1 px-4 py-3 rounded-lg border border-purple-200 dark:border-purple-700 bg-white dark:bg-surface-800 text-surface-900 dark:text-white placeholder-surface-400 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
               />
               <button
+                type="button"
                 onClick={submitPaymail}
                 disabled={loading || !paymail}
                 className="px-6 py-3 bg-purple-500 hover:bg-purple-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
@@ -384,7 +448,7 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
 
       {/* Info Text */}
       <p className="text-xs text-center text-surface-500 dark:text-surface-400">
-        Select a wallet to connect and start using T0kenRent
+        Connect your BSV wallet to start using T0kenRent
       </p>
     </div>
   )

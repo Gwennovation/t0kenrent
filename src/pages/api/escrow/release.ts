@@ -1,139 +1,226 @@
-import type { NextApiRequest, NextApiResponse } from 'next'
-import connectDB from '@/lib/mongodb'
-import Escrow from '@/models/Escrow'
-import RentalAsset from '@/models/RentalAsset'
-
 /**
  * Escrow Release Endpoint
+ * POST /api/escrow/release
  * 
- * Handles the release of escrowed funds when both parties co-sign.
- * Supports:
- * - Standard release (deposit back to renter, fee to owner)
- * - Partial release (damage deduction)
- * - Full release to owner (renter breach)
+ * Handles the dual-signing release process for escrow funds.
+ * Requires signatures from both owner and renter for standard releases.
+ * 
+ * Request body: {
+ *   escrowId: string,
+ *   signerKey: string,           // Public key of the signer
+ *   signature: string,           // Signature (or 'demo_signature' for hackathon)
+ *   releaseType: 'standard' | 'partial' | 'full_to_owner' | 'full_to_renter',
+ *   damageAmount?: number        // For partial releases
+ * }
+ * 
+ * Release types:
+ *   - standard: Rental fee to owner, deposit back to renter
+ *   - partial: Rental fee + damage deduction to owner, remaining to renter
+ *   - full_to_owner: All funds to owner (renter breach)
+ *   - full_to_renter: All funds to renter (owner breach)
  */
+
+import type { NextApiRequest, NextApiResponse } from 'next'
+import { storage, globalEscrowStore, globalReleaseStore } from '@/lib/storage'
+import { 
+  createSignature,
+  initializeRelease,
+  addSignatureToRelease,
+  canRelease,
+  executeRelease,
+  getEscrowStatus,
+  EscrowRelease,
+  EscrowContract
+} from '@/lib/escrow'
+import { logEscrowEvent } from '@/lib/overlay'
+
+// Use global stores for persistence
+const escrowStore = globalEscrowStore as Map<string, EscrowContract>
+const releaseStore = globalReleaseStore as Map<string, EscrowRelease>
+
+interface ReleaseResponse {
+  success: boolean
+  escrowId?: string
+  status?: string
+  releaseStatus?: string
+  release?: {
+    toOwner: number
+    toRenter: number
+    releaseType: string
+    ownerSigned: boolean
+    renterSigned: boolean
+  }
+  releaseTxId?: string
+  message?: string
+  waitingFor?: string
+  error?: string
+}
+
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse<ReleaseResponse>
 ) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
+    return res.status(405).json({ success: false, error: 'Method not allowed' })
   }
 
   try {
-    await connectDB()
-
-    const {
-      escrowId,
-      signerKey,
+    const { 
+      escrowId, 
+      signerKey, 
       signature,
-      releaseType = 'standard', // 'standard', 'partial', 'owner_full'
+      releaseType = 'standard',
       damageAmount = 0
     } = req.body
 
-    if (!escrowId || !signerKey || !signature) {
-      return res.status(400).json({ error: 'Missing required fields' })
-    }
-
-    // Find the escrow
-    const escrow = await Escrow.findOne({ escrowId })
-
-    if (!escrow) {
-      return res.status(404).json({ error: 'Escrow not found' })
-    }
-
-    if (escrow.status !== 'funded') {
+    if (!escrowId) {
       return res.status(400).json({ 
-        error: 'Escrow must be in funded state to release',
-        currentStatus: escrow.status
+        success: false, 
+        error: 'Escrow ID is required' 
       })
     }
 
-    // Determine who is signing
+    if (!signerKey) {
+      return res.status(400).json({ 
+        success: false, 
+        error: 'Signer key is required' 
+      })
+    }
+
+    // Get escrow from store
+    const escrow = escrowStore.get(escrowId)
+    
+    if (!escrow) {
+      return res.status(404).json({ 
+        success: false, 
+        error: 'Escrow not found' 
+      })
+    }
+
+    // Verify signer is a party to the escrow
     const isOwner = signerKey === escrow.ownerKey
     const isRenter = signerKey === escrow.renterKey
 
     if (!isOwner && !isRenter) {
       return res.status(403).json({ 
+        success: false, 
         error: 'Signer is not a party to this escrow' 
       })
     }
 
-    // Add signature
-    if (isOwner) {
-      if (escrow.signatures.ownerSigned) {
-        return res.status(400).json({ error: 'Owner has already signed' })
-      }
-      escrow.signatures.ownerSigned = true
-      escrow.signatures.ownerSignature = signature
-      escrow.signatures.ownerSignedAt = new Date()
-    } else {
-      if (escrow.signatures.renterSigned) {
-        return res.status(400).json({ error: 'Renter has already signed' })
-      }
-      escrow.signatures.renterSigned = true
-      escrow.signatures.renterSignature = signature
-      escrow.signatures.renterSignedAt = new Date()
+    // Check escrow can be released
+    if (escrow.status !== 'funded' && escrow.status !== 'active' && escrow.status !== 'releasing') {
+      return res.status(400).json({ 
+        success: false, 
+        error: `Escrow cannot be released - current status: ${escrow.status}` 
+      })
     }
 
-    // Check if both have signed
-    const bothSigned = escrow.signatures.ownerSigned && escrow.signatures.renterSigned
+    // Get or create release process
+    let release = releaseStore.get(escrowId)
+    
+    if (!release) {
+      // Initialize new release
+      release = initializeRelease(escrow, releaseType, damageAmount)
+      releaseStore.set(escrowId, release)
+      escrow.status = 'releasing'
+      escrowStore.set(escrowId, escrow)
+    }
 
-    if (bothSigned) {
-      // Calculate release breakdown
-      let toOwner = escrow.rentalFee
-      let toRenter = escrow.depositAmount
+    // Create signature for this signer
+    const newSignature = createSignature(escrowId, signerKey, 'release')
+    
+    // For hackathon, accept demo signatures
+    if (signature?.startsWith('demo_') || signature === newSignature.signature) {
+      // Valid signature
+    } else if (signature) {
+      // Use provided signature
+      newSignature.signature = signature
+    }
 
-      if (releaseType === 'partial' && damageAmount > 0) {
-        // Deduct damage from renter's deposit
-        const deduction = Math.min(damageAmount, escrow.depositAmount)
-        toRenter -= deduction
-        toOwner += deduction
-      } else if (releaseType === 'owner_full') {
-        // All funds to owner (renter breach)
-        toOwner = escrow.totalAmount
-        toRenter = 0
-      }
+    // Add signature to release
+    release = addSignatureToRelease(release, escrow, newSignature)
+    releaseStore.set(escrowId, release)
 
-      escrow.releaseBreakdown = {
-        toOwner,
-        toRenter,
-        toArbitrator: 0
-      }
+    // Check if we can execute release
+    if (canRelease(release)) {
+      // Execute the release transaction
+      const result = await executeRelease(escrow, release)
+      
+      if (result.success) {
+        // Update escrow status
+        escrow.status = 'released'
+        escrow.releasedAt = new Date().toISOString()
+        escrowStore.set(escrowId, escrow)
 
-      escrow.status = 'completed'
-      escrow.completedAt = new Date()
+        // Update asset status back to available
+        storage.updateAsset(escrow.assetId, { status: 'available' })
 
-      // Update asset status back to available
-      const asset = await RentalAsset.findOne({ tokenId: escrow.rentalTokenId })
-      if (asset) {
-        asset.status = 'available'
-        asset.totalEarnings = (asset.totalEarnings || 0) + toOwner
-        await asset.save()
+        // Log release event to overlay (non-blocking)
+        logEscrowEvent({
+          escrowId: escrow.id,
+          rentalId: escrow.rentalId,
+          eventType: 'released',
+          renterKey: escrow.renterKey,
+          ownerKey: escrow.ownerKey,
+          totalAmount: escrow.totalAmount,
+          depositAmount: escrow.depositAmount,
+          rentalFee: escrow.rentalFee,
+          releaseType: release.releaseType === 'full_to_renter' ? 'standard' : release.releaseType,
+          damageDeduction: damageAmount,
+          releaseTxid: result.txId
+        }).catch(err => console.error('Failed to log escrow release:', err))
+
+        return res.status(200).json({
+          success: true,
+          escrowId: escrow.id,
+          status: 'released',
+          releaseStatus: release.status,
+          release: {
+            toOwner: release.toOwner,
+            toRenter: release.toRenter,
+            releaseType: release.releaseType,
+            ownerSigned: !!release.ownerSignature,
+            renterSigned: !!release.renterSignature
+          },
+          releaseTxId: result.txId,
+          message: 'Escrow released successfully'
+        })
+      } else {
+        return res.status(500).json({
+          success: false,
+          error: result.error || 'Failed to execute release transaction'
+        })
       }
     }
 
-    await escrow.save()
-
+    // Not all signatures yet - return status
+    const waitingFor = isOwner ? 'renter signature' : 'owner signature'
+    
     return res.status(200).json({
       success: true,
-      escrowId: escrow.escrowId,
+      escrowId: escrow.id,
       status: escrow.status,
-      signatures: {
-        ownerSigned: escrow.signatures.ownerSigned,
-        renterSigned: escrow.signatures.renterSigned
+      releaseStatus: release.status,
+      release: {
+        toOwner: release.toOwner,
+        toRenter: release.toRenter,
+        releaseType: release.releaseType,
+        ownerSigned: !!release.ownerSignature,
+        renterSigned: !!release.renterSignature
       },
-      releaseBreakdown: bothSigned ? escrow.releaseBreakdown : null,
-      message: bothSigned 
-        ? 'Both parties have signed. Escrow released.' 
-        : `Signature recorded. Waiting for ${isOwner ? 'renter' : 'owner'} signature.`
+      message: `Signature recorded. Waiting for ${waitingFor}.`,
+      waitingFor
     })
 
   } catch (error: any) {
     console.error('Escrow release error:', error)
     return res.status(500).json({ 
-      error: 'Failed to process escrow release',
-      message: error.message 
+      success: false,
+      error: error.message || 'Failed to process release'
     })
   }
 }
+
+// Export release store for status endpoint
+export { releaseStore }

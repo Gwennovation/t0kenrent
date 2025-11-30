@@ -203,6 +203,7 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
 
                 {!isOwner && asset.status === 'available' && (
                   <button
+                    type="button"
                     onClick={handleRentClick}
                     className={`btn-primary text-sm py-2 ${unlocked ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700' : ''}`}
                   >
@@ -233,9 +234,9 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
             demoMode={demoMode}
             walletType={walletType}
             onClose={() => setShowEscrowModal(false)}
-            onSuccess={() => {
+            onSuccess={(rental) => {
               setShowEscrowModal(false)
-              onRent()
+              onRent(rental)
             }}
           />
         )}
@@ -358,15 +359,16 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
           <div>
             {isOwner ? (
               <div className="flex gap-2">
-                <button className="flex-1 px-4 py-2.5 bg-surface-100 dark:bg-surface-800 hover:bg-surface-200 dark:hover:bg-surface-700 text-surface-700 dark:text-surface-300 font-medium rounded-xl transition-all duration-200 text-sm border border-surface-200 dark:border-surface-700">
+                <button type="button" className="flex-1 px-4 py-2.5 bg-surface-100 dark:bg-surface-800 hover:bg-surface-200 dark:hover:bg-surface-700 text-surface-700 dark:text-surface-300 font-medium rounded-xl transition-all duration-200 text-sm border border-surface-200 dark:border-surface-700">
                   Edit
                 </button>
-                <button className="flex-1 px-4 py-2.5 bg-surface-100 dark:bg-surface-800 hover:bg-surface-200 dark:hover:bg-surface-700 text-surface-700 dark:text-surface-300 font-medium rounded-xl transition-all duration-200 text-sm border border-surface-200 dark:border-surface-700">
+                <button type="button" className="flex-1 px-4 py-2.5 bg-surface-100 dark:bg-surface-800 hover:bg-surface-200 dark:hover:bg-surface-700 text-surface-700 dark:text-surface-300 font-medium rounded-xl transition-all duration-200 text-sm border border-surface-200 dark:border-surface-700">
                   Stats
                 </button>
               </div>
             ) : asset.status === 'available' ? (
               <button
+                type="button"
                 onClick={handleRentClick}
                 className={`w-full px-4 py-3 font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 ${
                   unlocked

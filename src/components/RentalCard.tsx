@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import SmartContractStatus from './SmartContractStatus'
 
 interface Rental {
   id: string
@@ -18,16 +19,20 @@ interface Rental {
   completedAt?: string
   pickupLocation?: string
   accessCode?: string
+  paymentTxId?: string
+  escrowTxId?: string
 }
 
 interface RentalCardProps {
   rental: Rental
   userKey: string
+  demoMode?: boolean
   onUpdate: () => void
 }
 
-export default function RentalCard({ rental, userKey, onUpdate }: RentalCardProps) {
+export default function RentalCard({ rental, userKey, demoMode = false, onUpdate }: RentalCardProps) {
   const [completing, setCompleting] = useState(false)
+  const [showContractStatus, setShowContractStatus] = useState(false)
 
   const isRenter = rental.renterKey === userKey
   const statusConfig = {
@@ -146,6 +151,7 @@ export default function RentalCard({ rental, userKey, onUpdate }: RentalCardProp
         {rental.status === 'active' && (
           <div className="flex flex-col gap-2">
             <button
+              type="button"
               onClick={handleComplete}
               disabled={completing}
               className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 disabled:bg-emerald-300 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
@@ -171,6 +177,69 @@ export default function RentalCard({ rental, userKey, onUpdate }: RentalCardProp
           </div>
         )}
       </div>
+
+      {/* Transaction IDs */}
+      {(rental.paymentTxId || rental.escrowTxId || rental.escrowId) && (
+        <div className="mt-4 pt-4 border-t border-surface-200 dark:border-surface-700">
+          <div className="flex flex-wrap items-center gap-3 text-xs">
+            <span className="text-surface-500 dark:text-surface-400">On-Chain:</span>
+            {rental.paymentTxId && (
+              <a
+                href={`https://whatsonchain.com/tx/${rental.paymentTxId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-primary-600 dark:text-primary-400 hover:underline font-mono"
+              >
+                Payment TX
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            )}
+            {rental.escrowTxId && (
+              <a
+                href={`https://whatsonchain.com/tx/${rental.escrowTxId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-primary-600 dark:text-primary-400 hover:underline font-mono"
+              >
+                Escrow TX
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            )}
+            <button
+              type="button"
+              onClick={() => setShowContractStatus(true)}
+              className="flex items-center gap-1 px-2 py-1 bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 rounded-lg hover:bg-primary-200 dark:hover:bg-primary-900/50 transition-colors"
+            >
+              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              Contract Status
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Smart Contract Status Modal */}
+      {showContractStatus && (
+        <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowContractStatus(false)}>
+          <div className="modal-content max-w-lg animate-scale-in">
+            <SmartContractStatus
+              escrowId={rental.escrowId}
+              userKey={userKey}
+              demoMode={demoMode}
+              onClose={() => setShowContractStatus(false)}
+              onSign={() => {
+                setShowContractStatus(false)
+                onUpdate()
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

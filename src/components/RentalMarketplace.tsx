@@ -189,6 +189,7 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
             </p>
           </div>
           <button
+            type="button"
             onClick={() => setShowCreateModal(true)}
             className="btn-primary flex items-center justify-center gap-2 whitespace-nowrap"
           >
@@ -205,6 +206,7 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
         <div className="tab-list w-fit">
           {tabs.map(tab => (
             <button
+              type="button"
               key={tab.id}
               onClick={() => setActiveTab(tab.id as typeof activeTab)}
               className={activeTab === tab.id ? 'tab-item-active' : 'tab-item-inactive'}
@@ -268,6 +270,7 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
                 {/* View Mode Toggle */}
                 <div className="flex bg-surface-100 dark:bg-surface-800 rounded-xl p-1 border border-surface-200 dark:border-surface-700">
                   <button
+                    type="button"
                     onClick={() => setViewMode('grid')}
                     className={`p-2.5 rounded-lg transition-all duration-200 ${
                       viewMode === 'grid' 
@@ -280,6 +283,7 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
                     </svg>
                   </button>
                   <button
+                    type="button"
                     onClick={() => setViewMode('list')}
                     className={`p-2.5 rounded-lg transition-all duration-200 ${
                       viewMode === 'list' 
@@ -299,6 +303,7 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
             <div className="flex gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
               {categories.map(cat => (
                 <button
+                  type="button"
                   key={cat.id}
                   onClick={() => setSelectedCategory(cat.id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 ${
@@ -360,7 +365,7 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
                   : 'Be the first to list an item!'}
               </p>
               {!searchQuery && selectedCategory === 'all' && (
-                <button onClick={() => setShowCreateModal(true)} className="btn-primary">
+                <button type="button" onClick={() => setShowCreateModal(true)} className="btn-primary">
                   List Your First Item
                 </button>
               )}
@@ -455,7 +460,7 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
                   </h3>
                   <div className="grid gap-4">
                     {activeRentals.map(rental => (
-                      <RentalCard key={rental.id} rental={rental} userKey={userKey} onUpdate={loadAssets} />
+                      <RentalCard key={rental.id} rental={rental} userKey={userKey} demoMode={demoMode} onUpdate={loadAssets} />
                     ))}
                   </div>
                 </div>
@@ -469,7 +474,7 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
                   </h3>
                   <div className="grid gap-4">
                     {completedRentals.map(rental => (
-                      <RentalCard key={rental.id} rental={rental} userKey={userKey} onUpdate={loadAssets} />
+                      <RentalCard key={rental.id} rental={rental} userKey={userKey} demoMode={demoMode} onUpdate={loadAssets} />
                     ))}
                   </div>
                 </div>
@@ -488,7 +493,7 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
               <p className="text-surface-600 dark:text-surface-400 mb-6 max-w-md mx-auto">
                 Browse the marketplace to find items to rent
               </p>
-              <button onClick={() => setActiveTab('browse')} className="btn-secondary">
+              <button type="button" onClick={() => setActiveTab('browse')} className="btn-secondary">
                 Browse Items
               </button>
             </div>
@@ -503,6 +508,7 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
           onCreate={handleCreateAsset}
           categories={categories.filter(c => c.id !== 'all')}
           demoMode={demoMode}
+          ownerKey={userKey}
         />
       )}
     </div>

@@ -1,12 +1,49 @@
+/**
+ * Asset Creation Endpoint
+ * POST /api/assets/create
+ * 
+ * Creates a new rental asset listing with optional 1Sat ordinal linking.
+ * 
+ * Request body: {
+ *   name: string,
+ *   description: string,
+ *   category: string,
+ *   imageUrl?: string,
+ *   rentalRatePerDay: number,
+ *   depositAmount: number,
+ *   currency?: string,
+ *   location: { city, state, address },
+ *   accessCode?: string,
+ *   specialInstructions?: string,
+ *   ownerContact?: { name, phone, email },
+ *   unlockFee?: number,
+ *   condition?: string,
+ *   accessories?: string[],
+ *   ownerKey: string,
+ *   ordinalId?: string  // Optional: Link to 1Sat ordinal for proof of ownership
+ * }
+ */
+
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { storage } from '@/lib/storage'
+import { storage, StoredAsset } from '@/lib/storage'
+import { verifyOrdinalExists, verifyOrdinalOwnership, createDemoOrdinal } from '@/lib/ordinals'
+
+interface CreateAssetResponse {
+  success: boolean
+  tokenId?: string
+  ordinalId?: string
+  ordinalVerified?: boolean
+  asset?: Partial<StoredAsset>
+  error?: string
+  message?: string
+}
 
 export default async function handler(
   req: NextApiRequest,
-  res: NextApiResponse
+  res: NextApiResponse<CreateAssetResponse>
 ) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' })
+    return res.status(405).json({ success: false, error: 'Method not allowed' })
   }
 
   try {
@@ -21,23 +58,70 @@ export default async function handler(
       location,
       accessCode,
       specialInstructions,
+      ownerContact,
       unlockFee = 0.0001,
       condition = 'excellent',
       accessories = [],
-      ownerKey
+      ownerKey,
+      ordinalId
     } = req.body
 
     // Validate required fields
     if (!name || !description || !category || !ownerKey) {
-      return res.status(400).json({ error: 'Missing required fields: name, description, category, ownerKey' })
+      return res.status(400).json({ 
+        success: false,
+        error: 'Missing required fields: name, description, category, ownerKey' 
+      })
     }
 
     if (!location?.city || !location?.state || !location?.address) {
-      return res.status(400).json({ error: 'Location information is required (city, state, address)' })
+      return res.status(400).json({ 
+        success: false,
+        error: 'Location information is required (city, state, address)' 
+      })
     }
 
     // Ensure user exists
     storage.getOrCreateUser(ownerKey)
+
+    // Handle 1Sat ordinal linking
+    let verifiedOrdinalId: string | undefined
+    let ordinalVerified = false
+    let ordinalMessage: string | undefined
+
+    if (ordinalId) {
+      // User provided an ordinal ID - verify it
+      const isDemoMode = ownerKey.startsWith('demo_')
+      
+      if (isDemoMode) {
+        // Demo mode - accept ordinal without verification
+        verifiedOrdinalId = ordinalId
+        ordinalVerified = true
+        ordinalMessage = 'Ordinal accepted (demo mode)'
+      } else {
+        // Production - verify ordinal exists
+        const verification = await verifyOrdinalExists(ordinalId)
+        
+        if (verification.exists) {
+          // Optionally verify ownership (if owner address is known)
+          // const ownership = await verifyOrdinalOwnership(ordinalId, ownerKey)
+          
+          verifiedOrdinalId = ordinalId
+          ordinalVerified = true
+          ordinalMessage = 'Ordinal verified on-chain'
+        } else {
+          // Ordinal not found - continue without linking
+          ordinalMessage = `Ordinal not found: ${verification.error}`
+          console.warn('Ordinal verification failed:', verification.error)
+        }
+      }
+    } else if (ownerKey.startsWith('demo_')) {
+      // Demo mode without ordinal - create a mock ordinal
+      const demoOrdinal = createDemoOrdinal(Date.now().toString(), name)
+      verifiedOrdinalId = demoOrdinal.id
+      ordinalVerified = true
+      ordinalMessage = 'Demo ordinal created'
+    }
 
     // Create the asset
     const asset = storage.createAsset({
@@ -59,19 +143,36 @@ export default async function handler(
           state: location.state
         },
         accessCode,
-        specialInstructions
+        specialInstructions,
+        ...(ownerContact && {
+          ownerContact: {
+            name: ownerContact.name,
+            phone: ownerContact.phone,
+            email: ownerContact.email
+          }
+        })
       },
       status: 'available',
-      unlockFee: parseFloat(unlockFee) || 0.0001,
+      unlockFee: parseFloat(String(unlockFee)) || 0.0001,
       ownerKey,
       condition,
-      accessories,
-      rating: undefined
+      accessories
     })
+
+    // If ordinal was verified, update asset with ordinal ID
+    // Note: In a full implementation, tokenId would be derived from ordinalId
+    if (verifiedOrdinalId) {
+      // The tokenId is already generated by storage, but we can associate the ordinal
+      // In a production system, you'd store this association in the database
+      console.log(`Asset ${asset.id} linked to ordinal: ${verifiedOrdinalId}`)
+    }
 
     return res.status(201).json({
       success: true,
       tokenId: asset.tokenId,
+      ordinalId: verifiedOrdinalId,
+      ordinalVerified,
+      message: ordinalMessage,
       asset: {
         id: asset.id,
         tokenId: asset.tokenId,
@@ -86,6 +187,8 @@ export default async function handler(
         status: asset.status,
         unlockFee: asset.unlockFee,
         ownerKey: asset.ownerKey,
+        condition: asset.condition,
+        accessories: asset.accessories,
         createdAt: asset.createdAt
       }
     })
@@ -93,6 +196,7 @@ export default async function handler(
   } catch (error: any) {
     console.error('Asset creation error:', error)
     return res.status(500).json({ 
+      success: false,
       error: 'Failed to create asset',
       message: error.message 
     })
