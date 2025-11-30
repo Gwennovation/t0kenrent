@@ -4,11 +4,11 @@ import { getPublicKey, waitForAuthentication, isAuthenticated } from 'babbage-sd
 import { getErrorMessage } from '@/lib/error-utils'
 import { getHandCashAuthUrl } from '@/lib/handcash'
 
-// Wallet logo paths
+// Wallet logo paths - using official logos
 const WALLET_LOGOS = {
-  handcash: '/wallets/handcash.svg',
+  handcash: '/wallets/handcash.png',
   metanet: '/wallets/metanet.svg',
-  relysia: '/wallets/relysia.svg'
+  relysia: '/wallets/relysia.png'
 }
 
 interface WalletSelectorProps {
