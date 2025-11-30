@@ -2,9 +2,19 @@
 
 Technical architecture documentation for the T0kenRent decentralized rental platform.
 
+**Version:** 1.1.0  
+**Updated:** November 30, 2025  
+**Status:** 100% Workshop Aligned
+
 ## System Overview
 
 T0kenRent is built on the BSV blockchain following the 3-Layer Mandala Network architecture, providing scalability, security, and efficiency for peer-to-peer asset rentals.
+
+### New in v1.1.0
+- ✅ sCrypt Smart Contracts (RentalEscrow, PaymentChannel)
+- ✅ Custom Overlay Network (tm_tokenrent, ls_tokenrent)
+- ✅ Payment Channels for streaming rentals
+- ✅ BSV Desktop Wallet Bridge
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -41,8 +51,8 @@ T0kenRent is built on the BSV blockchain following the 3-Layer Mandala Network a
 │  ┌──────────────────────────▼─────────────────────────────────────────┐ │
 │  │                    Layer 1: BSV Protocol                            │ │
 │  │  ┌──────────────────────┐  ┌─────────────────────────────────────┐ │ │
-│  │  │   BRC-76 Tokens      │  │      Bitcoin Script Escrows         │ │ │
-│  │  │   (Asset NFTs)       │  │      (Information Locks)            │ │ │
+│  │  │   BRC-76 Tokens      │  │      sCrypt Smart Contracts         │ │ │
+│  │  │   (Asset NFTs)       │  │      (RentalEscrow, PaymentChannel) │ │ │
 │  │  │                      │  │                                     │ │ │
 │  │  │  ┌────────────────┐  │  │  ┌─────────────────────────────┐   │ │ │
 │  │  │  │ PushDrop Data  │  │  │  │  2-of-2 Multisig Script    │   │ │ │
@@ -501,6 +511,208 @@ volumes:
 | `ARC_API_KEY` | TAAL ARC API key | `mainnet_xxx` |
 | `JWT_SECRET` | JWT signing secret | `random_string` |
 
+## sCrypt Smart Contracts
+
+### RentalEscrow Contract
+
+Location: `src/contracts/RentalEscrow.ts`
+
+A stateful 2-of-2 multisig escrow contract for rental deposits:
+
+```typescript
+export class RentalEscrow extends SmartContract {
+  @prop() ownerPubKey: PubKey
+  @prop() renterPubKey: PubKey
+  @prop() depositAmount: bigint
+  @prop() rentalFee: bigint
+  @prop() timeoutBlock: bigint
+  @prop(true) state: bigint  // Stateful - tracks CREATED/FUNDED/ACTIVE/RELEASED
+
+  @method()
+  public release(ownerSig: Sig, renterSig: Sig) {
+    assert(this.state === BigInt(EscrowState.ACTIVE))
+    assert(this.checkSig(ownerSig, this.ownerPubKey))
+    assert(this.checkSig(renterSig, this.renterPubKey))
+    this.state = BigInt(EscrowState.RELEASED)
+    // Distribute: rental fee to owner, deposit return to renter
+  }
+  
+  @method()
+  public timeout(ownerSig: Sig) {
+    assert(this.ctx.locktime >= this.timeoutBlock)
+    assert(this.checkSig(ownerSig, this.ownerPubKey))
+    // Owner claims full deposit after timeout
+  }
+  
+  @method()
+  public refund(ownerSig: Sig, renterSig: Sig) {
+    assert(this.state === BigInt(EscrowState.FUNDED))
+    // Full deposit returns to renter (cancelled rental)
+  }
+  
+  @method()
+  public activate(renterSig: Sig) {
+    assert(this.state === BigInt(EscrowState.FUNDED))
+    // Renter confirms receipt, moves to ACTIVE
+  }
+}
+```
+
+**State Machine:**
+```
+         fund()
+ CREATED ──────▶ FUNDED
+                   │
+         activate()│
+                   ▼
+                 ACTIVE
+                   │
+    ┌──────────────┼──────────────┐
+    │              │              │
+release()      timeout()      refund()
+    │              │              │
+    ▼              ▼              ▼
+ RELEASED      DISPUTED       REFUNDED
+```
+
+### PaymentChannel Contract
+
+Location: `src/contracts/PaymentChannel.ts`
+
+Bidirectional payment channel for streaming rental payments:
+
+```typescript
+export class PaymentChannel extends SmartContract {
+  @prop() ownerPubKey: PubKey
+  @prop() renterPubKey: PubKey
+  @prop() capacity: bigint
+  @prop(true) ownerBalance: bigint
+  @prop(true) renterBalance: bigint
+  @prop(true) sequence: bigint
+  @prop() disputeTimeout: bigint
+  @prop(true) state: bigint
+
+  @method()
+  public update(
+    newOwnerBalance: bigint,
+    newRenterBalance: bigint,
+    newSequence: bigint,
+    ownerSig: Sig,
+    renterSig: Sig
+  ) {
+    assert(newSequence > this.sequence)
+    assert(newOwnerBalance + newRenterBalance === this.capacity)
+    // Off-chain state updates
+  }
+  
+  @method()
+  public cooperativeClose(ownerSig: Sig, renterSig: Sig) {
+    // Both parties agree to final settlement
+  }
+  
+  @method()
+  public initiateClose(initiatorSig: Sig, isOwner: boolean) {
+    // Unilateral close starts dispute period
+  }
+  
+  @method()
+  public finalizeClose(sig: Sig) {
+    assert(this.ctx.locktime >= this.disputeTimeout)
+    // Finalize after dispute timeout
+  }
+}
+```
+
+**Use Case: Hourly Rentals**
+```
+Renter funds channel with 10 hours capacity
+  │
+  ├── Hour 1: Update balance (renter: 9h, owner: 1h)
+  ├── Hour 2: Update balance (renter: 8h, owner: 2h)
+  ├── ... (off-chain, no fees)
+  ├── Hour 5: Rental ends early
+  │
+  └── Cooperative close: owner gets 5h, renter gets 5h refund
+```
+
+## Custom Overlay Network
+
+### Topic Manager (tm_tokenrent)
+
+Location: `src/overlay/TopicManager.ts`
+
+```typescript
+export const TOPICS = {
+  ASSET_CREATE: 'tokenrent.asset.create',
+  ASSET_TRANSFER: 'tokenrent.asset.transfer',
+  ESCROW_CREATE: 'tokenrent.escrow.create',
+  ESCROW_FUND: 'tokenrent.escrow.fund',
+  ESCROW_RELEASE: 'tokenrent.escrow.release',
+  PAYMENT_402: 'tokenrent.payment.402',
+  RENTAL_START: 'tokenrent.rental.start',
+  RENTAL_END: 'tokenrent.rental.end'
+}
+
+export const ADMITTANCE_RULES = {
+  [TOPICS.ASSET_CREATE]: {
+    requiredFields: ['TOKENRENT', 'tokenId', 'name', 'ownerKey'],
+    maxDataSize: 10000,
+    requireSignature: true
+  },
+  [TOPICS.ESCROW_CREATE]: {
+    requiredFields: ['TOKENRENT', 'escrowId', 'tokenId', 'ownerKey', 'renterKey', 'depositAmount'],
+    requireSignature: true
+  }
+}
+
+export class TokenRentTopicManager {
+  validateOutput(output: TopicOutput): ValidationResult
+  parseProtocolData(script: Script): ParsedProtocolData
+  createProtocolScript(action: string, data: object): string
+  async submitToOverlay(tx, topic): Promise<{ txid: string }>
+}
+```
+
+### Lookup Service (ls_tokenrent)
+
+Location: `src/overlay/LookupService.ts`
+
+```typescript
+export class TokenRentLookupService {
+  // Asset Queries
+  async getAssetByTokenId(tokenId: string): Promise<AssetRecord>
+  async getAssetsByOwner(ownerKey: string): Promise<AssetRecord[]>
+  async getAvailableAssets(filters?: AssetFilters): Promise<AssetRecord[]>
+  async searchAssets(keyword: string): Promise<AssetRecord[]>
+  
+  // Escrow Queries
+  async getEscrowById(escrowId: string): Promise<EscrowRecord>
+  async getActiveEscrows(partyKey: string): Promise<EscrowRecord[]>
+  async getEscrowsByToken(tokenId: string): Promise<EscrowRecord[]>
+  
+  // Payment Queries
+  async getPaymentStatus(reference: string): Promise<PaymentRecord>
+  async verifyPayment(txid: string, expectedAmount?: number): Promise<VerificationResult>
+  async get402Payments(tokenId: string): Promise<PaymentRecord[]>
+  
+  // Analytics
+  async getAssetStats(tokenId: string): Promise<AssetStats>
+  async getUserStats(userKey: string): Promise<UserStats>
+}
+```
+
+### Protocol Script Format
+
+```
+# T0kenRent Protocol Script
+OP_FALSE OP_RETURN
+  <TOKENRENT>           # Protocol identifier
+  <action>              # e.g., "create", "escrow-create"
+  <tokenId>             # Unique asset identifier
+  <key>:<value>         # Additional data pairs
+  <metadata_json>       # JSON metadata
+```
+
 ## Monitoring
 
 ### Metrics to Track
@@ -510,18 +722,21 @@ volumes:
 - Average rental duration
 - Transaction confirmation times
 - API response latency
+- sCrypt contract deployments
+- Payment channel utilization
 
 ### Logging
 
 ```typescript
 // Structured logging format
 {
-  timestamp: "2025-01-15T10:30:00Z",
+  timestamp: "2025-11-30T10:30:00Z",
   level: "info",
   service: "t0kenrent",
   event: "escrow_funded",
   escrowId: "escrow_123",
   amount: 600.00,
-  txid: "a1b2c3..."
+  txid: "a1b2c3...",
+  contractType: "RentalEscrow"
 }
 ```

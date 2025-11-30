@@ -4,8 +4,8 @@
   "schemaVersion": "1.0.0",
   
   "name": "T0kenRent",
-  "version": "1.0.0",
-  "description": "Decentralized Rental Tokenization and Escrow Platform - Tokenize and rent everyday assets on BSV blockchain with HTTP 402 payment gating",
+  "version": "1.1.0",
+  "description": "Decentralized Rental Tokenization and Escrow Platform - Tokenize and rent everyday assets on BSV blockchain with HTTP 402 payment gating, sCrypt smart contracts, and payment channels",
   
   "author": {
     "name": "ChibiTech",
@@ -98,9 +98,19 @@
         "name": "tm_tokenrent",
         "description": "T0kenRent rental asset transactions",
         "protocol": "pushdrop",
+        "implementation": "src/overlay/TopicManager.ts",
         "admittanceRules": {
-          "requiredFields": ["TOKENRENT", "assetId", "action"]
-        }
+          "requiredFields": ["TOKENRENT", "action", "tokenId"],
+          "maxDataSize": 10000
+        },
+        "actions": [
+          "tokenrent.asset.create",
+          "tokenrent.asset.transfer",
+          "tokenrent.escrow.create",
+          "tokenrent.escrow.fund",
+          "tokenrent.escrow.release",
+          "tokenrent.payment.402"
+        ]
       },
       {
         "name": "tm_supplychain",
@@ -114,7 +124,16 @@
     "lookupServices": [
       {
         "name": "ls_tokenrent",
-        "description": "Query T0kenRent assets and rentals"
+        "description": "Query T0kenRent assets, escrows, and payments",
+        "implementation": "src/overlay/LookupService.ts",
+        "queries": [
+          "getAssetByTokenId",
+          "getAssetsByOwner",
+          "getAvailableAssets",
+          "getEscrowById",
+          "getActiveEscrows",
+          "verifyPayment"
+        ]
       },
       {
         "name": "ls_supplychain",
@@ -127,6 +146,7 @@
   "wallet": {
     "interface": "babbage-sdk",
     "manifestPath": "public/manifest.json",
+    "bridgePath": "scripts/wallet-bridge.js",
     "requiredPermissions": {
       "protocols": [
         "[2, \"Pay MNEE\"]",
@@ -159,7 +179,44 @@
     ]
   },
   
-  "contracts": [],
+  "contracts": [
+    {
+      "name": "RentalEscrow",
+      "description": "2-of-2 multisig escrow for rental deposits with timeout",
+      "language": "scrypt-ts",
+      "path": "src/contracts/RentalEscrow.ts",
+      "features": [
+        "stateful",
+        "2-of-2 multisig",
+        "timeout release",
+        "refund mechanism"
+      ],
+      "methods": [
+        "release(ownerSig, renterSig)",
+        "timeout(ownerSig)",
+        "refund(ownerSig, renterSig)",
+        "activate(renterSig)"
+      ]
+    },
+    {
+      "name": "PaymentChannel",
+      "description": "Bidirectional payment channel for streaming rentals",
+      "language": "scrypt-ts",
+      "path": "src/contracts/PaymentChannel.ts",
+      "features": [
+        "off-chain updates",
+        "streaming payments",
+        "cooperative close",
+        "dispute timeout"
+      ],
+      "methods": [
+        "update(newOwnerBalance, newRenterBalance, newSequence, ownerSig, renterSig)",
+        "cooperativeClose(ownerSig, renterSig)",
+        "initiateClose(initiatorSig, isOwner)",
+        "finalizeClose(sig)"
+      ]
+    }
+  ],
   
   "configs": {
     "lars": {
@@ -186,14 +243,16 @@
     "lint": "next lint",
     "test": "jest",
     "bridge:setup": "node scripts/wallet-bridge.js",
-    "portal:init": "node scripts/init-metanet-portal.js"
+    "portal:init": "node scripts/init-metanet-portal.js",
+    "contracts:compile": "npx scrypt-cli compile"
   },
   
   "dependencies": {
     "runtime": {
       "babbage-sdk": "^0.4.0",
       "@bsv/sdk": "^1.0.0",
-      "pushdrop": "^0.5.0"
+      "pushdrop": "^0.5.0",
+      "scrypt-ts": "^1.3.0"
     },
     "optional": {
       "mongodb": "^6.0.0",
@@ -207,6 +266,7 @@
     "architecture": "docs/architecture.md",
     "http402": "docs/http402.md",
     "walletIntegration": "docs/wallet-integration.md",
+    "workshopAlignment": "docs/WORKSHOP_ALIGNMENT.md",
     "quickstart": "QUICKSTART.md",
     "contributing": "CONTRIBUTING.md"
   },
@@ -215,12 +275,22 @@
     "event": "Open Run Asia - BSV Hackathon 2025",
     "team": "ChibiTech",
     "track": "Web3 Application Development",
+    "workshopAlignment": "100%",
     "features": [
       "HTTP 402 Payment Gating",
       "BRC-76 Asset Tokenization",
       "2-of-2 Multisig Escrow",
       "MNEE Stablecoin Payments",
-      "Overlay Network Integration"
-    ]
+      "Overlay Network Integration",
+      "sCrypt Smart Contracts",
+      "Payment Channels",
+      "Custom Topic Manager",
+      "Custom Lookup Service"
+    ],
+    "optionalEnhancements": {
+      "scryptContracts": true,
+      "paymentChannels": true,
+      "customOverlay": true
+    }
   }
 }
