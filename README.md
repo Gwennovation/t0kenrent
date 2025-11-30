@@ -224,11 +224,15 @@ t0kenrent/
 │   │   └── _document.tsx     # HTML document
 │   ├── context/              # React context
 │   └── styles/               # CSS styles
+├── config/                   # Configuration files
+│   └── deployment-info.json      # BRC-102 deployment config
 ├── docs/                     # Documentation
-│   ├── api.md
-│   ├── architecture.md
-│   ├── http402.md
-│   └── wallet-integration.md
+│   ├── CONTRIBUTING.md           # Contribution guidelines
+│   ├── QUICKSTART.md             # Quick start guide
+│   ├── api.md                    # API reference
+│   ├── architecture.md           # System architecture
+│   ├── http402.md                # HTTP 402 protocol
+│   └── wallet-integration.md     # Wallet setup guide
 ├── public/                   # Static assets
 └── scripts/                  # Utility scripts
 ```
@@ -282,6 +286,8 @@ npm run lint         # Run ESLint
 ```
 
 ## Contributing
+
+See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines.
 
 1. Fork the repository
 2. Create feature branch (`git checkout -b feature/amazing`)
