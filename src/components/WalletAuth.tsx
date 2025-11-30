@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getPublicKey, waitForAuthentication, isAuthenticated } from 'babbage-sdk'
+import { getErrorMessage } from '@/lib/error-utils'
 
 interface WalletAuthProps {
   onAuthenticated?: (publicKey: string) => void
@@ -51,16 +52,12 @@ export default function WalletAuth({ onAuthenticated }: WalletAuthProps) {
     setError('')
     
     try {
-      const result = await waitForAuthentication()
-      
-      if (result) {
-        await loadIdentityKey()
-      } else {
-        setError('Authentication was cancelled')
-      }
-    } catch (err: any) {
-      console.error('Authentication failed:', err)
-      setError(err.message || 'Authentication failed')
+      await waitForAuthentication(/* any required options */);
+      setAuthenticated(true);
+    } catch (error) {
+      console.error('Authentication failed:', getErrorMessage(error));
+      setAuthenticated(false);
+      // notify user if needed
     } finally {
       setLoading(false)
     }
