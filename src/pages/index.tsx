@@ -35,7 +35,7 @@ export default function Home() {
     <>
       <Head>
         <title>T0kenRent - Decentralized Rental Platform</title>
-        <meta name="description" content="Tokenize and rent everyday assets on the BSV blockchain with HTTP 402 payment gating and smart contract escrows" />
+        <meta name="description" content="Rent everyday items from people near you with secure payments and protected deposits" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -148,8 +148,8 @@ export default function Home() {
                 </h1>
 
                 <p className="text-lg sm:text-xl text-surface-600 dark:text-surface-400 mb-10 max-w-2xl mx-auto animate-slide-up animation-delay-100">
-                  The decentralized platform for tokenizing and renting everyday assets. 
-                  Secured by smart contracts, powered by BSV blockchain.
+                  The peer-to-peer platform for renting everyday items. 
+                  Protected payments, secure deposits, no middleman fees.
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up animation-delay-200">
@@ -183,10 +183,10 @@ export default function Home() {
                     </svg>
                   </div>
                   <h3 className="text-xl font-semibold text-surface-900 dark:text-white mb-2">
-                    Asset Tokenization
+                    List Anything
                   </h3>
                   <p className="text-surface-600 dark:text-surface-400">
-                    Mint BRC-76 compliant tokens representing your rentable items with immutable on-chain metadata.
+                    Turn your unused items into income. List cameras, tools, sports gear, and more.
                   </p>
                 </div>
 
@@ -198,10 +198,10 @@ export default function Home() {
                     </svg>
                   </div>
                   <h3 className="text-xl font-semibold text-surface-900 dark:text-white mb-2">
-                    Smart Contract Escrow
+                    Protected Deposits
                   </h3>
                   <p className="text-surface-600 dark:text-surface-400">
-                    Deposits secured by 2-of-2 multisig contracts. Both parties must agree to release funds.
+                    Security deposits held safely until both renter and owner confirm the rental went smoothly.
                   </p>
                 </div>
 
@@ -213,10 +213,10 @@ export default function Home() {
                     </svg>
                   </div>
                   <h3 className="text-xl font-semibold text-surface-900 dark:text-white mb-2">
-                    HTTP 402 Payments
+                    Instant Access
                   </h3>
                   <p className="text-surface-600 dark:text-surface-400">
-                    Micropayments unlock rental details instantly. Pay per view, not per subscription.
+                    Pay a small fee to unlock contact details and pickup info. No subscriptions needed.
                   </p>
                 </div>
               </div>
@@ -234,10 +234,10 @@ export default function Home() {
 
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
                   {[
-                    { step: '01', title: 'List Your Asset', desc: 'Tokenize any item as a BRC-76 token with rental terms and pricing.' },
-                    { step: '02', title: 'Micropayment Unlock', desc: 'Renters pay tiny fee to access detailed rental information.' },
-                    { step: '03', title: 'Escrow Deposit', desc: 'Security deposit locked in smart contract until rental completes.' },
-                    { step: '04', title: 'Release & Review', desc: 'Both parties co-sign to release escrow and leave feedback.' },
+                    { step: '01', title: 'List Your Item', desc: 'Add photos, set your price, and describe your item in minutes.' },
+                    { step: '02', title: 'Browse & Unlock', desc: 'Renters pay a small fee to see pickup location and contact info.' },
+                    { step: '03', title: 'Secure Deposit', desc: 'Security deposit is held safely until the rental is complete.' },
+                    { step: '04', title: 'Complete & Review', desc: 'Return the item, get your deposit back, and leave a review.' },
                   ].map((item, i) => (
                     <div key={i} className="relative">
                       <div className="text-6xl font-bold text-primary-500/10 dark:text-primary-500/20 mb-2">
@@ -264,9 +264,9 @@ export default function Home() {
               {/* Stats */}
               <div className="grid grid-cols-3 gap-4 sm:gap-6 mb-16 sm:mb-24">
                 {[
-                  { value: '~0%', label: 'Transaction Fees', color: 'primary' },
-                  { value: '100%', label: 'On-Chain Security', color: 'accent' },
-                  { value: 'Global', label: 'Accessibility', color: 'primary' },
+                  { value: '~0%', label: 'Platform Fees', color: 'primary' },
+                  { value: '100%', label: 'Secure Payments', color: 'accent' },
+                  { value: 'Global', label: 'Rent Anywhere', color: 'primary' },
                 ].map((stat, i) => (
                   <div 
                     key={i} 
@@ -295,7 +295,7 @@ export default function Home() {
                     Ready to get started?
                   </h2>
                   <p className="text-white/80 mb-8 max-w-xl mx-auto">
-                    Join the future of peer-to-peer rentals. No intermediaries, no hidden fees.
+                    Start earning from your unused items or find exactly what you need. Quick, easy, and secure.
                   </p>
                   <button
                     onClick={enableDemoMode}

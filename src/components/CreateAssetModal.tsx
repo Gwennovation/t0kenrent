@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface Category {
   id: string
@@ -10,11 +10,59 @@ interface CreateAssetModalProps {
   onClose: () => void
   onCreate: (assetData: any) => void
   categories: Category[]
+  demoMode?: boolean
 }
 
-export default function CreateAssetModal({ onClose, onCreate, categories }: CreateAssetModalProps) {
+// Demo sample data for quick fill
+const demoSamples = [
+  {
+    name: 'Canon EOS R5 Camera Kit',
+    description: 'Professional mirrorless camera with 45MP sensor. Includes 24-70mm lens, battery grip, and carrying case. Perfect for events and professional shoots.',
+    category: 'photography',
+    imageUrl: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800',
+    rentalRatePerDay: '75',
+    depositAmount: '500',
+    city: 'San Francisco',
+    state: 'CA',
+    address: '123 Market Street, Suite 400',
+    accessCode: 'CAM-2024',
+    specialInstructions: 'Please return with battery fully charged. Handle with care.',
+    accessories: ['24-70mm Lens', 'Battery Grip', 'Extra Battery', '128GB SD Card', 'Carrying Case']
+  },
+  {
+    name: 'DJI Mavic 3 Pro Drone',
+    description: 'Professional drone with Hasselblad camera. 4/3 CMOS sensor, 46-min flight time. FAA registered and ready to fly.',
+    category: 'electronics',
+    imageUrl: 'https://images.unsplash.com/photo-1473968512647-3e447244af8f?w=800',
+    rentalRatePerDay: '95',
+    depositAmount: '800',
+    city: 'Los Angeles',
+    state: 'CA',
+    address: '456 Sunset Blvd',
+    accessCode: 'DRONE-456',
+    specialInstructions: 'Must have Part 107 certification to operate. Return with props intact.',
+    accessories: ['3 Batteries', 'ND Filters', 'Carrying Case', 'Remote Controller']
+  },
+  {
+    name: 'Milwaukee Power Tool Set',
+    description: 'Complete 18V cordless tool set. Includes drill, impact driver, circular saw, and reciprocating saw. All M18 FUEL series.',
+    category: 'tools',
+    imageUrl: 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=800',
+    rentalRatePerDay: '45',
+    depositAmount: '350',
+    city: 'Austin',
+    state: 'TX',
+    address: '789 Congress Ave',
+    accessCode: 'TOOLS-789',
+    specialInstructions: 'Tools should be wiped clean before return. Report any damage immediately.',
+    accessories: ['4 Batteries', 'Charger', 'Bit Set', 'Tool Bag']
+  }
+]
+
+export default function CreateAssetModal({ onClose, onCreate, categories, demoMode = false }: CreateAssetModalProps) {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [showDemoOptions, setShowDemoOptions] = useState(demoMode)
   
   const [formData, setFormData] = useState({
     name: '',
@@ -35,6 +83,31 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
     condition: 'excellent',
     accessories: [] as string[]
   })
+
+  function fillDemoData(sampleIndex: number) {
+    const sample = demoSamples[sampleIndex]
+    setFormData({
+      name: sample.name,
+      description: sample.description,
+      category: sample.category,
+      imageUrl: sample.imageUrl,
+      rentalRatePerDay: sample.rentalRatePerDay,
+      depositAmount: sample.depositAmount,
+      currency: 'USD',
+      location: {
+        city: sample.city,
+        state: sample.state,
+        address: sample.address
+      },
+      accessCode: sample.accessCode,
+      specialInstructions: sample.specialInstructions,
+      unlockFee: '0.0001',
+      condition: 'excellent',
+      accessories: sample.accessories
+    })
+    setShowDemoOptions(false)
+    setStep(4) // Jump to review
+  }
 
   const [newAccessory, setNewAccessory] = useState('')
 
@@ -110,7 +183,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-xl font-bold text-white">List New Asset</h2>
-                <p className="text-primary-200 text-sm">Create a BRC-76 token for your rentable item</p>
+                <p className="text-primary-200 text-sm">Add your item to the marketplace</p>
               </div>
               <button
                 onClick={onClose}
@@ -123,6 +196,39 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
             </div>
           </div>
         </div>
+
+        {/* Demo Quick Fill Options */}
+        {showDemoOptions && demoMode && (
+          <div className="bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800/50 px-6 py-4">
+            <div className="flex items-center gap-2 mb-3">
+              <svg className="w-5 h-5 text-amber-600 dark:text-amber-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clipRule="evenodd" />
+              </svg>
+              <span className="text-sm font-semibold text-amber-800 dark:text-amber-300">Demo Mode: Quick Fill</span>
+            </div>
+            <p className="text-sm text-amber-700 dark:text-amber-400 mb-3">
+              Select a sample listing to auto-fill the form and see the full experience:
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              {demoSamples.map((sample, i) => (
+                <button
+                  key={i}
+                  onClick={() => fillDemoData(i)}
+                  className="text-left p-3 bg-white dark:bg-surface-800 rounded-lg border border-amber-200 dark:border-amber-800/50 hover:border-amber-400 dark:hover:border-amber-600 transition-colors"
+                >
+                  <p className="font-medium text-sm text-surface-900 dark:text-white truncate">{sample.name}</p>
+                  <p className="text-xs text-surface-500 dark:text-surface-400">${sample.rentalRatePerDay}/day</p>
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowDemoOptions(false)}
+              className="mt-3 text-sm text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200"
+            >
+              Or fill manually
+            </button>
+          </div>
+        )}
 
         {/* Progress Steps */}
         <div className="px-6 py-4 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-700">
@@ -289,7 +395,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
 
               <div>
                 <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
-                  HTTP 402 Unlock Fee (BSV)
+                  Unlock Fee (BSV)
                 </label>
                 <input
                   type="number"
@@ -301,7 +407,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
                   className="input-field"
                 />
                 <p className="mt-2 text-xs text-surface-500 dark:text-surface-400">
-                  Micropayment renters pay to view detailed rental info (location, access codes)
+                  Small fee renters pay to see your contact info and pickup location
                 </p>
               </div>
 
@@ -314,7 +420,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
                     <p className="font-medium mb-1.5">Pricing Tips:</p>
                     <ul className="list-disc list-inside space-y-1 text-primary-700 dark:text-primary-400">
                       <li>Set deposit at ~10x daily rate for valuable items</li>
-                      <li>HTTP 402 fee prevents spam inquiries</li>
+                      <li>Unlock fee filters out casual browsers</li>
                       <li>Competitive pricing attracts more renters</li>
                     </ul>
                   </div>
@@ -357,7 +463,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
               <div>
                 <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
                   Pickup Address <span className="text-red-500">*</span>
-                  <span className="text-xs text-surface-500 ml-1">(shown after HTTP 402 payment)</span>
+                  <span className="text-xs text-surface-500 ml-1">(shown after unlock fee is paid)</span>
                 </label>
                 <input
                   type="text"
@@ -371,7 +477,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
               <div>
                 <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
                   Access Code
-                  <span className="text-xs text-surface-500 ml-1">(shown after HTTP 402 payment)</span>
+                  <span className="text-xs text-surface-500 ml-1">(shown after unlock fee is paid)</span>
                 </label>
                 <input
                   type="text"
@@ -466,7 +572,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
                     <p className="font-medium text-surface-900 dark:text-white">${formData.depositAmount}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">HTTP 402 Fee</p>
+                    <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">Unlock Fee</p>
                     <p className="font-medium text-accent-600 dark:text-accent-400">{formData.unlockFee} BSV</p>
                   </div>
                   <div>
@@ -497,7 +603,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
                   <div className="text-sm text-emerald-800 dark:text-emerald-300">
                     <p className="font-medium mb-1">Ready to List!</p>
                     <p className="text-emerald-700 dark:text-emerald-400">
-                      A BRC-76 compliant token will be minted on the BSV blockchain representing your asset.
+                      Your item will be listed on the marketplace and visible to renters.
                     </p>
                   </div>
                 </div>
@@ -554,14 +660,14 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
-                  Minting...
+                  Creating Listing...
                 </>
               ) : (
                 <>
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                  Mint Token & List
+                  Create Listing
                 </>
               )}
             </button>

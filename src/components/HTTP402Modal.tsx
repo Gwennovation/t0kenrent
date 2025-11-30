@@ -209,7 +209,7 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, onClose
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-surface-500 dark:text-surface-500">Approx. USD</span>
-                  <span className="text-surface-500 dark:text-surface-500">${(asset.unlockFee * 50).toFixed(4)}</span>
+                  <span className="text-surface-500 dark:text-surface-500">~${(asset.unlockFee * 50).toFixed(4)}</span>
                 </div>
               </div>
 
@@ -257,7 +257,7 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, onClose
                 {demoMode ? 'Simulating Payment' : 'Processing Payment'}
               </h3>
               <p className="text-surface-600 dark:text-surface-400">
-                {demoMode ? 'Simulating BSV transaction...' : 'Creating BSV transaction...'}
+                {demoMode ? 'Processing...' : 'Processing payment...'}
               </p>
             </div>
           )}
@@ -271,7 +271,7 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, onClose
               </div>
               <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">Verifying Payment</h3>
               <p className="text-surface-600 dark:text-surface-400 mb-6">
-                {demoMode ? 'Simulating verification...' : 'Confirming transaction on BSV network...'}
+                {demoMode ? 'Verifying...' : 'Verifying your payment...'}
               </p>
               <div className="bg-surface-100 dark:bg-surface-800 rounded-xl p-4 border border-surface-200 dark:border-surface-700">
                 <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">Transaction ID {demoMode && '(Demo)'}</p>

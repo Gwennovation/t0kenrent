@@ -107,7 +107,7 @@ export default function RentalMarketplace({ userKey, demoMode = false }: RentalM
   })
 
   const tabs = [
-    { id: 'browse', label: 'Browse Marketplace', count: filteredAssets.length },
+    { id: 'browse', label: 'Browse Items', count: filteredAssets.length },
     { id: 'myAssets', label: 'My Listed Assets', count: myAssets.length },
     { id: 'myRentals', label: 'My Rentals', count: 0 }
   ]
@@ -122,7 +122,7 @@ export default function RentalMarketplace({ userKey, demoMode = false }: RentalM
               Rental Marketplace
             </h1>
             <p className="text-surface-600 dark:text-surface-400 text-lg">
-              Discover and rent tokenized assets secured by blockchain
+              Find and rent items from people in your area
             </p>
           </div>
           <button
@@ -383,6 +383,7 @@ export default function RentalMarketplace({ userKey, demoMode = false }: RentalM
           onClose={() => setShowCreateModal(false)}
           onCreate={handleCreateAsset}
           categories={categories.filter(c => c.id !== 'all')}
+          demoMode={demoMode}
         />
       )}
     </div>
