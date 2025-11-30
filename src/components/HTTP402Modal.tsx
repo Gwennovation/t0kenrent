@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { getErrorMessage } from '@/lib/error-utils'
+import Portal from './Portal'
 
 interface Asset {
   id: string
@@ -18,10 +19,14 @@ interface HTTP402ModalProps {
   onSuccess: (details: any) => void
 }
 
+// Simulated BSV price for conversion display
+const BSV_PRICE_USD = 50
+
 export default function HTTP402Modal({ asset, userKey, demoMode = false, walletType = 'demo', onClose, onSuccess }: HTTP402ModalProps) {
-  const [step, setStep] = useState<'info' | 'paying' | 'verifying' | 'success' | 'error'>('info')
+  const [step, setStep] = useState<'info' | 'wallet_prompt' | 'paying' | 'verifying' | 'success' | 'error'>('info')
   const [error, setError] = useState('')
   const [txid, setTxid] = useState('')
+  const [paymentDetails, setPaymentDetails] = useState<any>(null)
 
   async function handlePayment() {
     if (demoMode) {
@@ -33,14 +38,15 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
     setError('')
 
     try {
-      const { createAction } = await import('babbage-sdk')
-
+      // Initialize payment request
       const initResponse = await fetch('/api/payment/initiate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           resourceId: asset.tokenId,
-          resourceType: 'rental_details'
+          resourceType: 'rental_details',
+          userKey,
+          walletType
         })
       })
 
@@ -48,28 +54,71 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
         throw new Error('Unexpected response from payment initiation')
       }
 
-      const paymentDetails = await initResponse.json()
+      const paymentInfo = await initResponse.json()
+      let txid = ''
 
-      const result = await createAction({
-        description: `HTTP 402 payment to unlock ${asset.name} rental details`,
-        outputs: [
-          {
-            satoshis: Math.ceil(asset.unlockFee * 100000000),
-            script: paymentDetails.payment.script || await createPaymentScript(asset.ownerKey),
-            basket: 'HTTP 402 Payments'
-          }
-        ]
-      })
+      // Handle payment based on wallet type
+      if (walletType === 'handcash') {
+        // HandCash payment via API
+        const handcashToken = sessionStorage.getItem('handcash_token')
+        if (!handcashToken) {
+          throw new Error('HandCash session expired. Please reconnect your wallet.')
+        }
 
-      setTxid(result.txid)
+        const payResponse = await fetch('/api/payment/handcash', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            accessToken: handcashToken,
+            amount: asset.unlockFee,
+            destination: asset.ownerKey,
+            description: `Unlock ${asset.name} rental details`,
+            paymentReference: paymentInfo.payment.reference
+          })
+        })
+
+        if (!payResponse.ok) {
+          const err = await payResponse.json()
+          throw new Error(err.error || 'HandCash payment failed')
+        }
+
+        const payResult = await payResponse.json()
+        txid = payResult.transactionId
+
+      } else if (walletType === 'metanet') {
+        // MetaNet/Babbage payment via SDK
+        const { createAction } = await import('babbage-sdk')
+
+        const result = await createAction({
+          description: `HTTP 402 payment to unlock ${asset.name} rental details`,
+          outputs: [
+            {
+              satoshis: Math.ceil(asset.unlockFee * 100000000),
+              script: paymentInfo.payment.script || await createPaymentScript(asset.ownerKey),
+              basket: 'HTTP 402 Payments'
+            }
+          ]
+        })
+        txid = result.txid
+
+      } else if (walletType === 'paymail') {
+        // Paymail - show QR code or redirect to wallet
+        // For now, use the generic payment flow
+        throw new Error('Please scan the QR code with your BSV wallet to complete payment')
+      } else {
+        throw new Error('Unknown wallet type')
+      }
+
+      setTxid(txid)
       setStep('verifying')
 
+      // Verify payment
       const verifyResponse = await fetch('/api/payment/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          paymentReference: paymentDetails.payment.reference,
-          transactionId: result.txid,
+          paymentReference: paymentInfo.payment.reference,
+          transactionId: txid,
           amount: asset.unlockFee,
           resourceId: asset.tokenId
         })
@@ -96,32 +145,49 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
   }
 
   function handleDemoPayment() {
-    setStep('paying')
+    // First show wallet prompt simulation
+    setStep('wallet_prompt')
     
+    // Set payment details for display
+    setPaymentDetails({
+      amount: asset.unlockFee,
+      amountUSD: (asset.unlockFee * BSV_PRICE_USD).toFixed(4),
+      recipient: asset.ownerKey.slice(0, 10) + '...' + asset.ownerKey.slice(-6),
+      description: `Unlock ${asset.name} rental details`
+    })
+    
+    // Simulate wallet approval delay
     setTimeout(() => {
-      setTxid('demo_tx_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(7))
-      setStep('verifying')
+      setStep('paying')
       
       setTimeout(() => {
-        setStep('success')
+        const mockTxid = 'demo_tx_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(7)
+        setTxid(mockTxid)
+        setStep('verifying')
         
-        const mockRentalDetails = {
-          pickupLocation: {
-            address: '123 Demo Street, San Francisco, CA 94102',
-            coordinates: { lat: 37.7749, lng: -122.4194 }
-          },
-          accessCode: 'DEMO-' + Math.random().toString(36).substring(2, 6).toUpperCase(),
-          ownerContact: {
-            name: 'Demo Owner',
-            phone: '(555) 123-4567',
-            email: 'demo@t0kenrent.com'
-          },
-          specialInstructions: 'This is a demo - no real rental has been created. In production, this would contain actual pickup instructions.'
-        }
-        
-        onSuccess(mockRentalDetails)
-      }, 1000)
-    }, 1500)
+        setTimeout(() => {
+          setStep('success')
+          
+          const mockRentalDetails = {
+            pickupLocation: {
+              address: '123 Demo Street, San Francisco, CA 94102',
+              coordinates: { lat: 37.7749, lng: -122.4194 }
+            },
+            accessCode: 'DEMO-' + Math.random().toString(36).substring(2, 6).toUpperCase(),
+            ownerContact: {
+              name: 'Demo Owner',
+              phone: '(555) 123-4567',
+              email: 'demo@t0kenrent.com'
+            },
+            specialInstructions: 'This is a demo - no real rental has been created. In production, this would contain actual pickup instructions.',
+            paymentTxId: mockTxid,
+            paidAt: new Date().toISOString()
+          }
+          
+          onSuccess(mockRentalDetails)
+        }, 1200)
+      }, 1500)
+    }, 1000)
   }
 
   async function createPaymentScript(recipientKey: string): Promise<string> {
@@ -131,8 +197,9 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
   }
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal-content max-w-md animate-scale-in">
+    <Portal>
+      <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+        <div className="modal-content max-w-md">
         {/* Header */}
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-accent-500 to-accent-700 dark:from-accent-600 dark:to-accent-800" />
@@ -153,6 +220,7 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
                 </div>
               </div>
               <button
+                type="button"
                 onClick={onClose}
                 className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
               >
@@ -232,6 +300,7 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
               </div>
 
               <button
+                type="button"
                 onClick={handlePayment}
                 className="w-full btn-accent flex items-center justify-center gap-2"
               >
@@ -250,6 +319,53 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
             </div>
           )}
 
+          {/* Wallet Prompt Step */}
+          {step === 'wallet_prompt' && (
+            <div className="text-center py-6">
+              <div className="w-20 h-20 bg-gradient-to-br from-amber-100 to-amber-200 dark:from-amber-900/50 dark:to-amber-800/50 rounded-2xl flex items-center justify-center mx-auto mb-6 animate-pulse">
+                <svg className="w-10 h-10 text-amber-600 dark:text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
+                402 Payment Required
+              </h3>
+              <p className="text-surface-600 dark:text-surface-400 mb-6">
+                Waiting for wallet approval...
+              </p>
+              
+              {paymentDetails && (
+                <div className="bg-surface-50 dark:bg-surface-800/50 rounded-xl p-4 text-left space-y-3 border border-surface-200/50 dark:border-surface-700/50">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-surface-500 dark:text-surface-400">Amount</span>
+                    <span className="text-sm font-semibold text-surface-900 dark:text-white">
+                      {paymentDetails.amount} BSV (~${paymentDetails.amountUSD})
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-surface-500 dark:text-surface-400">To</span>
+                    <span className="text-sm font-mono text-surface-700 dark:text-surface-300">
+                      {paymentDetails.recipient}
+                    </span>
+                  </div>
+                  <div className="border-t border-surface-200 dark:border-surface-700 pt-3">
+                    <p className="text-xs text-surface-500 dark:text-surface-400">
+                      {paymentDetails.description}
+                    </p>
+                  </div>
+                </div>
+              )}
+              
+              <p className="text-xs text-amber-600 dark:text-amber-400 mt-4 flex items-center justify-center gap-1">
+                <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                {demoMode ? 'Simulating wallet popup...' : 'Check your wallet...'}
+              </p>
+            </div>
+          )}
+
           {step === 'paying' && (
             <div className="text-center py-8">
               <div className="relative w-20 h-20 mx-auto mb-6">
@@ -262,10 +378,10 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
                 </div>
               </div>
               <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
-                {demoMode ? 'Simulating Payment' : 'Processing Payment'}
+                {demoMode ? 'Simulating Payment' : 'Broadcasting Transaction'}
               </h3>
               <p className="text-surface-600 dark:text-surface-400">
-                {demoMode ? 'Processing...' : 'Processing payment...'}
+                {demoMode ? 'Processing...' : 'Sending payment to BSV network...'}
               </p>
             </div>
           )}
@@ -289,32 +405,56 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
           )}
 
           {step === 'success' && (
-            <div className="text-center py-8">
+            <div className="text-center py-6">
               <div className="w-20 h-20 bg-gradient-to-br from-emerald-100 to-emerald-200 dark:from-emerald-900/50 dark:to-emerald-800/50 rounded-2xl flex items-center justify-center mx-auto mb-6">
                 <svg className="w-10 h-10 text-emerald-600 dark:text-emerald-400" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
               </div>
               <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
-                {demoMode ? 'Demo Payment Complete!' : 'Payment Successful!'}
+                {demoMode ? 'Demo Payment Complete!' : 'Payment Verified On-Chain!'}
               </h3>
               <p className="text-surface-600 dark:text-surface-400 mb-4">Rental details have been unlocked.</p>
-              {!demoMode && (
-                <a
-                  href={`https://whatsonchain.com/tx/${txid}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-sm text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 transition-colors"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              
+              {/* Transaction Details */}
+              <div className="bg-surface-50 dark:bg-surface-800/50 rounded-xl p-4 text-left mb-4 border border-surface-200/50 dark:border-surface-700/50">
+                <div className="flex items-center gap-2 mb-3">
+                  <svg className="w-4 h-4 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  View transaction on WhatsOnChain
-                </a>
-              )}
+                  <span className="text-sm font-medium text-emerald-700 dark:text-emerald-400">Transaction Confirmed</span>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-surface-500 dark:text-surface-400">Amount Paid</span>
+                    <span className="font-medium text-surface-900 dark:text-white">{asset.unlockFee} BSV</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-surface-500 dark:text-surface-400">Status</span>
+                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">Confirmed</span>
+                  </div>
+                </div>
+                <div className="mt-3 pt-3 border-t border-surface-200 dark:border-surface-700">
+                  <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">Transaction ID {demoMode && '(Demo)'}</p>
+                  <p className="text-xs font-mono text-surface-700 dark:text-surface-300 break-all">{txid}</p>
+                </div>
+              </div>
+              
+              <a
+                href={`https://whatsonchain.com/tx/${txid}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-sm text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                View on WhatsOnChain (Blockchain Explorer)
+              </a>
+              
               {demoMode && (
-                <p className="text-sm text-amber-600 dark:text-amber-400">
-                  This was a simulated payment for demo purposes.
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-3">
+                  Demo mode: This was a simulated payment for demonstration.
                 </p>
               )}
             </div>
@@ -330,6 +470,7 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
               <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">Payment Failed</h3>
               <p className="text-red-600 dark:text-red-400 mb-6">{error}</p>
               <button
+                type="button"
                 onClick={() => setStep('info')}
                 className="btn-secondary"
               >
@@ -337,8 +478,9 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
               </button>
             </div>
           )}
+          </div>
         </div>
       </div>
-    </div>
+    </Portal>
   )
 }

@@ -2,56 +2,102 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import WalletSelector from '@/components/WalletSelector'
 import RentalMarketplace from '@/components/RentalMarketplace'
-import ChainDashboard from '@/components/ChainDashboard'
+import RentalDashboard from '@/components/RentalDashboard'
 import { ThemeToggle } from '@/context/ThemeContext'
 
 export default function Home() {
   const [authenticated, setAuthenticated] = useState(false)
   const [userKey, setUserKey] = useState('')
+  const [userHandle, setUserHandle] = useState('')
   const [walletType, setWalletType] = useState<'handcash' | 'metanet' | 'paymail' | 'demo'>('demo')
   const [demoMode, setDemoMode] = useState(false)
   const [showMarketplace, setShowMarketplace] = useState(false)
-  const [activeView, setActiveView] = useState<'marketplace' | 'chains'>('marketplace')
+  const [activeView, setActiveView] = useState<'marketplace' | 'dashboard'>('marketplace')
   const [isLoaded, setIsLoaded] = useState(false)
+  const [walletBalance, setWalletBalance] = useState<number | null>(null)
 
   useEffect(() => {
     setIsLoaded(true)
+    
+    // Check for demo mode in URL
     const urlParams = new URLSearchParams(window.location.search)
     if (urlParams.get('demo') === 'true') {
       enableDemoMode()
     }
-    if (urlParams.get('view') === 'chains') {
-      setActiveView('chains')
+    
+    // Check for HandCash callback
+    const authToken = urlParams.get('authToken')
+    if (authToken) {
+      handleHandCashCallback(authToken)
     }
   }, [])
 
-  function handleAuthenticated(publicKey: string, wallet: string = 'metanet') {
+  async function handleHandCashCallback(authToken: string) {
+    // In production, exchange auth token for access token
+    // and fetch user profile
+    try {
+      const response = await fetch('/api/auth/handcash', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ authToken })
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        handleAuthenticated(data.publicKey, data.handle, 'handcash', data.balance)
+      }
+    } catch (error) {
+      console.error('HandCash callback error:', error)
+    }
+  }
+
+  function handleAuthenticated(publicKey: string, handle: string, wallet: string = 'demo', balance?: number) {
     setUserKey(publicKey)
+    setUserHandle(handle || publicKey.slice(0, 10))
     setWalletType(wallet as 'handcash' | 'metanet' | 'paymail' | 'demo')
     setAuthenticated(true)
     setShowMarketplace(true)
+    
+    // Only set demo mode if explicitly using demo wallet
+    const isDemo = wallet === 'demo'
+    setDemoMode(isDemo)
+    
+    // Set balance - only use random balance for demo mode
+    if (isDemo) {
+      setWalletBalance(Math.random() * 10 + 0.5) // Random demo balance 0.5-10.5 BSV
+    } else if (balance !== undefined) {
+      setWalletBalance(balance)
+    } else {
+      // Real wallet without balance info yet - will be fetched later
+      setWalletBalance(null)
+    }
   }
 
   function enableDemoMode() {
-    setUserKey('demo_user_' + Date.now().toString(36))
+    const demoKey = 'demo_user_' + Date.now().toString(36)
+    setUserKey(demoKey)
+    setUserHandle('Demo User')
     setWalletType('demo')
     setDemoMode(true)
     setShowMarketplace(true)
+    setWalletBalance(Math.random() * 10 + 0.5)
   }
 
   function disconnectWallet() {
     setUserKey('')
+    setUserHandle('')
     setWalletType('demo')
     setAuthenticated(false)
     setDemoMode(false)
     setShowMarketplace(false)
+    setWalletBalance(null)
   }
 
   return (
     <>
       <Head>
-        <title>T0kenRent - Decentralized Rental Platform</title>
-        <meta name="description" content="Rent everyday items from people near you with secure payments and protected deposits" />
+        <title>T0kenRent - Decentralized Rental Platform on BSV</title>
+        <meta name="description" content="Rent everyday items from people near you with secure BSV payments, smart contract escrow, and on-chain proof of rentals." />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -68,7 +114,7 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16 sm:h-20">
               {/* Logo */}
-              <div className="flex items-center gap-3 group cursor-pointer" onClick={() => { setShowMarketplace(false); setDemoMode(false); }}>
+              <div className="flex items-center gap-3 group cursor-pointer" onClick={() => { setShowMarketplace(false); setDemoMode(false); setActiveView('marketplace'); }}>
                 <div className="relative">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25 group-hover:shadow-xl group-hover:shadow-primary-500/30 transition-all duration-300 group-hover:scale-105">
                     <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -82,7 +128,7 @@ export default function Home() {
                     T0kenRent
                   </h1>
                   <p className="text-xs text-surface-500 dark:text-surface-400 -mt-0.5">
-                    Decentralized Rentals
+                    Decentralized Rentals on BSV
                   </p>
                 </div>
               </div>
@@ -103,7 +149,7 @@ export default function Home() {
                   </div>
                 )}
 
-                {/* Wallet / Demo Status */}
+                {/* Wallet Status */}
                 <div className="w-auto">
                   {showMarketplace ? (
                     <div className="flex items-center gap-2">
@@ -117,10 +163,16 @@ export default function Home() {
                           {demoMode ? 'DEMO' : walletType === 'handcash' ? 'HC' : walletType === 'metanet' ? 'MN' : 'PM'}
                         </span>
                         <span className="hidden sm:inline text-xs font-medium text-emerald-700 dark:text-emerald-400 truncate max-w-[120px]">
-                          {demoMode ? 'Demo User' : `${userKey.slice(0, 6)}...${userKey.slice(-4)}`}
+                          {demoMode ? 'Demo User' : userHandle || `${userKey.slice(0, 6)}...${userKey.slice(-4)}`}
                         </span>
+                        {walletBalance !== null && (
+                          <span className="hidden md:inline text-xs font-bold text-primary-600 dark:text-primary-400 ml-1">
+                            {walletBalance.toFixed(4)} BSV
+                          </span>
+                        )}
                       </div>
                       <button 
+                        type="button"
                         onClick={disconnectWallet}
                         className="p-2 rounded-lg bg-surface-100 dark:bg-surface-800 hover:bg-red-100 dark:hover:bg-red-900/30 text-surface-600 dark:text-surface-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                         title="Disconnect"
@@ -149,24 +201,32 @@ export default function Home() {
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
                 <div className="flex items-center justify-center gap-2 p-1 bg-surface-100 dark:bg-surface-800 rounded-xl w-fit mx-auto">
                   <button
+                    type="button"
                     onClick={() => setActiveView('marketplace')}
-                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
+                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
                       activeView === 'marketplace'
                         ? 'bg-white dark:bg-surface-700 text-primary-600 dark:text-primary-400 shadow-sm'
                         : 'text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
                     }`}
                   >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
                     Marketplace
                   </button>
                   <button
-                    onClick={() => setActiveView('chains')}
-                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all ${
-                      activeView === 'chains'
+                    type="button"
+                    onClick={() => setActiveView('dashboard')}
+                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                      activeView === 'dashboard'
                         ? 'bg-white dark:bg-surface-700 text-primary-600 dark:text-primary-400 shadow-sm'
                         : 'text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
                     }`}
                   >
-                    Supply Chains
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                    </svg>
+                    Dashboard
                   </button>
                 </div>
               </div>
@@ -174,7 +234,7 @@ export default function Home() {
               {activeView === 'marketplace' ? (
                 <RentalMarketplace userKey={userKey} demoMode={demoMode} walletType={walletType} />
               ) : (
-                <ChainDashboard userKey={userKey} demoMode={demoMode} walletType={walletType} />
+                <RentalDashboard userKey={userKey} demoMode={demoMode} walletType={walletType} walletBalance={walletBalance} />
               )}
             </div>
           ) : (
@@ -187,7 +247,7 @@ export default function Home() {
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
                   </span>
                   <span className="text-sm font-medium text-primary-700 dark:text-primary-400">
-                    BSV Hackathon 2025 - Team ChibiTech
+                    Built on BSV Blockchain
                   </span>
                 </div>
 
@@ -197,13 +257,13 @@ export default function Home() {
                   </span>
                   <br />
                   <span className="bg-gradient-to-r from-primary-500 via-accent-500 to-primary-500 bg-clip-text text-transparent">
-                    Trust No One
+                    Trust the Chain
                   </span>
                 </h1>
 
                 <p className="text-lg sm:text-xl text-surface-600 dark:text-surface-400 mb-10 max-w-2xl mx-auto animate-slide-up animation-delay-100">
-                  The peer-to-peer platform for renting everyday items. 
-                  Protected payments, secure deposits, no middleman fees.
+                  Peer-to-peer rentals with HTTP 402 micropayments, smart contract escrow, 
+                  and on-chain proof of every transaction.
                 </p>
 
                 {/* Wallet Connection Options */}
@@ -213,7 +273,7 @@ export default function Home() {
                       <svg className="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                       </svg>
-                      Connect Your Wallet
+                      Connect Your BSV Wallet
                     </h3>
                     <WalletSelector onAuthenticated={handleAuthenticated} />
                   </div>
@@ -227,6 +287,7 @@ export default function Home() {
                     <div className="h-px w-16 bg-surface-300 dark:bg-surface-700" />
                   </div>
                   <button
+                    type="button"
                     onClick={enableDemoMode}
                     className="btn-secondary text-base px-6 py-3 flex items-center justify-center gap-2"
                   >
@@ -237,57 +298,53 @@ export default function Home() {
                     Try Demo Mode
                   </button>
                   <p className="text-sm text-surface-500 dark:text-surface-500">
-                    No wallet? No problem. Explore the full experience without connecting.
+                    Explore the full experience without connecting a wallet
                   </p>
                 </div>
               </div>
 
               {/* Feature Cards */}
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16 sm:mb-24">
-                {/* Card 1 */}
-                <div className="feature-card animate-slide-up animation-delay-100">
-                  <div className="icon-wrapper">
-                    <svg className="w-7 h-7 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                    </svg>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16 sm:mb-24">
+                {[
+                  {
+                    icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
+                    title: 'Smart Contract Escrow',
+                    description: '2-of-2 multisig escrow protects both parties. Funds released only when both agree.',
+                    color: 'primary'
+                  },
+                  {
+                    icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z',
+                    title: 'HTTP 402 Payments',
+                    description: 'Pay tiny micropayments to unlock rental details. Near-zero fees on BSV.',
+                    color: 'accent'
+                  },
+                  {
+                    icon: 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z',
+                    title: '1Sat Ordinal Tokens',
+                    description: 'Link your assets to 1Sat ordinals for on-chain proof of ownership.',
+                    color: 'primary'
+                  },
+                  {
+                    icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01',
+                    title: 'On-Chain Logging',
+                    description: 'Every transaction logged on BSV. Immutable rental history and receipts.',
+                    color: 'accent'
+                  }
+                ].map((feature, i) => (
+                  <div key={i} className="feature-card animate-slide-up" style={{ animationDelay: `${(i + 1) * 100}ms` }}>
+                    <div className={`icon-wrapper ${feature.color === 'accent' ? 'bg-accent-100 dark:bg-accent-900/30' : ''}`}>
+                      <svg className={`w-7 h-7 ${feature.color === 'accent' ? 'text-accent-500' : 'text-primary-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={feature.icon} />
+                      </svg>
+                    </div>
+                    <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
+                      {feature.title}
+                    </h3>
+                    <p className="text-sm text-surface-600 dark:text-surface-400">
+                      {feature.description}
+                    </p>
                   </div>
-                  <h3 className="text-xl font-semibold text-surface-900 dark:text-white mb-2">
-                    List Anything
-                  </h3>
-                  <p className="text-surface-600 dark:text-surface-400">
-                    Turn your unused items into income. List cameras, tools, sports gear, and more.
-                  </p>
-                </div>
-
-                {/* Card 2 */}
-                <div className="feature-card animate-slide-up animation-delay-200">
-                  <div className="icon-wrapper">
-                    <svg className="w-7 h-7 text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-semibold text-surface-900 dark:text-white mb-2">
-                    Protected Deposits
-                  </h3>
-                  <p className="text-surface-600 dark:text-surface-400">
-                    Security deposits held safely until both renter and owner confirm the rental went smoothly.
-                  </p>
-                </div>
-
-                {/* Card 3 */}
-                <div className="feature-card animate-slide-up animation-delay-300 sm:col-span-2 lg:col-span-1">
-                  <div className="icon-wrapper">
-                    <svg className="w-7 h-7 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
-                  </div>
-                  <h3 className="text-xl font-semibold text-surface-900 dark:text-white mb-2">
-                    Instant Access
-                  </h3>
-                  <p className="text-surface-600 dark:text-surface-400">
-                    Pay a small fee to unlock contact details and pickup info. No subscriptions needed.
-                  </p>
-                </div>
+                ))}
               </div>
 
               {/* How It Works */}
@@ -297,16 +354,16 @@ export default function Home() {
                     How It Works
                   </h2>
                   <p className="text-surface-600 dark:text-surface-400">
-                    Four simple steps to trustless rentals
+                    Four steps to trustless peer-to-peer rentals
                   </p>
                 </div>
 
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
                   {[
-                    { step: '01', title: 'List Your Item', desc: 'Add photos, set your price, and describe your item in minutes.' },
-                    { step: '02', title: 'Browse & Unlock', desc: 'Renters pay a small fee to see pickup location and contact info.' },
-                    { step: '03', title: 'Secure Deposit', desc: 'Security deposit is held safely until the rental is complete.' },
-                    { step: '04', title: 'Complete & Review', desc: 'Return the item, get your deposit back, and leave a review.' },
+                    { step: '01', title: 'Connect Wallet', desc: 'Sign in with HandCash, Relysia, or any BSV wallet.' },
+                    { step: '02', title: 'Pay to Unlock', desc: 'HTTP 402 micropayment reveals pickup location and contact.' },
+                    { step: '03', title: 'Fund Escrow', desc: 'Deposit + rental fee locked in 2-of-2 multisig contract.' },
+                    { step: '04', title: 'Complete & Release', desc: 'Both parties sign to release funds. On-chain proof created.' },
                   ].map((item, i) => (
                     <div key={i} className="relative">
                       <div className="text-6xl font-bold text-primary-500/10 dark:text-primary-500/20 mb-2">
@@ -331,25 +388,26 @@ export default function Home() {
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-3 gap-4 sm:gap-6 mb-16 sm:mb-24">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 mb-16 sm:mb-24">
                 {[
-                  { value: '~0%', label: 'Platform Fees', color: 'primary' },
-                  { value: '100%', label: 'Secure Payments', color: 'accent' },
-                  { value: 'Global', label: 'Rent Anywhere', color: 'primary' },
+                  { value: '~$0.001', label: 'Unlock Fee', color: 'primary' },
+                  { value: '2-of-2', label: 'Multisig Escrow', color: 'accent' },
+                  { value: '100%', label: 'On-Chain', color: 'primary' },
+                  { value: 'Global', label: 'P2P Rentals', color: 'accent' },
                 ].map((stat, i) => (
                   <div 
                     key={i} 
-                    className={`glass-card p-6 sm:p-8 text-center animate-slide-up`}
+                    className="glass-card p-6 sm:p-8 text-center animate-slide-up"
                     style={{ animationDelay: `${(i + 5) * 100}ms` }}
                   >
-                    <div className={`text-3xl sm:text-4xl font-bold mb-2 bg-gradient-to-r ${
+                    <div className={`text-2xl sm:text-3xl font-bold mb-2 bg-gradient-to-r ${
                       stat.color === 'primary' 
                         ? 'from-primary-500 to-primary-600' 
                         : 'from-accent-500 to-accent-600'
                     } bg-clip-text text-transparent`}>
                       {stat.value}
                     </div>
-                    <div className="text-sm text-surface-600 dark:text-surface-400">
+                    <div className="text-xs sm:text-sm text-surface-600 dark:text-surface-400">
                       {stat.label}
                     </div>
                   </div>
@@ -361,12 +419,13 @@ export default function Home() {
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRoLTJ2LTRoMnY0em0wLTZ2LTJoLTJ2Mmgyem0tNiAwaC0ydjJoMnYtMnptMCA2aC0ydjRoMnYtNHptLTYtNmgtMnYyaDJ2LTJ6bTAgNmgtMnY0aDJ2LTR6bTEyLTEydi0ySDI0djJoMTJ6bTAgMTJ2LTJIMjR2MmgxMnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30" />
                 <div className="relative">
                   <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-                    Ready to get started?
+                    Ready to rent trustlessly?
                   </h2>
                   <p className="text-white/80 mb-8 max-w-xl mx-auto">
-                    Start earning from your unused items or find exactly what you need. Quick, easy, and secure.
+                    List your items, rent what you need, all secured by BSV blockchain technology.
                   </p>
                   <button
+                    type="button"
                     onClick={enableDemoMode}
                     className="px-8 py-4 bg-white text-primary-600 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
                   >
@@ -393,14 +452,14 @@ export default function Home() {
                     T0kenRent
                   </p>
                   <p className="text-xs text-surface-500 dark:text-surface-400">
-                    Team ChibiTech - BSV Hackathon 2025
+                    Decentralized Rentals on BSV
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-6">
                 <a 
-                  href="https://github.com/Gwennovation/t0kenrent" 
+                  href="https://github.com" 
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-surface-600 dark:text-surface-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"

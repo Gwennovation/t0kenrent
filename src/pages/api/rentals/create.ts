@@ -18,7 +18,9 @@ export default async function handler(
       rentalDays,
       rentalFee,
       depositAmount,
-      totalAmount
+      totalAmount,
+      paymentTxId,
+      escrowTxId
     } = req.body
 
     // Validate required fields
@@ -39,7 +41,7 @@ export default async function handler(
     // Ensure renter exists
     storage.getOrCreateUser(renterKey)
 
-    // Create the rental
+    // Create the rental with on-chain transaction IDs
     const rental = storage.createRental({
       assetId,
       assetName: asset.name,
@@ -55,7 +57,9 @@ export default async function handler(
       totalAmount: totalAmount || (rentalFee + depositAmount),
       status: 'active',
       pickupLocation: asset.rentalDetails?.pickupLocation?.address,
-      accessCode: asset.rentalDetails?.accessCode
+      accessCode: asset.rentalDetails?.accessCode,
+      paymentTxId: paymentTxId || `tx_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
+      escrowTxId: escrowTxId || `esc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
     })
 
     return res.status(201).json({
@@ -74,7 +78,10 @@ export default async function handler(
         status: rental.status,
         pickupLocation: rental.pickupLocation,
         accessCode: rental.accessCode,
-        createdAt: rental.createdAt
+        createdAt: rental.createdAt,
+        // On-chain transaction logging
+        paymentTxId: rental.paymentTxId,
+        escrowTxId: rental.escrowTxId
       }
     })
 

@@ -60,6 +60,11 @@ export interface StoredRental {
   completedAt?: string
   pickupLocation?: string
   accessCode?: string
+  // On-chain transaction logging
+  paymentTxId?: string
+  escrowTxId?: string
+  releaseTxId?: string
+  unlockTxId?: string
 }
 
 export interface StoredUser {
@@ -343,7 +348,7 @@ class InMemoryStorage {
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }
 
-  createRental(data: Omit<StoredRental, 'id' | 'escrowId' | 'createdAt'>): StoredRental {
+  createRental(data: Omit<StoredRental, 'id' | 'escrowId' | 'createdAt'> & Partial<Pick<StoredRental, 'paymentTxId' | 'escrowTxId'>>): StoredRental {
     const id = `rental_${Date.now()}_${Math.random().toString(36).substring(7)}`
     const escrowId = `escrow_${Date.now()}_${Math.random().toString(36).substring(7)}`
     
@@ -471,4 +476,19 @@ export const inMemoryStorage = {
   assets: [] as any[],
   rentals: [] as any[],
   users: [] as any[]
+}
+
+// Global escrow store for persistence across API calls
+// Using globalThis to ensure singleton behavior in serverless environment
+declare global {
+  var escrowStore: Map<string, any> | undefined
+  var releaseStore: Map<string, any> | undefined
+}
+
+export const globalEscrowStore = globalThis.escrowStore || new Map<string, any>()
+export const globalReleaseStore = globalThis.releaseStore || new Map<string, any>()
+
+if (process.env.NODE_ENV !== 'production') {
+  globalThis.escrowStore = globalEscrowStore
+  globalThis.releaseStore = globalReleaseStore
 }

@@ -11,6 +11,7 @@ interface CreateAssetModalProps {
   onCreate: (assetData: any) => void
   categories: Category[]
   demoMode?: boolean
+  ownerKey?: string
 }
 
 // Demo sample data for quick fill
@@ -59,7 +60,7 @@ const demoSamples = [
   }
 ]
 
-export default function CreateAssetModal({ onClose, onCreate, categories, demoMode = false }: CreateAssetModalProps) {
+export default function CreateAssetModal({ onClose, onCreate, categories, demoMode = false, ownerKey = '' }: CreateAssetModalProps) {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [showDemoOptions, setShowDemoOptions] = useState(demoMode)
@@ -186,6 +187,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories, demoMo
                 <p className="text-primary-200 text-sm">Add your item to the marketplace</p>
               </div>
               <button
+                type="button"
                 onClick={onClose}
                 className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
               >
@@ -212,6 +214,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories, demoMo
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {demoSamples.map((sample, i) => (
                 <button
+                  type="button"
                   key={i}
                   onClick={() => fillDemoData(i)}
                   className="text-left p-3 bg-white dark:bg-surface-800 rounded-lg border border-amber-200 dark:border-amber-800/50 hover:border-amber-400 dark:hover:border-amber-600 transition-colors"
@@ -222,6 +225,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories, demoMo
               ))}
             </div>
             <button
+              type="button"
               onClick={() => setShowDemoOptions(false)}
               className="mt-3 text-sm text-amber-700 dark:text-amber-400 hover:text-amber-900 dark:hover:text-amber-200"
             >
@@ -595,6 +599,42 @@ export default function CreateAssetModal({ onClose, onCreate, categories, demoMo
                 )}
               </div>
 
+              {/* Owner Wallet Info - Auto-filled */}
+              <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800/50 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <svg className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-primary-800 dark:text-primary-300 mb-1">Owner Wallet (Auto-filled)</p>
+                    <p className="font-mono text-xs text-primary-700 dark:text-primary-400 break-all">
+                      {ownerKey || 'Not connected'}
+                    </p>
+                    <p className="text-xs text-primary-600 dark:text-primary-500 mt-1">
+                      Rental payments will be sent to this address
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Tokenization Info */}
+              <div className="bg-accent-50 dark:bg-accent-900/20 border border-accent-200 dark:border-accent-800/50 rounded-xl p-4">
+                <div className="flex items-start gap-3">
+                  <svg className="w-5 h-5 text-accent-600 dark:text-accent-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
+                  <div className="text-sm text-accent-800 dark:text-accent-300">
+                    <p className="font-medium mb-1.5">Asset Tokenization (BRC-76)</p>
+                    <ul className="list-disc list-inside space-y-1 text-accent-700 dark:text-accent-400 text-xs">
+                      <li>A unique token ID will be generated for this asset</li>
+                      <li>Token metadata stored on BSV blockchain</li>
+                      <li>Ownership verifiable on-chain</li>
+                      <li>HTTP 402 payment gating for rental details</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
               <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-xl p-4">
                 <div className="flex items-start gap-3">
                   <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -603,7 +643,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories, demoMo
                   <div className="text-sm text-emerald-800 dark:text-emerald-300">
                     <p className="font-medium mb-1">Ready to List!</p>
                     <p className="text-emerald-700 dark:text-emerald-400">
-                      Your item will be listed on the marketplace and visible to renters.
+                      Your item will be tokenized and listed on the marketplace.
                     </p>
                   </div>
                 </div>
@@ -616,6 +656,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories, demoMo
         <div className="px-6 py-4 bg-surface-50 dark:bg-surface-800/50 border-t border-surface-200 dark:border-surface-700 flex justify-between">
           {step > 1 ? (
             <button
+              type="button"
               onClick={() => setStep(step - 1)}
               className="btn-ghost text-surface-600 dark:text-surface-400"
             >
@@ -626,6 +667,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories, demoMo
             </button>
           ) : (
             <button
+              type="button"
               onClick={onClose}
               className="btn-ghost text-surface-600 dark:text-surface-400"
             >
@@ -635,6 +677,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories, demoMo
 
           {step < 4 ? (
             <button
+              type="button"
               onClick={() => setStep(step + 1)}
               disabled={
                 (step === 1 && !isStep1Valid) ||
@@ -650,6 +693,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories, demoMo
             </button>
           ) : (
             <button
+              type="button"
               onClick={handleSubmit}
               disabled={loading}
               className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:from-surface-300 disabled:to-surface-300 dark:disabled:from-surface-700 dark:disabled:to-surface-700 text-white font-semibold rounded-xl transition-all duration-300 flex items-center gap-2 shadow-lg shadow-emerald-500/25 disabled:shadow-none"

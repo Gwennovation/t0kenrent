@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { getErrorMessage } from '@/lib/error-utils'
+import Portal from './Portal'
 
 interface Asset {
   id: string
@@ -71,8 +72,7 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
     setError('')
 
     try {
-      const { createAction } = await import('babbage-sdk')
-
+      // Create escrow contract
       const response = await fetch('/api/escrow/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -85,7 +85,8 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
             endDate: new Date(endDate).toISOString()
           },
           depositAmount: depositAmount,
-          rentalFee: rentalFee
+          rentalFee: rentalFee,
+          walletType
         })
       })
 
@@ -99,23 +100,64 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
       setEscrowAddress(escrowData.escrowAddress)
       setStep('funding')
 
-      const fundResult = await createAction({
-        description: `Escrow deposit for ${asset.name} rental`,
-        outputs: [
-          {
-            satoshis: Math.ceil(totalAmount * 100),
-            script: escrowData.escrowScript,
-            basket: 'Rental Escrows'
-          }
-        ]
-      })
+      let fundingTxid = ''
 
+      // Fund escrow based on wallet type
+      if (walletType === 'handcash') {
+        // HandCash payment
+        const handcashToken = sessionStorage.getItem('handcash_token')
+        if (!handcashToken) {
+          throw new Error('HandCash session expired. Please reconnect your wallet.')
+        }
+
+        const payResponse = await fetch('/api/payment/handcash', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            accessToken: handcashToken,
+            amount: totalAmount / 100, // Convert cents to BSV
+            destination: escrowData.escrowAddress,
+            description: `Escrow deposit for ${asset.name} rental`
+          })
+        })
+
+        if (!payResponse.ok) {
+          const err = await payResponse.json()
+          throw new Error(err.error || 'HandCash payment failed')
+        }
+
+        const payResult = await payResponse.json()
+        fundingTxid = payResult.transactionId
+
+      } else if (walletType === 'metanet') {
+        // MetaNet/Babbage SDK
+        const { createAction } = await import('babbage-sdk')
+
+        const fundResult = await createAction({
+          description: `Escrow deposit for ${asset.name} rental`,
+          outputs: [
+            {
+              satoshis: Math.ceil(totalAmount * 100),
+              script: escrowData.escrowScript,
+              basket: 'Rental Escrows'
+            }
+          ]
+        })
+        fundingTxid = fundResult.txid
+
+      } else if (walletType === 'paymail') {
+        throw new Error('Please scan the QR code with your BSV wallet to fund the escrow')
+      } else {
+        throw new Error('Unknown wallet type')
+      }
+
+      // Confirm escrow funding
       const confirmResponse = await fetch('/api/escrow/confirm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           escrowId: escrowData.escrowId,
-          fundingTxid: fundResult.txid
+          fundingTxid
         })
       })
 
@@ -135,6 +177,10 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
   async function handleDemoEscrow() {
     setStep('creating')
     
+    // Generate demo transaction IDs
+    const demoPaymentTxId = `demo_pay_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`
+    const demoEscrowTxId = `demo_esc_${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 8)}`
+    
     try {
       // Create actual rental in demo mode too
       const response = await fetch('/api/rentals/create', {
@@ -148,7 +194,9 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
           rentalDays,
           rentalFee,
           depositAmount,
-          totalAmount
+          totalAmount,
+          paymentTxId: demoPaymentTxId,
+          escrowTxId: demoEscrowTxId
         })
       })
 
@@ -161,8 +209,13 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
         
         setTimeout(() => {
           setStep('success')
-          // Pass the rental back to parent
-          setTimeout(() => onSuccess(result.rental), 500)
+          // Pass the rental with transaction IDs back to parent
+          const rentalWithTx = {
+            ...result.rental,
+            paymentTxId: demoPaymentTxId,
+            escrowTxId: demoEscrowTxId
+          }
+          setTimeout(() => onSuccess(rentalWithTx), 500)
         }, 1000)
       } else {
         throw new Error(result.error || 'Failed to create rental')
@@ -177,6 +230,19 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
       
       setTimeout(() => {
         setStep('success')
+        // Include transaction IDs even in fallback
+        const fallbackRental = {
+          id: 'demo_rental_' + Date.now().toString(36),
+          escrowId: demoEscrowId,
+          paymentTxId: demoPaymentTxId,
+          escrowTxId: demoEscrowTxId,
+          assetName: asset.name,
+          startDate,
+          endDate,
+          rentalDays,
+          totalAmount
+        }
+        onSuccess(fallbackRental)
       }, 1000)
     }
   }
@@ -186,8 +252,9 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
   const minDateStr = minDate.toISOString().split('T')[0]
 
   return (
-    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal-content max-w-lg max-h-[90vh] overflow-y-auto animate-scale-in">
+    <Portal>
+      <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+        <div className="modal-content max-w-lg">
         {/* Header */}
         <div className="relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-emerald-500 to-emerald-700 dark:from-emerald-600 dark:to-emerald-800" />
@@ -208,6 +275,7 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
                 </div>
               </div>
               <button
+                type="button"
                 onClick={onClose}
                 className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
               >
@@ -349,6 +417,7 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
               )}
 
               <button
+                type="button"
                 onClick={handleCreateEscrow}
                 disabled={!startDate || !endDate}
                 className="w-full px-6 py-3.5 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:from-surface-300 disabled:to-surface-300 dark:disabled:from-surface-700 dark:disabled:to-surface-700 disabled:cursor-not-allowed text-white font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/25 disabled:shadow-none hover:-translate-y-0.5 disabled:hover:translate-y-0"
@@ -466,7 +535,8 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
               )}
 
               <button
-                onClick={onSuccess}
+                type="button"
+                onClick={() => onClose()}
                 className="px-8 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white font-semibold rounded-xl transition-all duration-300 shadow-lg shadow-emerald-500/25 hover:-translate-y-0.5"
               >
                 Done
@@ -484,6 +554,7 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
               <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">Escrow Failed</h3>
               <p className="text-red-600 dark:text-red-400 mb-6">{error}</p>
               <button
+                type="button"
                 onClick={() => setStep('configure')}
                 className="btn-secondary"
               >
@@ -491,8 +562,9 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
               </button>
             </div>
           )}
+          </div>
         </div>
       </div>
-    </div>
+    </Portal>
   )
 }
