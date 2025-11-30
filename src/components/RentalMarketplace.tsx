@@ -64,6 +64,7 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [successMessage, setSuccessMessage] = useState('')
+  const [myListingsFilter, setMyListingsFilter] = useState<'all' | 'available' | 'rented'>('all')
 
   const categories = useMemo(() => [
     { id: 'all', name: 'All Categories', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z' },
@@ -159,6 +160,12 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
 
   const activeRentals = useMemo(() => myRentals.filter(r => r.status === 'active'), [myRentals])
   const completedRentals = useMemo(() => myRentals.filter(r => r.status === 'completed'), [myRentals])
+
+  // Filter my listings by status
+  const filteredMyAssets = useMemo(() => {
+    if (myListingsFilter === 'all') return myAssets
+    return myAssets.filter(asset => asset.status === myListingsFilter)
+  }, [myAssets, myListingsFilter])
 
   const tabs = useMemo(() => [
     { id: 'browse', label: 'Browse Items', count: filteredAssets.length },
@@ -374,6 +381,56 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
       {/* My Assets Tab */}
       {activeTab === 'myAssets' && (
         <div className="animate-fade-in">
+          {/* Status Filter */}
+          {myAssets.length > 0 && (
+            <div className="mb-6">
+              <div className="flex items-center gap-3 flex-wrap">
+                <span className="text-sm font-medium text-surface-600 dark:text-surface-400">Filter by status:</span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setMyListingsFilter('all')}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
+                      myListingsFilter === 'all'
+                        ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25'
+                        : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 hover:bg-surface-200 dark:hover:bg-surface-700 border border-surface-200 dark:border-surface-700'
+                    }`}
+                  >
+                    All ({myAssets.length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMyListingsFilter('available')}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                      myListingsFilter === 'available'
+                        ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25'
+                        : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 hover:bg-surface-200 dark:hover:bg-surface-700 border border-surface-200 dark:border-surface-700'
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${
+                      myListingsFilter === 'available' ? 'bg-white' : 'bg-emerald-500'
+                    }`}></span>
+                    Available ({myAssets.filter(a => a.status === 'available').length})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMyListingsFilter('rented')}
+                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
+                      myListingsFilter === 'rented'
+                        ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25'
+                        : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 hover:bg-surface-200 dark:hover:bg-surface-700 border border-surface-200 dark:border-surface-700'
+                    }`}
+                  >
+                    <span className={`w-2 h-2 rounded-full ${
+                      myListingsFilter === 'rented' ? 'bg-white' : 'bg-amber-500'
+                    }`}></span>
+                    Rented ({myAssets.filter(a => a.status === 'rented').length})
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Stats Summary */}
           {myAssets.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
@@ -402,9 +459,9 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
             </div>
           )}
 
-          {myAssets.length > 0 ? (
+          {filteredMyAssets.length > 0 ? (
             <div className={`grid gap-6 ${viewMode === 'grid' ? 'sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
-              {myAssets.map((asset, index) => (
+              {filteredMyAssets.map((asset, index) => (
                 <div 
                   key={asset.id} 
                   className="animate-slide-up"
@@ -422,7 +479,28 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
                 </div>
               ))}
             </div>
+          ) : myAssets.length > 0 ? (
+            /* No items match filter */
+            <div className="empty-state">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-surface-100 to-surface-200 dark:from-surface-800 dark:to-surface-700 flex items-center justify-center">
+                <svg className="w-12 h-12 text-surface-400 dark:text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-surface-900 dark:text-white mb-2">
+                No {myListingsFilter === 'available' ? 'available' : 'rented'} items
+              </h3>
+              <p className="text-surface-600 dark:text-surface-400 mb-6 max-w-md mx-auto">
+                {myListingsFilter === 'available' 
+                  ? 'All your items are currently rented out!' 
+                  : 'None of your items are currently being rented.'}
+              </p>
+              <button type="button" onClick={() => setMyListingsFilter('all')} className="btn-secondary">
+                View All Listings
+              </button>
+            </div>
           ) : (
+            /* No items at all */
             <div className="empty-state">
               <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-surface-100 to-surface-200 dark:from-surface-800 dark:to-surface-700 flex items-center justify-center">
                 <svg className="w-12 h-12 text-surface-400 dark:text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -435,7 +513,7 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
               <p className="text-surface-600 dark:text-surface-400 mb-6 max-w-md mx-auto">
                 Start earning by listing your first item
               </p>
-              <button onClick={() => setShowCreateModal(true)} className="btn-primary">
+              <button type="button" onClick={() => setShowCreateModal(true)} className="btn-primary">
                 List Your First Item
               </button>
             </div>
