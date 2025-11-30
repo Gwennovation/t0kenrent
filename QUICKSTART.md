@@ -1,44 +1,37 @@
 # T0kenRent Quick Start Guide
 
-Get T0kenRent up and running on your local machine in less than 10 minutes.
+Get T0kenRent up and running in under 5 minutes.
 
 ## Prerequisites
 
 - **Node.js** v18+ - [Download](https://nodejs.org/)
-- **npm** or **yarn** - Comes with Node.js
+- **npm** - Comes with Node.js
 - **Git** - [Download](https://git-scm.com/)
-- **MongoDB** (optional) - [Download](https://www.mongodb.com/try/download/community)
-- **BSV Wallet** - [Babbage](https://babbage.systems/) or compatible
 
 ## Step 1: Clone and Install
 
 ```bash
-git clone https://github.com/ChibiTech/T0kenRent.git
-cd T0kenRent
+git clone https://github.com/Gwennovation/t0kenrent.git
+cd t0kenrent
 npm install
 ```
 
 ## Step 2: Configure Environment
 
 ```bash
-cp .env.example .env
+cp .env.example .env.local
 ```
 
-Edit `.env`:
+Edit `.env.local` with minimum settings:
 
 ```bash
-# Minimal configuration for development
-NODE_ENV=development
-PORT=3000
+# HandCash Connect (get from https://dashboard.handcash.io)
+NEXT_PUBLIC_HANDCASH_APP_ID=your_app_id
+HANDCASH_APP_SECRET=your_app_secret
+NEXT_PUBLIC_HANDCASH_REDIRECT_URL=http://localhost:3000
 
-# BSV Network (use testnet for development)
-NETWORK=test
-
-# MongoDB (optional - uses in-memory for quick testing if not set)
-MONGODB_URI=mongodb://localhost:27017/t0kenrent
-
-# Overlay Network
-OVERLAY_URL=https://overlay-us-1.bsvb.tech
+# Optional: MongoDB (app works without it using in-memory storage)
+# MONGODB_URI=mongodb://localhost:27017/t0kenrent
 ```
 
 ## Step 3: Start Development Server
@@ -49,120 +42,112 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000)
 
-You should see the T0kenRent marketplace!
+## Step 4: Try Demo Mode
 
-## Step 4: Connect Your Wallet
+No wallet? No problem!
 
-1. Click "Connect BSV Wallet" in the top right
-2. Approve connection in your BSV wallet (Babbage, etc.)
-3. You're now authenticated!
+1. Click **"Try Demo Mode"** on the landing page
+2. Browse the marketplace with sample assets
+3. Test the full user flow without any setup
 
-## Step 5: Try the Features
+## Step 5: Connect a Real Wallet
 
-### List an Asset
+### HandCash
+1. Click **"HandCash"** button
+2. Authorize in the popup
+3. Return to T0kenRent authenticated
 
-1. Click "List New Asset"
-2. Fill in asset details:
-   - Name: "Canon EOS R5 Camera"
-   - Category: Photography
-   - Daily Rate: $50
-   - Deposit: $500
-   - Location: San Francisco, CA
-3. Click "Mint Token & List"
+### MetaNet/Babbage
+1. Install [MetaNet Portal](https://www.babbage.systems/)
+2. Click **"MetaNet"** button
+3. Approve connection in your wallet
+
+### Paymail
+1. Click **"Paymail"** button
+2. Enter your paymail (e.g., `user@handcash.io`)
+3. Start browsing
+
+## Try the Features
 
 ### Browse Marketplace
-
-- Search for assets by name or category
-- View public details (location, price)
-- Note the "Pay to Unlock Details" button (HTTP 402)
+- View rental listings
+- Filter by category
+- See pricing and locations
 
 ### Unlock Details (HTTP 402)
+1. Click **"Unlock Contact Info"** on any asset
+2. Review the micropayment (~$0.001)
+3. Pay with your connected wallet
+4. View pickup address, access codes, contact info
 
-1. Click "Pay to Unlock Details" on any asset
-2. Review the micropayment amount
-3. Click "Pay X BSV"
-4. View unlocked rental details (address, access code)
-
-### Create Escrow
-
-1. After unlocking details, click "Create Escrow & Rent"
+### Rent an Item (Escrow)
+1. Click **"Rent Now"** on an unlocked asset
 2. Select rental dates
-3. Review cost breakdown
-4. Click "Create Escrow & Fund"
-5. Confirm transaction in your wallet
+3. Review deposit + rental fee
+4. Fund the 2-of-2 escrow
+5. Rental confirmed!
 
-## Hackathon Mode
+### My Dashboard
+- View active and past rentals
+- See your listed assets
+- Track earnings and spending
 
-For rapid development without real transactions:
+## Environment Variables
 
-```bash
-# .env
-NODE_ENV=development
-MOCK_PAYMENTS=true
-```
-
-This enables:
-- In-memory database (no MongoDB needed)
-- Mocked BSV transactions
-- Auto-verified payments
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `NEXT_PUBLIC_HANDCASH_APP_ID` | For HandCash | Your HandCash App ID |
+| `HANDCASH_APP_SECRET` | For HandCash | Your HandCash App Secret |
+| `NEXT_PUBLIC_HANDCASH_REDIRECT_URL` | For HandCash | OAuth callback URL |
+| `MONGODB_URI` | No | MongoDB connection string |
+| `NETWORK` | No | BSV network (main/test) |
+| `OVERLAY_URL` | No | Overlay network URL |
 
 ## Common Issues
 
-### "Cannot connect to MongoDB"
-
+### "Port 3000 already in use"
 ```bash
-# Option 1: Start MongoDB
-mongod --dbpath ./data/db
-
-# Option 2: Use in-memory (comment out MONGODB_URI)
+# Use a different port
+PORT=3001 npm run dev
 ```
 
-### "Wallet not detected"
+### "HandCash login not working"
+- Ensure redirect URL matches in HandCash Dashboard
+- Check App ID and Secret are correct
 
-- Ensure you have a Babbage-compatible BSV wallet installed
+### "Wallet not connecting"
+- Install MetaNet Portal browser extension
 - Try refreshing the page
 - Check browser console for errors
 
-### "Port already in use"
+## Commands
 
 ```bash
-# Kill process on port 3000
-kill -9 $(lsof -ti:3000)
+npm run dev      # Start development server
+npm run build    # Build for production
+npm run start    # Start production server
+npm run lint     # Run linter
+```
+
+## Project Structure
+
+```
+t0kenrent/
+├── src/
+│   ├── components/   # React components
+│   ├── pages/api/    # API routes
+│   ├── lib/          # Utilities
+│   └── models/       # MongoDB schemas
+├── docs/             # Documentation
+└── public/           # Static assets
 ```
 
 ## Next Steps
 
-- Read the [README.md](README.md) for full documentation
-- Check [docs/api.md](docs/api.md) for API reference
-- Review [docs/http402.md](docs/http402.md) for payment protocol details
-- See [docs/architecture.md](docs/architecture.md) for system design
-
-## Docker Alternative
-
-```bash
-docker-compose up -d
-```
-
-Services:
-- App: http://localhost:3000
-- MongoDB: localhost:27017
-
-## Commands Reference
-
-```bash
-npm run dev      # Development server
-npm run build    # Production build
-npm run start    # Production server
-npm test         # Run tests
-npm run lint     # Lint code
-```
-
-## Support
-
-- [GitHub Issues](https://github.com/ChibiTech/T0kenRent/issues)
-- [Discord](https://discord.gg/tokenrent)
-- Email: support@tokenrent.io
+- Read [README.md](README.md) for full documentation
+- See [docs/api.md](docs/api.md) for API reference
+- Check [docs/http402.md](docs/http402.md) for payment protocol
 
 ---
 
-**Team ChibiTech** | BSV Hackathon 2025
+**Built on BSV Blockchain**

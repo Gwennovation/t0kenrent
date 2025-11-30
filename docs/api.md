@@ -6,31 +6,56 @@ Complete API reference for the T0kenRent platform.
 
 ```
 Development: http://localhost:3000/api
-Production: https://tokenrent.io/api
+Production: https://your-domain.com/api
 ```
 
 ## Authentication
 
-### Wallet Login
+### HandCash OAuth
 
-Authenticate using BSV wallet signature.
+Exchange HandCash auth token for access credentials.
 
 ```http
-POST /api/auth/login
+POST /api/auth/handcash
 Content-Type: application/json
 
 {
-  "wallet_address": "1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2",
-  "signature": "signed_message_proof"
+  "authToken": "handcash_auth_token_from_oauth"
 }
 ```
 
-**Response:**
+**Response (200 OK):**
 ```json
 {
-  "jwt_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-  "expires_in": 3600,
-  "user_id": "user123"
+  "success": true,
+  "publicKey": "03a3ee5b5d8d...",
+  "handle": "johndoe",
+  "displayName": "John Doe",
+  "paymail": "johndoe@handcash.io",
+  "balance": 0.12345678,
+  "accessToken": "hc_access_token..."
+}
+```
+
+### Paymail Resolution
+
+Resolve paymail to public key.
+
+```http
+POST /api/auth/paymail
+Content-Type: application/json
+
+{
+  "paymail": "user@handcash.io"
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "paymail": "user@handcash.io",
+  "publicKey": "03b4cc5a6d7e..."
 }
 ```
 
@@ -40,11 +65,10 @@ Content-Type: application/json
 
 ### Create Asset
 
-Mint a new BRC-76 compliant rental asset token.
+Create a new rental asset listing.
 
 ```http
 POST /api/assets/create
-Authorization: Bearer {jwt_token}
 Content-Type: application/json
 
 {
@@ -52,20 +76,26 @@ Content-Type: application/json
   "description": "Professional mirrorless camera with 45MP sensor",
   "category": "photography",
   "imageUrl": "https://example.com/camera.jpg",
-  "rentalRatePerDay": 50.00,
-  "depositAmount": 500.00,
+  "rentalRatePerDay": 75,
+  "depositAmount": 500,
   "currency": "USD",
   "location": {
     "city": "San Francisco",
     "state": "CA",
     "address": "123 Market St, Suite 100"
   },
-  "accessCode": "CAMERA2024",
-  "specialInstructions": "Equipment is in blue case",
+  "accessCode": "CAM-2024",
+  "specialInstructions": "Handle with care",
+  "ownerContact": {
+    "name": "John Doe",
+    "phone": "(415) 555-0123",
+    "email": "john@example.com"
+  },
   "unlockFee": 0.0001,
   "condition": "excellent",
   "accessories": ["battery", "charger", "memory_card"],
-  "ownerKey": "03a3ee5b5d8d..."
+  "ownerKey": "03a3ee5b5d8d...",
+  "ordinalId": "optional_1sat_ordinal_id"
 }
 ```
 
@@ -73,27 +103,17 @@ Content-Type: application/json
 ```json
 {
   "success": true,
-  "tokenId": "t0ken_1234567890_abc123",
+  "tokenId": "token_1234567890_abc123",
+  "ordinalId": "1sat_ord_camera_abc123",
+  "ordinalVerified": true,
+  "message": "Ordinal verified on-chain",
   "asset": {
-    "id": "65abc123...",
-    "tokenId": "t0ken_1234567890_abc123",
+    "id": "asset_001",
+    "tokenId": "token_1234567890_abc123",
     "name": "Canon EOS R5 Camera",
-    "description": "Professional mirrorless camera with 45MP sensor",
-    "category": "photography",
-    "imageUrl": "https://example.com/camera.jpg",
-    "rentalRatePerDay": 50.00,
-    "depositAmount": 500.00,
-    "currency": "USD",
-    "location": {
-      "city": "San Francisco",
-      "state": "CA"
-    },
     "status": "available",
-    "unlockFee": 0.0001,
-    "ownerKey": "03a3ee5b5d8d...",
     "createdAt": "2025-01-15T10:30:00Z"
-  },
-  "brc76Compliant": true
+  }
 }
 ```
 
@@ -102,16 +122,15 @@ Content-Type: application/json
 Fetch available assets from the marketplace.
 
 ```http
-GET /api/assets/list?category=photography&maxPrice=100&city=San%20Francisco&page=1&limit=20
+GET /api/assets/list?category=photography&maxPrice=100&status=available&page=1&limit=20
 ```
 
 **Query Parameters:**
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| category | string | Filter by category |
+| category | string | Filter by category (photography, tools, electronics, sports, vehicles, other) |
 | maxPrice | number | Maximum daily rental rate |
-| city | string | Filter by city |
 | status | string | Filter by status (default: available) |
 | page | number | Page number (default: 1) |
 | limit | number | Items per page (default: 20) |
@@ -121,43 +140,82 @@ GET /api/assets/list?category=photography&maxPrice=100&city=San%20Francisco&page
 {
   "assets": [
     {
-      "id": "65abc123...",
-      "tokenId": "t0ken_1234567890_abc123",
-      "name": "Canon EOS R5 Camera",
+      "id": "asset_001",
+      "tokenId": "token_camera_001",
+      "name": "Canon EOS R5 Camera Kit",
+      "description": "Professional mirrorless camera...",
       "category": "photography",
-      "rentalRatePerDay": 50.00,
-      "depositAmount": 500.00,
-      "location": {
-        "city": "San Francisco",
-        "state": "CA"
-      },
+      "imageUrl": "https://images.unsplash.com/...",
+      "rentalRatePerDay": 75,
+      "depositAmount": 500,
+      "currency": "USD",
+      "location": { "city": "San Francisco", "state": "CA" },
       "status": "available",
       "rating": 4.8,
-      "unlockFee": 0.0001
+      "unlockFee": 0.0001,
+      "ownerKey": "demo_owner_001",
+      "createdAt": "2025-01-10T00:00:00Z"
     }
   ],
   "pagination": {
     "page": 1,
     "limit": 20,
-    "total": 45,
-    "pages": 3
+    "total": 5,
+    "pages": 1
   }
 }
 ```
 
 ### Get My Assets
 
-Fetch assets owned by the authenticated user.
+Fetch assets owned by a specific user.
 
 ```http
-GET /api/assets/my?owner={publicKey}
+GET /api/assets/my?ownerKey=03a3ee5b5d8d...
 ```
 
 **Response (200 OK):**
 ```json
 {
   "assets": [...],
-  "count": 5
+  "count": 3
+}
+```
+
+### Unlock Asset Details
+
+Unlock protected rental details after payment.
+
+```http
+POST /api/assets/unlock
+Content-Type: application/json
+
+{
+  "assetId": "asset_001",
+  "userKey": "03b4cc5a6d7e...",
+  "demoMode": false
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "unlocked": true,
+  "rentalDetails": {
+    "pickupLocation": {
+      "address": "123 Market Street, Suite 400",
+      "city": "San Francisco",
+      "state": "CA"
+    },
+    "accessCode": "CAM-2024",
+    "ownerContact": {
+      "name": "Alex Chen",
+      "phone": "(415) 555-0123",
+      "email": "alex@example.com"
+    },
+    "specialInstructions": "Please return with battery fully charged."
+  }
 }
 ```
 
@@ -165,39 +223,36 @@ GET /api/assets/my?owner={publicKey}
 
 ## HTTP 402 Payment Gateway
 
-### Initiate Payment
+### Initiate 402 Payment
 
-Request access to protected rental details.
+Request payment details to unlock protected content.
 
 ```http
-POST /api/payment/initiate
+POST /api/402/initiate
 Content-Type: application/json
 
 {
-  "resourceId": "t0ken_1234567890_abc123",
-  "resourceType": "rental_details",
-  "payerKey": "03b4cc5a6d7e..."
+  "resourceId": "asset_001",
+  "resourceType": "asset"
 }
 ```
 
 **Response (402 Payment Required):**
 ```json
 {
-  "error": "Payment required",
-  "message": "Access to rental details requires micropayment",
+  "success": true,
+  "message": "Payment required to access rental details",
   "payment": {
-    "currency": "BSV",
+    "paymentReference": "pay_asset_001_1705312200_xyz789",
+    "resourceId": "asset_001",
+    "resourceType": "asset",
+    "resourceName": "Canon EOS R5 Camera Kit",
     "amount": 0.0001,
-    "address": "03a3ee5b5d8d...",
-    "reference": "pay_t0ken_1234567890_abc123_1705312200_xyz789",
+    "currency": "BSV",
+    "paymentAddress": "demo_owner_001",
     "expiresAt": "2025-01-15T10:35:00Z",
     "expiresIn": 300,
-    "resourceId": "t0ken_1234567890_abc123",
-    "resourceType": "rental_details"
-  },
-  "asset": {
-    "name": "Canon EOS R5 Camera",
-    "tokenId": "t0ken_1234567890_abc123"
+    "status": "pending"
   }
 }
 ```
@@ -206,8 +261,36 @@ Content-Type: application/json
 ```
 Accept-Payment: BSV
 Payment-Amount: 0.0001
-Payment-Address: 03a3ee5b5d8d...
-Payment-Reference: pay_t0ken_1234567890_abc123_1705312200_xyz789
+Payment-Address: demo_owner_001
+Payment-Reference: pay_asset_001_1705312200_xyz789
+Payment-Expires: 2025-01-15T10:35:00Z
+```
+
+### Initiate Payment Request
+
+Create a payment request for wallet integration.
+
+```http
+POST /api/payment/initiate
+Content-Type: application/json
+
+{
+  "assetId": "asset_001",
+  "amount": 0.0001,
+  "userKey": "03b4cc5a6d7e..."
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "paymentReference": "pay_1705312200_abc123",
+  "amount": 0.0001,
+  "recipient": "demo_owner_001",
+  "description": "Unlock rental details for Canon EOS R5 Camera Kit",
+  "expiresAt": "2025-01-15T10:35:00Z"
+}
 ```
 
 ### Verify Payment
@@ -219,10 +302,10 @@ POST /api/payment/verify
 Content-Type: application/json
 
 {
-  "paymentReference": "pay_t0ken_1234567890_abc123_1705312200_xyz789",
+  "paymentReference": "pay_1705312200_abc123",
   "transactionId": "a1b2c3d4e5f6...",
   "amount": 0.0001,
-  "resourceId": "t0ken_1234567890_abc123"
+  "resourceId": "asset_001"
 }
 ```
 
@@ -236,28 +319,43 @@ Content-Type: application/json
   "transactionId": "a1b2c3d4e5f6...",
   "rentalDetails": {
     "pickupLocation": {
-      "address": "123 Market St, Suite 100",
+      "address": "123 Market Street, Suite 400",
       "city": "San Francisco",
-      "state": "CA",
-      "coordinates": {
-        "lat": 37.7749,
-        "lng": -122.4194
-      }
+      "state": "CA"
     },
-    "accessCode": "CAMERA2024",
+    "accessCode": "CAM-2024",
     "ownerContact": {
-      "phone": "+1-555-0123",
-      "email": "owner@example.com"
+      "phone": "(415) 555-0123",
+      "email": "alex@example.com"
     },
-    "specialInstructions": "Equipment is in blue case"
+    "specialInstructions": "Please return with battery fully charged."
   }
 }
 ```
 
-**Response Headers:**
+### HandCash Payment
+
+Process payment via HandCash wallet.
+
+```http
+POST /api/payment/handcash
+Content-Type: application/json
+
+{
+  "accessToken": "hc_access_token...",
+  "assetId": "asset_001",
+  "amount": 0.0001,
+  "paymentType": "unlock"
+}
 ```
-Payment-Verified: true
-Access-Token: access_1705312200_abc123
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "transactionId": "hc_tx_1234567890",
+  "paymentReference": "pay_1705312200_abc123"
+}
 ```
 
 ---
@@ -266,23 +364,22 @@ Access-Token: access_1705312200_abc123
 
 ### Create Escrow
 
-Create a new escrow contract for a rental agreement.
+Create a new 2-of-2 multisig escrow for a rental.
 
 ```http
 POST /api/escrow/create
-Authorization: Bearer {jwt_token}
 Content-Type: application/json
 
 {
-  "rentalTokenId": "t0ken_1234567890_abc123",
+  "assetId": "asset_001",
   "renterKey": "03b4cc5a6d7e...",
-  "ownerKey": "03a3ee5b5d8d...",
+  "ownerKey": "demo_owner_001",
   "rentalPeriod": {
-    "startDate": "2025-01-20T10:00:00Z",
-    "endDate": "2025-01-22T10:00:00Z"
+    "startDate": "2025-01-20",
+    "endDate": "2025-01-22"
   },
-  "depositAmount": 500.00,
-  "rentalFee": 100.00
+  "depositAmount": 500,
+  "rentalFee": 150
 }
 ```
 
@@ -292,26 +389,57 @@ Content-Type: application/json
   "success": true,
   "escrowId": "escrow_1705312200_def456",
   "escrowAddress": "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy",
-  "escrowScript": "5221...",
   "multisigScript": "OP_2 03a3ee... 03b4cc... OP_2 OP_CHECKMULTISIG",
   "requiredSignatures": 2,
   "timeoutBlocks": 144,
-  "totalAmount": 600.00,
+  "totalAmount": 650,
+  "depositAmount": 500,
+  "rentalFee": 150,
   "status": "created",
+  "statusInfo": {
+    "status": "created",
+    "canRelease": false,
+    "message": "Waiting for funding"
+  },
   "rentalPeriod": {
-    "startDate": "2025-01-20T10:00:00Z",
-    "endDate": "2025-01-22T10:00:00Z"
+    "startDate": "2025-01-20",
+    "endDate": "2025-01-22"
   }
 }
 ```
 
-### Confirm Escrow Funding
+### Fund Escrow
 
-Confirm that escrow has been funded.
+Record escrow funding transaction.
+
+```http
+POST /api/escrow/fund
+Content-Type: application/json
+
+{
+  "escrowId": "escrow_1705312200_def456",
+  "transactionId": "b2c3d4e5f6a7...",
+  "renterKey": "03b4cc5a6d7e..."
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "escrowId": "escrow_1705312200_def456",
+  "status": "funded",
+  "fundingTxId": "b2c3d4e5f6a7...",
+  "message": "Escrow funded successfully. Rental is now active."
+}
+```
+
+### Confirm Escrow
+
+Confirm escrow funding (MongoDB version).
 
 ```http
 POST /api/escrow/confirm
-Authorization: Bearer {jwt_token}
 Content-Type: application/json
 
 {
@@ -329,29 +457,49 @@ Content-Type: application/json
   "status": "funded",
   "fundingTxid": "b2c3d4e5f6a7...",
   "fundedAt": "2025-01-15T11:00:00Z",
-  "rentalPeriod": {
-    "startDate": "2025-01-20T10:00:00Z",
-    "endDate": "2025-01-22T10:00:00Z"
-  },
   "message": "Escrow funded successfully. Rental is now active."
+}
+```
+
+### Get Escrow Status
+
+Check current escrow status.
+
+```http
+GET /api/escrow/status?escrowId=escrow_1705312200_def456
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "escrow": {
+    "id": "escrow_1705312200_def456",
+    "status": "funded",
+    "ownerSigned": false,
+    "renterSigned": false,
+    "totalAmount": 650,
+    "depositAmount": 500,
+    "rentalFee": 150,
+    "fundingTxId": "b2c3d4e5f6a7...",
+    "canRelease": true
+  }
 }
 ```
 
 ### Release Escrow
 
-Sign escrow release (requires both parties).
+Sign and release escrow funds.
 
 ```http
 POST /api/escrow/release
-Authorization: Bearer {jwt_token}
 Content-Type: application/json
 
 {
   "escrowId": "escrow_1705312200_def456",
   "signerKey": "03a3ee5b5d8d...",
   "signature": "304402...",
-  "releaseType": "standard",
-  "damageAmount": 0
+  "releaseType": "standard"
 }
 ```
 
@@ -370,8 +518,7 @@ Content-Type: application/json
     "ownerSigned": true,
     "renterSigned": false
   },
-  "releaseBreakdown": null,
-  "message": "Signature recorded. Waiting for renter signature."
+  "message": "Signature recorded. Waiting for other party."
 }
 ```
 
@@ -380,17 +527,214 @@ Content-Type: application/json
 {
   "success": true,
   "escrowId": "escrow_1705312200_def456",
-  "status": "completed",
+  "status": "released",
   "signatures": {
     "ownerSigned": true,
     "renterSigned": true
   },
   "releaseBreakdown": {
-    "toOwner": 100.00,
-    "toRenter": 500.00,
-    "toArbitrator": 0
+    "toOwner": 150,
+    "toRenter": 500
   },
-  "message": "Both parties have signed. Escrow released."
+  "releaseTxId": "c3d4e5f6a7b8...",
+  "message": "Escrow released successfully."
+}
+```
+
+---
+
+## Rental Management
+
+### Create Rental
+
+Create a new rental record.
+
+```http
+POST /api/rentals/create
+Content-Type: application/json
+
+{
+  "assetId": "asset_001",
+  "renterKey": "03b4cc5a6d7e...",
+  "startDate": "2025-01-20",
+  "endDate": "2025-01-22",
+  "escrowId": "escrow_1705312200_def456"
+}
+```
+
+**Response (201 Created):**
+```json
+{
+  "success": true,
+  "rental": {
+    "id": "rental_1705312200_ghi789",
+    "assetId": "asset_001",
+    "assetName": "Canon EOS R5 Camera Kit",
+    "renterKey": "03b4cc5a6d7e...",
+    "ownerKey": "demo_owner_001",
+    "status": "pending",
+    "totalAmount": 650,
+    "createdAt": "2025-01-15T11:00:00Z"
+  }
+}
+```
+
+### Get My Rentals
+
+Fetch user's rental history.
+
+```http
+GET /api/rentals/my?userKey=03b4cc5a6d7e...
+```
+
+**Response (200 OK):**
+```json
+{
+  "rentals": [
+    {
+      "id": "rental_1705312200_ghi789",
+      "assetId": "asset_001",
+      "assetName": "Canon EOS R5 Camera Kit",
+      "status": "active",
+      "role": "renter",
+      "startDate": "2025-01-20",
+      "endDate": "2025-01-22",
+      "totalAmount": 650,
+      "escrowId": "escrow_1705312200_def456"
+    }
+  ],
+  "count": 1
+}
+```
+
+### Complete Rental
+
+Mark rental as completed.
+
+```http
+POST /api/rentals/complete
+Content-Type: application/json
+
+{
+  "rentalId": "rental_1705312200_ghi789",
+  "userKey": "03b4cc5a6d7e..."
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "rental": {
+    "id": "rental_1705312200_ghi789",
+    "status": "completed",
+    "completedAt": "2025-01-22T10:00:00Z"
+  }
+}
+```
+
+### Mint Rental Proof
+
+Mint on-chain proof of rental.
+
+```http
+POST /api/rentals/mint-proof
+Content-Type: application/json
+
+{
+  "rentalId": "rental_1705312200_ghi789",
+  "userKey": "03b4cc5a6d7e..."
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "proofTxId": "d4e5f6a7b8c9...",
+  "ordinalId": "1sat_proof_rental_ghi789"
+}
+```
+
+### Submit to Overlay
+
+Submit rental transaction to overlay network.
+
+```http
+POST /api/rentals/submit-overlay
+Content-Type: application/json
+
+{
+  "rentalId": "rental_1705312200_ghi789",
+  "txId": "d4e5f6a7b8c9..."
+}
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "overlayResponse": {
+    "accepted": true,
+    "topic": "tokenrent.rental.complete"
+  }
+}
+```
+
+---
+
+## User Management
+
+### Get User Profile
+
+Fetch user profile information.
+
+```http
+GET /api/user/profile?publicKey=03b4cc5a6d7e...
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "user": {
+    "publicKey": "03b4cc5a6d7e...",
+    "handle": "johndoe",
+    "displayName": "John Doe",
+    "walletType": "handcash",
+    "rating": 4.9,
+    "reviewCount": 15,
+    "totalListings": 3,
+    "totalRentals": 12,
+    "totalEarnings": 1250,
+    "totalSpent": 450,
+    "createdAt": "2024-06-15T00:00:00Z"
+  }
+}
+```
+
+### Get User Stats
+
+Fetch user statistics.
+
+```http
+GET /api/user/stats?publicKey=03b4cc5a6d7e...
+```
+
+**Response (200 OK):**
+```json
+{
+  "success": true,
+  "stats": {
+    "totalListings": 3,
+    "totalRentals": 12,
+    "activeRentals": 1,
+    "completedRentals": 11,
+    "totalEarnings": 1250,
+    "totalSpent": 450,
+    "rating": 4.9,
+    "reviewCount": 15
+  }
 }
 ```
 
@@ -402,25 +746,23 @@ Content-Type: application/json
 
 ```json
 {
-  "error": "Error type",
-  "message": "Detailed error message",
-  "code": "ERROR_CODE"
+  "success": false,
+  "error": "Error message",
+  "message": "Detailed error description"
 }
 ```
 
 ### HTTP Status Codes
 
-| Code | Meaning | T0kenRent Usage |
-|------|---------|-----------------|
+| Code | Meaning | Usage |
+|------|---------|-------|
 | 200 | OK | Successful request |
-| 201 | Created | Resource created successfully |
+| 201 | Created | Resource created |
 | 400 | Bad Request | Invalid parameters |
-| 402 | Payment Required | HTTP 402 micropayment needed |
+| 402 | Payment Required | Micropayment needed |
 | 403 | Forbidden | Access denied |
 | 404 | Not Found | Resource not found |
 | 405 | Method Not Allowed | Invalid HTTP method |
-| 409 | Conflict | Resource conflict (e.g., already rented) |
-| 422 | Unprocessable Entity | Validation error |
 | 500 | Internal Server Error | Server error |
 
 ---
@@ -430,52 +772,18 @@ Content-Type: application/json
 | Endpoint Type | Limit |
 |---------------|-------|
 | Public endpoints | 100 requests/minute |
-| Authenticated endpoints | 200 requests/minute |
 | Payment endpoints | 50 requests/minute |
 
 ---
 
-## Webhooks (Future)
+## Demo Mode
 
-T0kenRent will support webhooks for:
-- Payment verification events
-- Escrow status changes
-- Rental completion notifications
+All endpoints support demo mode when:
+- User's publicKey starts with `demo_`
+- `demoMode: true` is passed in request body
+- URL contains `?demo=true`
 
----
-
-## SDK Examples
-
-### JavaScript/TypeScript
-
-```typescript
-import { T0kenRentClient } from '@tokenrent/sdk';
-
-const client = new T0kenRentClient({
-  baseUrl: 'https://tokenrent.io/api',
-  walletProvider: babbageWallet
-});
-
-// List available assets
-const assets = await client.assets.list({ category: 'photography' });
-
-// Unlock rental details (handles HTTP 402 automatically)
-const details = await client.payment.unlockDetails(asset.tokenId);
-
-// Create escrow
-const escrow = await client.escrow.create({
-  assetId: asset.tokenId,
-  startDate: new Date('2025-01-20'),
-  endDate: new Date('2025-01-22')
-});
-```
-
----
-
-## Changelog
-
-### v1.0.0 (2025-01-15)
-- Initial release
-- HTTP 402 payment gateway
-- BRC-76 asset tokenization
-- 2-of-2 multisig escrows
+In demo mode:
+- No real blockchain transactions occur
+- Payments are simulated
+- Mock data is returned

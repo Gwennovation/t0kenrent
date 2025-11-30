@@ -1,37 +1,25 @@
 # T0kenRent
 
-> **Decentralized Rental Tokenization and Escrow Platform**
+> **Decentralized Peer-to-Peer Rental Platform on BSV**
 
 [![BSV Hackathon](https://img.shields.io/badge/BSV-Hackathon%202025-orange)](https://bsvhackathon.com)
 [![Built on BSV](https://img.shields.io/badge/Built%20on-BSV-green)](https://bsvblockchain.org)
 [![HTTP 402](https://img.shields.io/badge/HTTP-402%20Payment%20Required-purple)](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/402)
-[![Workshop Alignment](https://img.shields.io/badge/Workshop%20Alignment-100%25-brightgreen)](docs/WORKSHOP_ALIGNMENT.md)
 
-T0kenRent is a decentralized platform built on the BSV blockchain that enables tokenization and rental of everyday assets. By leveraging BRC-76 compliant tokens, HTTP 402 micropayment gating, sCrypt smart contracts, and payment channels, T0kenRent creates a trustless, efficient, and globally accessible rental marketplace.
+T0kenRent is a decentralized rental marketplace built on the BSV blockchain. Rent everyday items from people near you with secure BSV payments, smart contract escrow, and on-chain proof of every transaction.
+
+## Live Demo
+
+**🚀 [Try T0kenRent Live](https://3000-ivkd2o96dkwj9eeevj6yh-18e660f9.sandbox.novita.ai)**
 
 ## Key Features
 
-- **Asset Tokenization**: Mint BRC-76 compliant tokens representing rentable items (cameras, tools, vehicles, etc.)
-- **HTTP 402 Payment Gating**: Micropayments unlock detailed rental information, filtering serious renters
-- **sCrypt Smart Contracts**: Type-safe escrow contracts with 2-of-2 multisig and timeout protection
-- **Payment Channels**: Off-chain streaming payments for hourly/minute-based rentals
-- **Custom Overlay Network**: Full Topic Manager (tm_tokenrent) and Lookup Service (ls_tokenrent) implementation
-- **Near-Zero Fees**: BSV's low transaction costs enable micropayment economics
-
-## Table of Contents
-
-- [Quick Start](#quick-start)
-- [Demo Mode](#demo-mode)
-- [Architecture](#architecture)
-- [Smart Contracts](#smart-contracts)
-- [Overlay Network](#overlay-network)
-- [HTTP 402 Protocol](#http-402-protocol)
-- [Escrow System](#escrow-system)
-- [API Reference](#api-reference)
-- [Development](#development)
-- [Workshop Alignment](#workshop-alignment)
-- [Contributing](#contributing)
-- [License](#license)
+- **🔐 Multi-Wallet Support**: Connect with HandCash, MetaNet/Babbage, or Paymail
+- **💰 HTTP 402 Micropayments**: Pay tiny fees (~$0.001) to unlock rental details
+- **🔒 2-of-2 Multisig Escrow**: Secure deposits with smart contract protection
+- **📜 On-Chain Logging**: Every transaction recorded on BSV blockchain
+- **🎯 1Sat Ordinal Integration**: Link assets to ordinals for proof of ownership
+- **🌐 Overlay Network**: Transaction broadcasting via BSV overlay services
 
 ## Quick Start
 
@@ -39,8 +27,8 @@ T0kenRent is a decentralized platform built on the BSV blockchain that enables t
 
 - **Node.js** v18 or higher
 - **npm** or **yarn**
-- **MongoDB** (optional - demo mode works without it)
-- **BSV Wallet** with Babbage SDK support (or use demo mode)
+- **MongoDB** (optional - works without it in demo mode)
+- **BSV Wallet**: HandCash, MetaNet, or Paymail
 
 ### Installation
 
@@ -53,376 +41,265 @@ cd t0kenrent
 npm install
 
 # Copy environment configuration
-cp .env.example .env
+cp .env.example .env.local
 
 # Start development server
 npm run dev
 ```
 
-### Environment Configuration
+### Environment Variables
+
+Create a `.env.local` file with the following:
 
 ```bash
-# .env
-NODE_ENV=development
-PORT=3000
-MONGODB_URI="mongodb://localhost:27017/t0kenrent"  # Optional
-NETWORK="testnet"
-OVERLAY_URL="https://overlay-us-1.bsvb.tech"
-MOCK_PAYMENTS=true  # Enable for demo mode
-MOCK_WALLET=true    # Enable for demo mode
+# HandCash Connect (get from https://dashboard.handcash.io)
+NEXT_PUBLIC_HANDCASH_APP_ID=your_app_id
+HANDCASH_APP_SECRET=your_app_secret
+NEXT_PUBLIC_HANDCASH_REDIRECT_URL=http://localhost:3000
+
+# MongoDB (optional - app works without it)
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/t0kenrent
+
+# BSV Network
+NETWORK=main
+WHATSONCHAIN_API=https://api.whatsonchain.com/v1/bsv/main
+
+# Overlay Network
+OVERLAY_URL=https://overlay.example.com
+
+# HTTP 402 Settings
+DEFAULT_UNLOCK_FEE_BSV=0.0001
+PAYMENT_EXPIRY_MINUTES=5
+
+# Security
+JWT_SECRET=your_secret_key
 ```
-
-### Access the Application
-
-Open [http://localhost:3000](http://localhost:3000) and connect your BSV wallet or use Demo Mode.
 
 ## Demo Mode
 
-Test T0kenRent without a wallet, MongoDB, or real BSV transactions:
+Test T0kenRent without connecting a wallet:
 
-1. Visit the application URL
-2. Click **"Try Demo Mode (No Wallet Required)"** button
+1. Visit the application
+2. Click **"Try Demo Mode"** button
 3. Or add `?demo=true` to any URL
 
-**Demo Mode Features:**
-- Browse marketplace with mock rental assets
-- View HTTP 402 payment flow (simulated - no real payment required)
-- Test escrow creation UI
-- View rental details without payment
-- Full UI/UX testing without any blockchain interaction
-- No wallet or MongoDB required
-
-**Mock Assets Available:**
-- Canon EOS R5 Camera Kit (50 MNEE/day)
-- Trek Mountain Bike (25 MNEE/day)
-- DeWalt Power Drill Set (15 MNEE/day)
-- Epson Home Cinema Projector (35 MNEE/day)
-- 4-Person Camping Tent (20 MNEE/day)
+**Demo Assets Available:**
+- Canon EOS R5 Camera Kit ($75/day)
+- Trek Mountain Bike ($45/day)
+- Milwaukee Power Tool Set ($35/day)
+- Epson 4K Projector ($55/day)
+- DJI Mavic 3 Pro Drone ($95/day)
 
 ## Architecture
 
-T0kenRent follows the BSV 3-Layer Mandala Network architecture:
-
 ```
-+-------------------------------------------------------------+
-|                    Layer 3: Application                      |
-|  +-----------+  +-----------+  +---------------------+      |
-|  |  Frontend |  |  HTTP 402 |  |  Wallet Interface   |      |
-|  |  (Next.js)|  |  Gateway  |  |  (Babbage SDK)      |      |
-+-------------------------------------------------------------+
-                             |
-+-------------------------------------------------------------+
-|                  Layer 2: Overlay Services                   |
-|  +-----------------+  +-----------------------------+       |
-|  |  Topic Manager  |  |  Lookup Service (UTXO Set)  |       |
-|  |  (tm_tokenrent) |  |  - Asset tokens             |       |
-|  +-----------------+  |  - Escrow status            |       |
-|                       |  - Payment verification      |       |
-|                       +-----------------------------+       |
-+-------------------------------------------------------------+
-                             |
-+-------------------------------------------------------------+
-|                Layer 1: BSV Protocol                         |
-|  +-----------------+  +-----------------------------+       |
-|  |  BRC-76 Tokens  |  |  sCrypt Smart Contracts     |       |
-|  |  (Asset NFTs)   |  |  (RentalEscrow, PaymentChannel)|    |
-+-------------------------------------------------------------+
+┌─────────────────────────────────────────────────────────────┐
+│                    Frontend (Next.js)                        │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │ Marketplace  │  │   Dashboard  │  │ Wallet Auth  │       │
+│  │  RentalCard  │  │  RentalCard  │  │  HandCash    │       │
+│  │  HTTP402Modal│  │  EscrowModal │  │  MetaNet     │       │
+│  └──────────────┘  └──────────────┘  └──────────────┘       │
+└─────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                    API Routes (Next.js)                      │
+│  /api/auth/*     /api/assets/*    /api/escrow/*             │
+│  /api/402/*      /api/payment/*   /api/rentals/*            │
+└─────────────────────────────────────────────────────────────┘
+                              │
+┌─────────────────────────────────────────────────────────────┐
+│                    Data Layer                                │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐       │
+│  │   MongoDB    │  │  In-Memory   │  │  BSV Chain   │       │
+│  │   (prod)     │  │   (demo)     │  │  (overlay)   │       │
+│  └──────────────┘  └──────────────┘  └──────────────┘       │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### Components
+## MongoDB Models
 
-| Component | Description |
-|-----------|-------------|
-| **Frontend** | Next.js React application with Tailwind CSS |
-| **HTTP 402 Gateway** | Micropayment-gated content delivery |
-| **Wallet Interface** | Babbage SDK + BSV Desktop Wallet Bridge |
-| **Topic Manager** | Custom `tm_tokenrent` overlay implementation |
-| **Lookup Service** | Custom `ls_tokenrent` for state queries |
-| **RentalEscrow** | sCrypt 2-of-2 multisig escrow contract |
-| **PaymentChannel** | sCrypt streaming payment channel |
-
-## Smart Contracts
-
-### RentalEscrow Contract
-
-Location: `src/contracts/RentalEscrow.ts`
-
-```typescript
-export class RentalEscrow extends SmartContract {
-  @prop() ownerPubKey: PubKey
-  @prop() renterPubKey: PubKey
-  @prop() depositAmount: bigint
-  @prop() timeoutBlock: bigint
-  @prop(true) state: bigint  // Stateful
-
-  @method()
-  public release(ownerSig: Sig, renterSig: Sig) {
-    // 2-of-2 multisig release
-    assert(this.checkSig(ownerSig, this.ownerPubKey))
-    assert(this.checkSig(renterSig, this.renterPubKey))
-  }
-  
-  @method()
-  public timeout(ownerSig: Sig) {
-    // Owner claims after timeout
-    assert(this.ctx.locktime >= this.timeoutBlock)
-    assert(this.checkSig(ownerSig, this.ownerPubKey))
-  }
-}
-```
-
-**Features:**
-- 2-of-2 multisig for normal release
-- Timeout-based dispute resolution
-- Refund mechanism for cancellations
-- Stateful contract with state transitions
-
-### PaymentChannel Contract
-
-Location: `src/contracts/PaymentChannel.ts`
-
-```typescript
-export class PaymentChannel extends SmartContract {
-  @prop() capacity: bigint
-  @prop(true) ownerBalance: bigint
-  @prop(true) renterBalance: bigint
-  @prop(true) sequence: bigint
-
-  @method()
-  public update(newOwnerBalance, newRenterBalance, newSequence, ownerSig, renterSig) {
-    // Off-chain updates with higher sequence
-  }
-  
-  @method()
-  public cooperativeClose(ownerSig: Sig, renterSig: Sig) {
-    // Both parties agree to final settlement
-  }
-}
-```
-
-**Features:**
-- Off-chain payment updates (no on-chain fees)
-- Streaming payments for hourly rentals
-- Cooperative and unilateral close
-- Dispute timeout protection
-
-## Overlay Network
-
-### Topic Manager (tm_tokenrent)
-
-Location: `src/overlay/TopicManager.ts`
-
-```typescript
-export const TOPICS = {
-  ASSET_CREATE: 'tokenrent.asset.create',
-  ESCROW_CREATE: 'tokenrent.escrow.create',
-  ESCROW_RELEASE: 'tokenrent.escrow.release',
-  PAYMENT_402: 'tokenrent.payment.402'
-}
-
-const topicManager = createTopicManager()
-topicManager.validateOutput(output)  // Validate transactions
-topicManager.submitToOverlay(tx, topic)  // Submit to network
-```
-
-### Lookup Service (ls_tokenrent)
-
-Location: `src/overlay/LookupService.ts`
-
-```typescript
-const lookupService = createLookupService()
-
-// Asset queries
-await lookupService.getAssetByTokenId(tokenId)
-await lookupService.getAvailableAssets({ category: 'photography' })
-
-// Escrow queries
-await lookupService.getEscrowById(escrowId)
-await lookupService.getActiveEscrows(userKey)
-
-// Payment verification
-await lookupService.verifyPayment(txid, expectedAmount)
-```
-
-## HTTP 402 Protocol
-
-T0kenRent implements the HTTP 402 "Payment Required" status code:
-
-```
-Renter                          T0kenRent                       BSV Network
-  |                                 |                                |
-  |---- GET /rental/xyz ----------->|                                |
-  |<--- 402 Payment Required -------|                                |
-  |     {amount: 0.0001 BSV}        |                                |
-  |                                 |                                |
-  |---- Create Payment -------------------------------------------->|
-  |                                 |                                |
-  |---- POST /payment/verify ------>|---- Verify ------------------>|
-  |<--- 200 OK + Details -----------|                                |
-```
-
-**Benefits:**
-- Spam prevention through economic cost
-- Owner revenue from information access
-- Demonstrates serious rental intent
-
-## Escrow System
-
-### Escrow States
-
-```
-+----------+    Fund     +--------+   Co-sign   +-----------+
-| CREATED  |------------>| FUNDED |------------>| RELEASED  |
-+----------+             +--------+             +-----------+
-                              |
-                              | Timeout/Dispute
-                              v
-                        +-----------+
-                        | DISPUTED  |
-                        +-----------+
-```
-
-### Script Structure
-
-```
-# 2-of-2 Multisig
-OP_2 <owner_pubkey> <renter_pubkey> OP_2 OP_CHECKMULTISIG
-
-# With Timeout Fallback
-OP_IF
-    OP_2 <owner_pubkey> <renter_pubkey> OP_2 OP_CHECKMULTISIG
-OP_ELSE
-    <timeout_blocks> OP_CHECKSEQUENCEVERIFY OP_DROP
-    <owner_pubkey> OP_CHECKSIG
-OP_ENDIF
-```
+| Model | Description |
+|-------|-------------|
+| **User** | User accounts with wallet info, stats, ratings |
+| **RentalAsset** | Asset listings with HTTP 402 payment support |
+| **Rental** | Rental agreements with status tracking |
+| **Escrow** | 2-of-2 multisig escrow contracts |
 
 ## API Reference
 
-### Asset Endpoints
+### Authentication
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/assets/create` | POST | Mint new rental asset token |
+| `/api/auth/handcash` | POST | HandCash OAuth callback |
+| `/api/auth/paymail` | POST | Paymail resolution |
+
+### Assets
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/assets/create` | POST | Create new rental asset |
 | `/api/assets/list` | GET | List marketplace assets |
-| `/api/assets/my` | GET | List user's assets |
+| `/api/assets/my` | GET | Get user's owned assets |
+| `/api/assets/unlock` | POST | Unlock asset details |
 
-### Payment Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/payment/initiate` | POST | Initiate HTTP 402 payment |
-| `/api/payment/verify` | POST | Verify payment and unlock |
-
-### Escrow Endpoints
+### HTTP 402 Payments
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| `/api/escrow/create` | POST | Create rental escrow |
-| `/api/escrow/confirm` | POST | Confirm escrow funding |
-| `/api/escrow/release` | POST | Sign escrow release |
+| `/api/402/initiate` | POST | Initiate 402 payment request |
+| `/api/402/callback` | POST | Payment callback |
+| `/api/payment/initiate` | POST | Create payment request |
+| `/api/payment/verify` | POST | Verify payment transaction |
+| `/api/payment/handcash` | POST | HandCash payment |
 
-See [docs/api.md](docs/api.md) for complete API documentation.
+### Escrow
 
-## Development
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/escrow/create` | POST | Create 2-of-2 escrow |
+| `/api/escrow/fund` | POST | Fund escrow contract |
+| `/api/escrow/confirm` | POST | Confirm funding |
+| `/api/escrow/status` | GET | Get escrow status |
+| `/api/escrow/release` | POST | Release escrow funds |
 
-### Project Structure
+### Rentals
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/rentals/create` | POST | Create rental record |
+| `/api/rentals/my` | GET | Get user's rentals |
+| `/api/rentals/complete` | POST | Complete rental |
+| `/api/rentals/mint-proof` | POST | Mint rental proof |
+| `/api/rentals/submit-overlay` | POST | Submit to overlay |
+
+### User
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/user/profile` | GET/POST | User profile |
+| `/api/user/stats` | GET | User statistics |
+
+## Project Structure
 
 ```
 t0kenrent/
 ├── src/
 │   ├── components/           # React components
-│   ├── contracts/            # sCrypt smart contracts
-│   │   ├── RentalEscrow.ts
-│   │   └── PaymentChannel.ts
-│   ├── overlay/              # Custom overlay network
-│   │   ├── TopicManager.ts
-│   │   ├── LookupService.ts
-│   │   └── index.ts
+│   │   ├── AssetCard.tsx         # Asset display card
+│   │   ├── CreateAssetModal.tsx  # Asset creation form
+│   │   ├── EscrowModal.tsx       # Escrow checkout
+│   │   ├── HTTP402Modal.tsx      # Payment modal
+│   │   ├── RentalCard.tsx        # Rental display
+│   │   ├── RentalDashboard.tsx   # User dashboard
+│   │   ├── RentalMarketplace.tsx # Browse assets
+│   │   ├── WalletSelector.tsx    # Wallet connection
+│   │   └── Portal.tsx            # Modal portal
+│   ├── models/               # MongoDB schemas
+│   │   ├── User.ts
+│   │   ├── RentalAsset.ts
+│   │   ├── Rental.ts
+│   │   └── Escrow.ts
+│   ├── lib/                  # Utilities
+│   │   ├── handcash.ts           # HandCash SDK
+│   │   ├── escrow.ts             # Escrow logic
+│   │   ├── http402.ts            # HTTP 402 protocol
+│   │   ├── mongodb.ts            # Database connection
+│   │   ├── overlay.ts            # Overlay network
+│   │   ├── ordinals.ts           # 1Sat ordinals
+│   │   ├── pushdrop.ts           # PushDrop tokens
+│   │   └── storage.ts            # In-memory storage
 │   ├── pages/
 │   │   ├── api/              # API routes
-│   │   └── index.tsx
-│   ├── lib/                  # Utilities
-│   └── models/               # MongoDB schemas
-├── scripts/
-│   ├── wallet-bridge.js      # BSV Desktop wallet bridge
-│   └── init-metanet-portal.js
+│   │   │   ├── 402/
+│   │   │   ├── assets/
+│   │   │   ├── auth/
+│   │   │   ├── escrow/
+│   │   │   ├── payment/
+│   │   │   ├── rentals/
+│   │   │   └── user/
+│   │   ├── index.tsx         # Main page
+│   │   ├── _app.tsx          # App wrapper
+│   │   └── _document.tsx     # HTML document
+│   ├── context/              # React context
+│   └── styles/               # CSS styles
 ├── docs/                     # Documentation
+│   ├── api.md
+│   ├── architecture.md
+│   ├── http402.md
+│   └── wallet-integration.md
 ├── public/                   # Static assets
-└── deployment-info.json      # BRC-102 config
+└── scripts/                  # Utility scripts
 ```
 
-### Commands
+## Wallet Integration
+
+### HandCash
+1. Create app at [dashboard.handcash.io](https://dashboard.handcash.io)
+2. Add redirect URL to your app settings
+3. Configure `NEXT_PUBLIC_HANDCASH_APP_ID` and `HANDCASH_APP_SECRET`
+
+### MetaNet/Babbage
+- Uses `babbage-sdk` for transaction signing
+- Requires MetaNet Portal extension or compatible wallet
+
+### Paymail
+- Enter your paymail address (e.g., `user@handcash.io`)
+- System resolves public key via paymail protocol
+
+## HTTP 402 Flow
+
+```
+1. User clicks "Unlock Contact Info" on asset
+2. Frontend calls POST /api/402/initiate
+3. API returns 402 with payment details
+4. User's wallet creates payment transaction
+5. Frontend calls POST /api/payment/verify with txId
+6. API verifies on-chain, returns access token
+7. Asset details unlocked for 30 minutes
+```
+
+## Escrow Flow
+
+```
+1. Renter selects dates and clicks "Rent Now"
+2. POST /api/escrow/create creates 2-of-2 multisig
+3. Renter funds escrow via wallet
+4. POST /api/escrow/fund records funding tx
+5. Rental becomes active
+6. Both parties sign to release
+7. POST /api/escrow/release distributes funds
+```
+
+## Development Commands
 
 ```bash
-# Development
-npm run dev              # Start dev server
-npm run build            # Production build
-npm run start            # Start production
-
-# Wallet Bridge
-npm run bridge:setup     # Import BSV Desktop wallet key
-
-# Smart Contracts
-npm run contracts:compile  # Compile sCrypt contracts
-
-# Code Quality
-npm run lint             # Lint code
-npm run test             # Run tests
+npm run dev          # Start development server
+npm run build        # Production build
+npm run start        # Start production server
+npm run lint         # Run ESLint
 ```
-
-### BSV Desktop Wallet Bridge
-
-Connect your existing BSV wallet:
-
-```bash
-# Interactive mode
-node scripts/wallet-bridge.js
-
-# Options:
-# 1. Import WIF private key
-# 2. View current identity
-# 3. Generate new identity
-# 4. Export public key
-```
-
-## Workshop Alignment
-
-T0kenRent achieves **100% alignment** with all Open Run Asia workshops:
-
-| Workshop | Score | Key Implementations |
-|----------|-------|---------------------|
-| Workshop 1: Architecture | 100% | 3-Layer Mandala, UTXO, Overlay |
-| Workshop 2: Development | 100% | Babbage SDK, PushDrop, MessageBox |
-| Workshop 3: Design | 100% | Whitepaper, Wireframes, API Spec |
-| Workshop 4: Use Cases | 100% | Overlay, MNEE, Certificates |
-| Workshop 5: Smart Contracts | 100% | sCrypt, Payment Channels |
-
-See [docs/WORKSHOP_ALIGNMENT.md](docs/WORKSHOP_ALIGNMENT.md) for detailed alignment report.
 
 ## Contributing
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create feature branch (`git checkout -b feature/amazing`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing`)
+5. Open Pull Request
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+MIT License - see [LICENSE](LICENSE) for details.
 
 ## Acknowledgments
 
-- **BSV Blockchain** - For scalable, low-cost transactions
-- **Babbage SDK** - For seamless wallet integration
-- **sCrypt** - For TypeScript smart contract DSL
-- **Open Run Asia** - For the hackathon opportunity
+- **BSV Blockchain** - Scalable, low-cost transactions
+- **HandCash** - Wallet integration
+- **Babbage SDK** - MetaNet wallet support
+- **WhatsOnChain** - Blockchain explorer API
 
 ---
 
-**Team ChibiTech** | Open Run Asia - BSV Hackathon 2025
-
-Built on Bitcoin SV
+**Built with ❤️ on BSV Blockchain**
