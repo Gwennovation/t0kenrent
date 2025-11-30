@@ -1,0 +1,226 @@
+{
+  "$schema": "https://bsv.brc.dev/schemas/deployment-info.json",
+  "schema": "brc-102",
+  "schemaVersion": "1.0.0",
+  
+  "name": "T0kenRent",
+  "version": "1.0.0",
+  "description": "Decentralized Rental Tokenization and Escrow Platform - Tokenize and rent everyday assets on BSV blockchain with HTTP 402 payment gating",
+  
+  "author": {
+    "name": "ChibiTech",
+    "email": "team@chibitech.dev",
+    "organization": "Open Run Asia - BSV Hackathon 2025"
+  },
+  
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gwennovation/t0kenrent"
+  },
+  
+  "license": "MIT",
+  
+  "networks": ["mainnet", "testnet"],
+  "defaultNetwork": "testnet",
+  
+  "frontend": {
+    "language": "typescript",
+    "framework": "next",
+    "entryPoint": "src/pages/index.tsx",
+    "buildCommand": "npm run build",
+    "startCommand": "npm run start",
+    "devCommand": "npm run dev",
+    "outputDir": ".next",
+    "publicDir": "public",
+    "port": 3000,
+    "env": {
+      "NEXT_PUBLIC_APP_NAME": "T0kenRent",
+      "NEXT_PUBLIC_NETWORK": "${NETWORK}"
+    }
+  },
+  
+  "backend": {
+    "language": "typescript",
+    "framework": "next-api",
+    "entryPoint": "src/pages/api",
+    "routes": [
+      {
+        "path": "/api/assets/create",
+        "method": "POST",
+        "description": "Create/mint a new rental asset token"
+      },
+      {
+        "path": "/api/assets/list",
+        "method": "GET",
+        "description": "List available rental assets"
+      },
+      {
+        "path": "/api/assets/my",
+        "method": "GET",
+        "description": "Get user's owned assets"
+      },
+      {
+        "path": "/api/payment/initiate",
+        "method": "POST",
+        "description": "Initiate HTTP 402 payment flow"
+      },
+      {
+        "path": "/api/payment/verify",
+        "method": "POST",
+        "description": "Verify BSV payment transaction"
+      },
+      {
+        "path": "/api/escrow/create",
+        "method": "POST",
+        "description": "Create 2-of-2 multisig escrow"
+      },
+      {
+        "path": "/api/escrow/confirm",
+        "method": "POST",
+        "description": "Confirm escrow funding"
+      },
+      {
+        "path": "/api/escrow/release",
+        "method": "POST",
+        "description": "Release escrow with co-signatures"
+      },
+      {
+        "path": "/api/bridge/identity",
+        "method": "GET",
+        "description": "Get wallet bridge identity (dev)"
+      }
+    ]
+  },
+  
+  "overlay": {
+    "topics": [
+      {
+        "name": "tm_tokenrent",
+        "description": "T0kenRent rental asset transactions",
+        "protocol": "pushdrop",
+        "admittanceRules": {
+          "requiredFields": ["TOKENRENT", "assetId", "action"]
+        }
+      },
+      {
+        "name": "tm_supplychain",
+        "description": "Supply chain stage tracking",
+        "protocol": "pushdrop",
+        "admittanceRules": {
+          "requiredFields": ["STAGE", "chainId", "stageIndex"]
+        }
+      }
+    ],
+    "lookupServices": [
+      {
+        "name": "ls_tokenrent",
+        "description": "Query T0kenRent assets and rentals"
+      },
+      {
+        "name": "ls_supplychain",
+        "description": "Query supply chain stages"
+      }
+    ],
+    "defaultHost": "https://overlay-us-1.bsvb.tech"
+  },
+  
+  "wallet": {
+    "interface": "babbage-sdk",
+    "manifestPath": "public/manifest.json",
+    "requiredPermissions": {
+      "protocols": [
+        "[2, \"Pay MNEE\"]",
+        "[2, \"HTTP 402\"]",
+        "[1, \"messagebox\"]",
+        "[\"tm_tokenrent\"]",
+        "[\"BRC-76\"]"
+      ],
+      "baskets": [
+        "MNEE tokens",
+        "Rental Asset Tokens",
+        "HTTP 402 Payments",
+        "Rental Escrows"
+      ],
+      "certificates": [
+        "identity"
+      ]
+    }
+  },
+  
+  "database": {
+    "type": "mongodb",
+    "required": false,
+    "fallback": "in-memory",
+    "collections": [
+      "rentalassets",
+      "escrows",
+      "actionchains",
+      "payments"
+    ]
+  },
+  
+  "contracts": [],
+  
+  "configs": {
+    "lars": {
+      "network": "testnet",
+      "components": ["frontend", "backend"],
+      "autoStart": true,
+      "hotReload": true
+    },
+    "cars": {
+      "network": "mainnet",
+      "projectId": "t0kenrent-prod",
+      "components": ["frontend", "backend", "overlay"],
+      "scaling": {
+        "minInstances": 1,
+        "maxInstances": 3
+      }
+    }
+  },
+  
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "test": "jest",
+    "bridge:setup": "node scripts/wallet-bridge.js",
+    "portal:init": "node scripts/init-metanet-portal.js"
+  },
+  
+  "dependencies": {
+    "runtime": {
+      "babbage-sdk": "^0.4.0",
+      "@bsv/sdk": "^1.0.0",
+      "pushdrop": "^0.5.0"
+    },
+    "optional": {
+      "mongodb": "^6.0.0",
+      "mongoose": "^8.0.0"
+    }
+  },
+  
+  "documentation": {
+    "whitepaper": "docs/T0kenRent-Whitepaper-v1.0.pdf",
+    "api": "docs/api.md",
+    "architecture": "docs/architecture.md",
+    "http402": "docs/http402.md",
+    "walletIntegration": "docs/wallet-integration.md",
+    "quickstart": "QUICKSTART.md",
+    "contributing": "CONTRIBUTING.md"
+  },
+  
+  "hackathon": {
+    "event": "Open Run Asia - BSV Hackathon 2025",
+    "team": "ChibiTech",
+    "track": "Web3 Application Development",
+    "features": [
+      "HTTP 402 Payment Gating",
+      "BRC-76 Asset Tokenization",
+      "2-of-2 Multisig Escrow",
+      "MNEE Stablecoin Payments",
+      "Overlay Network Integration"
+    ]
+  }
+}
