@@ -32,6 +32,7 @@ export default function Document() {
       </Head>
       <body className="antialiased">
         <Main />
+        <div id="modal-root"></div>
         <NextScript />
       </body>
     </Html>
