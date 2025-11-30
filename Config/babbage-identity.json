@@ -1,0 +1,7 @@
+{
+  "id": "810a68535a514afeb129c5d993b23c9d44232cbf1e08708dc01e6cd482d86c01",
+  "publicKey": "04813250da3d3f1b3ee46f0c9062813bee38e54fcd66e7cb944ae7445dda3a536653a8612d47e44b54368afda1b8685e1aec0063f4d943300bfc8133bf1571d18e",
+  "privateKey": "85f9f0769709376b374292981e21755bc30cb0c8a1403c2e951ec55bc6b20c58",
+  "createdAt": "2025-11-30T08:52:43.732Z",
+  "note": "Local dev identity — do NOT use in production"
+}

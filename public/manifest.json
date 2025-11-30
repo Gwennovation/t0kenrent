@@ -1,0 +1,51 @@
+{
+  "babbage": {
+    "name": "Dynamic Supply Chain with Token Rent",
+    "version": "1.0.0",
+    "description": "Blockchain-based supply chain management with MNEE token rent payments",
+    "author": "Open Run Asia",
+    "icon": "/logo.png",
+    "groupPermissions": {
+      "protocolPermissions": [
+        {
+          "protocolID": [2, "Pay MNEE"],
+          "counterparty": "self",
+          "description": "Create receive addresses for MNEE token rent payments"
+        },
+        {
+          "protocolID": [1, "messagebox"],
+          "counterparty": "self",
+          "description": "Decrypt inbound payment notifications"
+        },
+        {
+          "protocolID": [1, "messagebox advertisement"],
+          "counterparty": "anyone",
+          "description": "Advertise payment receiving capability"
+        },
+        {
+          "protocolID": ["tm_supplychain"],
+          "counterparty": "anyone",
+          "description": "Record supply chain actions on overlay network"
+        }
+      ],
+      "basketAccess": [
+        {
+          "basket": "MNEE tokens",
+          "description": "For holding and spending MNEE stablecoin tokens for rent payments"
+        },
+        {
+          "basket": "Supply Chain Actions",
+          "description": "For storing supply chain stage transactions"
+        }
+      ],
+      "certificateAccess": [
+        {
+          "type": "...",
+          "fields": ["Name", "Email"],
+          "verifierPublicKey": "...",
+          "description": "For identity verification of supply chain participants"
+        }
+      ]
+    }
+  }
+}
