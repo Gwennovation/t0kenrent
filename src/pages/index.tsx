@@ -15,6 +15,8 @@ export default function Home() {
   const [activeView, setActiveView] = useState<'marketplace' | 'dashboard'>('marketplace')
   const [isLoaded, setIsLoaded] = useState(false)
   const [walletBalance, setWalletBalance] = useState<number | null>(null)
+  const [isAuthenticating, setIsAuthenticating] = useState(false)
+  const [authError, setAuthError] = useState<string | null>(null)
 
   useEffect(() => {
     setIsLoaded(true)
@@ -33,8 +35,15 @@ export default function Home() {
   }, [])
 
   async function handleHandCashCallback(authToken: string) {
-    // In production, exchange auth token for access token
-    // and fetch user profile
+    // Show loading state
+    setIsAuthenticating(true)
+    setAuthError(null)
+    
+    // Clean URL immediately to prevent re-triggering on refresh
+    const url = new URL(window.location.href)
+    url.searchParams.delete('authToken')
+    window.history.replaceState({}, '', url.pathname + url.search)
+    
     try {
       const response = await fetch('/api/auth/handcash', {
         method: 'POST',
@@ -42,12 +51,21 @@ export default function Home() {
         body: JSON.stringify({ authToken })
       })
       
-      if (response.ok) {
-        const data = await response.json()
+      const data = await response.json()
+      
+      if (response.ok && data.success) {
         handleAuthenticated(data.publicKey, data.handle, 'handcash', data.balance)
+      } else {
+        // Handle API error response
+        const errorMessage = data.error || 'Authentication failed. Please try again.'
+        console.error('HandCash auth failed:', errorMessage)
+        setAuthError(errorMessage)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('HandCash callback error:', error)
+      setAuthError(error.message || 'Network error during authentication. Please check your connection and try again.')
+    } finally {
+      setIsAuthenticating(false)
     }
   }
 
@@ -91,6 +109,7 @@ export default function Home() {
     setDemoMode(false)
     setShowMarketplace(false)
     setWalletBalance(null)
+    setAuthError(null)
   }
 
   return (
@@ -192,6 +211,77 @@ export default function Home() {
             </div>
           </div>
         </header>
+
+        {/* Authentication Loading Overlay */}
+        {isAuthenticating && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="glass-card p-8 text-center max-w-sm mx-4 animate-slide-up">
+              <div className="relative mx-auto w-16 h-16 mb-4">
+                <div className="absolute inset-0 rounded-full border-4 border-primary-200 dark:border-primary-800"></div>
+                <div className="absolute inset-0 rounded-full border-4 border-primary-500 border-t-transparent animate-spin"></div>
+              </div>
+              <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
+                Authenticating with HandCash
+              </h3>
+              <p className="text-sm text-surface-600 dark:text-surface-400">
+                Please wait while we verify your wallet...
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Authentication Error Alert */}
+        {authError && !isAuthenticating && (
+          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[90] max-w-md mx-4 animate-slide-down">
+            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl p-4 shadow-lg">
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <h4 className="text-sm font-semibold text-red-800 dark:text-red-300 mb-1">
+                    Authentication Failed
+                  </h4>
+                  <p className="text-sm text-red-700 dark:text-red-400">
+                    {authError}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAuthError(null)}
+                  className="flex-shrink-0 p-1 rounded-lg hover:bg-red-100 dark:hover:bg-red-800/50 transition-colors"
+                >
+                  <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <div className="mt-3 flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setAuthError(null)}
+                  className="flex-1 px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-800/50 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
+                >
+                  Dismiss
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthError(null)
+                    // Redirect to HandCash auth again
+                    const handcashAuthUrl = `https://app.handcash.io/#/authorizeApp?appId=${process.env.NEXT_PUBLIC_HANDCASH_APP_ID || ''}`
+                    window.location.href = handcashAuthUrl
+                  }}
+                  className="flex-1 px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  Try Again
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Main Content */}
         <main className="relative">
