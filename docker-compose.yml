@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: supply-chain-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password123
+      MONGO_INITDB_DATABASE: supplychain
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - supply-chain-network
+
+  # Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: supply-chain-app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGODB_URI=mongodb://admin:password123@mongodb:27017/supplychain?authSource=admin
+      - NETWORK=main
+      - OVERLAY_URL=https://overlay-us-1.bsvb.tech
+      - HOSTING_URL=http://localhost:3000
+    depends_on:
+      - mongodb
+    networks:
+      - supply-chain-network
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  supply-chain-network:
+    driver: bridge
