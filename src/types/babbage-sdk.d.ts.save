@@ -1,9 +1,0 @@
-declare module 'babbage-sdk' {
-  // If you only use getPublicKey, you can add a loose typing:
-  export function getPublicKey(options?: any): Promise<string>;
-
-  // Fallback for other exports (loosely typed)
-  const _default: any;
-  export default _default;
-}declare module 'babbage-sdk';
-

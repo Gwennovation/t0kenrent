@@ -20,7 +20,7 @@ interface RentalAsset {
   }
   status: 'available' | 'rented' | 'pending'
   rating?: number
-  unlockFee: number // HTTP 402 micropayment amount
+  unlockFee: number
   createdAt: Date
 }
 
@@ -37,15 +37,16 @@ export default function RentalMarketplace({ userKey, demoMode = false }: RentalM
   const [activeTab, setActiveTab] = useState<'browse' | 'myAssets' | 'myRentals'>('browse')
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
 
   const categories = [
-    { id: 'all', name: 'All Categories' },
-    { id: 'photography', name: 'Photography' },
-    { id: 'tools', name: 'Tools & Equipment' },
-    { id: 'electronics', name: 'Electronics' },
-    { id: 'sports', name: 'Sports & Outdoors' },
-    { id: 'vehicles', name: 'Vehicles' },
-    { id: 'other', name: 'Other' }
+    { id: 'all', name: 'All Categories', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z' },
+    { id: 'photography', name: 'Photography', icon: 'M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M15 13a3 3 0 11-6 0 3 3 0 016 0z' },
+    { id: 'tools', name: 'Tools & Equipment', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z' },
+    { id: 'electronics', name: 'Electronics', icon: 'M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' },
+    { id: 'sports', name: 'Sports & Outdoors', icon: 'M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+    { id: 'vehicles', name: 'Vehicles', icon: 'M8 17a2 2 0 100-4 2 2 0 000 4zm8 0a2 2 0 100-4 2 2 0 000 4zM3 9a1 1 0 011-1h1.586a1 1 0 01.707.293L8 10h8l1.707-1.707A1 1 0 0118.414 8H20a1 1 0 011 1v8a1 1 0 01-1 1h-1.5a2.5 2.5 0 00-5 0h-3a2.5 2.5 0 00-5 0H4a1 1 0 01-1-1V9z' },
+    { id: 'other', name: 'Other', icon: 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4' }
   ]
 
   useEffect(() => {
@@ -55,14 +56,12 @@ export default function RentalMarketplace({ userKey, demoMode = false }: RentalM
   async function loadAssets() {
     setLoading(true)
     try {
-      // Load marketplace assets
       const response = await fetch('/api/assets/list')
       if (response.ok) {
         const data = await response.json()
         setAssets(data.assets || [])
       }
 
-      // Load user's own assets
       const myResponse = await fetch(`/api/assets/my?owner=${userKey}`)
       if (myResponse.ok) {
         const myData = await myResponse.json()
@@ -91,8 +90,6 @@ export default function RentalMarketplace({ userKey, demoMode = false }: RentalM
       }
 
       const result = await response.json()
-      
-      // Add to my assets
       setMyAssets(prev => [...prev, result.asset])
       setShowCreateModal(false)
       
@@ -109,111 +106,203 @@ export default function RentalMarketplace({ userKey, demoMode = false }: RentalM
     return matchesSearch && matchesCategory
   })
 
+  const tabs = [
+    { id: 'browse', label: 'Browse Marketplace', count: filteredAssets.length },
+    { id: 'myAssets', label: 'My Listed Assets', count: myAssets.length },
+    { id: 'myRentals', label: 'My Rentals', count: 0 }
+  ]
+
   return (
-    <div className="max-w-7xl mx-auto px-4">
-      {/* Marketplace Header */}
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Rental Marketplace</h1>
-          <p className="text-gray-600 mt-1">Discover and rent tokenized assets</p>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Header Section */}
+      <div className="mb-8 animate-slide-up">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+          <div>
+            <h1 className="text-3xl sm:text-4xl font-bold text-surface-900 dark:text-white mb-2">
+              Rental Marketplace
+            </h1>
+            <p className="text-surface-600 dark:text-surface-400 text-lg">
+              Discover and rent tokenized assets secured by blockchain
+            </p>
+          </div>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="btn-primary flex items-center justify-center gap-2 whitespace-nowrap"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            List New Asset
+          </button>
         </div>
-        <button
-          onClick={() => setShowCreateModal(true)}
-          className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-          List New Asset
-        </button>
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-lg mb-6 w-fit">
-        <button
-          onClick={() => setActiveTab('browse')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === 'browse'
-              ? 'bg-white text-primary-600 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          Browse Marketplace
-        </button>
-        <button
-          onClick={() => setActiveTab('myAssets')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === 'myAssets'
-              ? 'bg-white text-primary-600 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          My Listed Assets
-        </button>
-        <button
-          onClick={() => setActiveTab('myRentals')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            activeTab === 'myRentals'
-              ? 'bg-white text-primary-600 shadow-sm'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          My Rentals
-        </button>
+      <div className="mb-6 animate-slide-up animation-delay-100">
+        <div className="tab-list w-fit">
+          {tabs.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as typeof activeTab)}
+              className={activeTab === tab.id ? 'tab-item-active' : 'tab-item-inactive'}
+            >
+              <span>{tab.label}</span>
+              {tab.count > 0 && (
+                <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
+                  activeTab === tab.id 
+                    ? 'bg-primary-100 dark:bg-primary-900/50 text-primary-600 dark:text-primary-400' 
+                    : 'bg-surface-200 dark:bg-surface-700 text-surface-600 dark:text-surface-400'
+                }`}>
+                  {tab.count}
+                </span>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Browse Tab */}
       {activeTab === 'browse' && (
         <>
-          {/* Search and Filter */}
-          <div className="flex gap-4 mb-6">
-            <div className="flex-1 relative">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search assets..."
-                className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
-              <svg className="w-5 h-5 text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
+          {/* Search and Filter Bar */}
+          <div className="glass-card p-4 mb-6 animate-slide-up animation-delay-150">
+            <div className="flex flex-col lg:flex-row gap-4">
+              {/* Search Input */}
+              <div className="flex-1 relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <svg className="w-5 h-5 text-surface-400 dark:text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search assets by name or description..."
+                  className="input-field pl-12"
+                />
+              </div>
+
+              {/* Category Filter */}
+              <div className="flex gap-3">
+                <div className="relative min-w-[180px]">
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="input-field appearance-none pr-10 cursor-pointer"
+                  >
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <svg className="w-5 h-5 text-surface-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
+
+                {/* View Mode Toggle */}
+                <div className="flex bg-surface-100 dark:bg-surface-800 rounded-xl p-1 border border-surface-200 dark:border-surface-700">
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-2.5 rounded-lg transition-all duration-200 ${
+                      viewMode === 'grid' 
+                        ? 'bg-white dark:bg-surface-700 shadow-sm text-primary-600 dark:text-primary-400' 
+                        : 'text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-300'
+                    }`}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-2.5 rounded-lg transition-all duration-200 ${
+                      viewMode === 'list' 
+                        ? 'bg-white dark:bg-surface-700 shadow-sm text-primary-600 dark:text-primary-400' 
+                        : 'text-surface-500 dark:text-surface-400 hover:text-surface-700 dark:hover:text-surface-300'
+                    }`}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
             </div>
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
+
+            {/* Category Pills */}
+            <div className="flex gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide">
               {categories.map(cat => (
-                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                <button
+                  key={cat.id}
+                  onClick={() => setSelectedCategory(cat.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 ${
+                    selectedCategory === cat.id
+                      ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25'
+                      : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 hover:bg-surface-200 dark:hover:bg-surface-700 border border-surface-200 dark:border-surface-700'
+                  }`}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={cat.icon} />
+                  </svg>
+                  {cat.name}
+                </button>
               ))}
-            </select>
+            </div>
           </div>
 
           {/* Asset Grid */}
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="animate-spin h-12 w-12 border-4 border-primary-600 border-t-transparent rounded-full"></div>
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="relative">
+                <div className="w-16 h-16 border-4 border-primary-200 dark:border-primary-900 rounded-full"></div>
+                <div className="absolute top-0 left-0 w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+              <p className="mt-4 text-surface-600 dark:text-surface-400">Loading assets...</p>
             </div>
           ) : filteredAssets.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {filteredAssets.map(asset => (
-                <AssetCard
-                  key={asset.id}
-                  asset={asset}
-                  userKey={userKey}
-                  demoMode={demoMode}
-                  onRent={() => loadAssets()}
-                />
+            <div className={`grid gap-6 ${viewMode === 'grid' ? 'sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
+              {filteredAssets.map((asset, index) => (
+                <div 
+                  key={asset.id} 
+                  className="animate-slide-up"
+                  style={{ animationDelay: `${(index % 6) * 50 + 200}ms` }}
+                >
+                  <AssetCard
+                    asset={asset}
+                    userKey={userKey}
+                    demoMode={demoMode}
+                    viewMode={viewMode}
+                    onRent={() => loadAssets()}
+                  />
+                </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-20 bg-gray-50 rounded-xl">
-              <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-              </svg>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No assets found</h3>
-              <p className="text-gray-600">Be the first to list an asset on the marketplace!</p>
+            <div className="empty-state animate-slide-up animation-delay-200">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-surface-100 to-surface-200 dark:from-surface-800 dark:to-surface-700 flex items-center justify-center">
+                <svg className="w-12 h-12 text-surface-400 dark:text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-surface-900 dark:text-white mb-2">
+                No assets found
+              </h3>
+              <p className="text-surface-600 dark:text-surface-400 mb-6 max-w-md mx-auto">
+                {searchQuery || selectedCategory !== 'all' 
+                  ? 'Try adjusting your search or filter criteria'
+                  : 'Be the first to list an asset on the marketplace!'}
+              </p>
+              {!searchQuery && selectedCategory === 'all' && (
+                <button
+                  onClick={() => setShowCreateModal(true)}
+                  className="btn-primary"
+                >
+                  List Your First Asset
+                </button>
+              )}
             </div>
           )}
         </>
@@ -221,30 +310,42 @@ export default function RentalMarketplace({ userKey, demoMode = false }: RentalM
 
       {/* My Assets Tab */}
       {activeTab === 'myAssets' && (
-        <div>
+        <div className="animate-fade-in">
           {myAssets.length > 0 ? (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-              {myAssets.map(asset => (
-                <AssetCard
-                  key={asset.id}
-                  asset={asset}
-                  userKey={userKey}
-                  isOwner={true}
-                  demoMode={demoMode}
-                  onRent={() => loadAssets()}
-                />
+            <div className={`grid gap-6 ${viewMode === 'grid' ? 'sm:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1'}`}>
+              {myAssets.map((asset, index) => (
+                <div 
+                  key={asset.id} 
+                  className="animate-slide-up"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  <AssetCard
+                    asset={asset}
+                    userKey={userKey}
+                    isOwner={true}
+                    demoMode={demoMode}
+                    viewMode={viewMode}
+                    onRent={() => loadAssets()}
+                  />
+                </div>
               ))}
             </div>
           ) : (
-            <div className="text-center py-20 bg-gray-50 rounded-xl">
-              <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-              </svg>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No assets listed</h3>
-              <p className="text-gray-600 mb-4">Start earning by listing your first asset</p>
+            <div className="empty-state">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-surface-100 to-surface-200 dark:from-surface-800 dark:to-surface-700 flex items-center justify-center">
+                <svg className="w-12 h-12 text-surface-400 dark:text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-surface-900 dark:text-white mb-2">
+                No assets listed
+              </h3>
+              <p className="text-surface-600 dark:text-surface-400 mb-6 max-w-md mx-auto">
+                Start earning by listing your first asset on the marketplace
+              </p>
               <button
                 onClick={() => setShowCreateModal(true)}
-                className="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-lg transition-colors"
+                className="btn-primary"
               >
                 List Your First Asset
               </button>
@@ -255,12 +356,24 @@ export default function RentalMarketplace({ userKey, demoMode = false }: RentalM
 
       {/* My Rentals Tab */}
       {activeTab === 'myRentals' && (
-        <div className="text-center py-20 bg-gray-50 rounded-xl">
-          <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-          </svg>
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">No active rentals</h3>
-          <p className="text-gray-600">Browse the marketplace to find assets to rent</p>
+        <div className="empty-state animate-fade-in">
+          <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-surface-100 to-surface-200 dark:from-surface-800 dark:to-surface-700 flex items-center justify-center">
+            <svg className="w-12 h-12 text-surface-400 dark:text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <h3 className="text-xl font-semibold text-surface-900 dark:text-white mb-2">
+            No active rentals
+          </h3>
+          <p className="text-surface-600 dark:text-surface-400 mb-6 max-w-md mx-auto">
+            Browse the marketplace to find assets to rent
+          </p>
+          <button
+            onClick={() => setActiveTab('browse')}
+            className="btn-secondary"
+          >
+            Browse Marketplace
+          </button>
         </div>
       )}
 

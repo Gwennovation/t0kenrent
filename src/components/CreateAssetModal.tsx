@@ -3,6 +3,7 @@ import { useState } from 'react'
 interface Category {
   id: string
   name: string
+  icon?: string
 }
 
 interface CreateAssetModalProps {
@@ -30,7 +31,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
     },
     accessCode: '',
     specialInstructions: '',
-    unlockFee: '0.0001', // Default HTTP 402 micropayment
+    unlockFee: '0.0001',
     condition: 'excellent',
     accessories: [] as string[]
   })
@@ -91,52 +92,68 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
   const isStep2Valid = formData.rentalRatePerDay && formData.depositAmount
   const isStep3Valid = formData.location.city && formData.location.state && formData.location.address
 
+  const steps = [
+    { num: 1, label: 'Basic Info' },
+    { num: 2, label: 'Pricing' },
+    { num: 3, label: 'Location' },
+    { num: 4, label: 'Review' }
+  ]
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-2xl w-full shadow-xl overflow-hidden max-h-[90vh] overflow-y-auto">
+    <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="bg-white dark:bg-surface-900 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto animate-scale-in border border-surface-200/50 dark:border-surface-700/50">
         {/* Header */}
-        <div className="bg-gradient-to-r from-primary-600 to-indigo-600 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-bold text-white">List New Asset</h2>
-              <p className="text-primary-200 text-sm">Create a BRC-76 token for your rentable item</p>
+        <div className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800" />
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0aC0ydi00aDJ2NHptMC02di0yaC0ydjJoMnptLTYgMGgtMnYyaDJ2LTJ6bTAgNmgtMnY0aDJ2LTR6bS02LTZoLTJ2Mmgydi0yem0wIDZoLTJ2NGgydi00em0xMi0xMnYtMkgyNHYyaDEyem0wIDEydi0ySDI0djJoMTJ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-50" />
+          <div className="relative px-6 py-5">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-white">List New Asset</h2>
+                <p className="text-primary-200 text-sm">Create a BRC-76 token for your rentable item</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
-            <button
-              onClick={onClose}
-              className="text-white hover:text-primary-200 transition-colors"
-            >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
           </div>
         </div>
 
         {/* Progress Steps */}
-        <div className="px-6 py-4 bg-gray-50 border-b border-gray-200">
+        <div className="px-6 py-4 bg-surface-50 dark:bg-surface-800/50 border-b border-surface-200 dark:border-surface-700">
           <div className="flex items-center justify-between">
-            {[1, 2, 3, 4].map((s) => (
-              <div key={s} className="flex items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-medium ${
-                  step >= s
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-200 text-gray-500'
+            {steps.map((s, i) => (
+              <div key={s.num} className="flex items-center">
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-semibold text-sm transition-all duration-300 ${
+                  step >= s.num
+                    ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/25'
+                    : 'bg-surface-200 dark:bg-surface-700 text-surface-500 dark:text-surface-400'
                 }`}>
-                  {s}
+                  {step > s.num ? (
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  ) : s.num}
                 </div>
-                {s < 4 && (
-                  <div className={`w-16 md:w-24 h-1 mx-2 ${
-                    step > s ? 'bg-primary-600' : 'bg-gray-200'
+                {i < steps.length - 1 && (
+                  <div className={`w-12 sm:w-20 lg:w-24 h-1 mx-2 rounded-full transition-all duration-300 ${
+                    step > s.num ? 'bg-primary-500' : 'bg-surface-200 dark:bg-surface-700'
                   }`} />
                 )}
               </div>
             ))}
           </div>
-          <div className="flex justify-between mt-2 text-xs text-gray-500">
-            <span>Basic Info</span>
-            <span>Pricing</span>
-            <span>Location</span>
-            <span>Review</span>
+          <div className="flex justify-between mt-3 text-xs font-medium">
+            {steps.map(s => (
+              <span key={s.num} className={`${step >= s.num ? 'text-primary-600 dark:text-primary-400' : 'text-surface-500 dark:text-surface-400'}`}>
+                {s.label}
+              </span>
+            ))}
           </div>
         </div>
 
@@ -146,49 +163,56 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
           {step === 1 && (
             <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Asset Name *
+                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+                  Asset Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => updateFormData('name', e.target.value)}
                   placeholder="e.g., Canon EOS R5 Camera"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="input-field"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Description *
+                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+                  Description <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => updateFormData('description', e.target.value)}
                   placeholder="Describe your item, its features, and condition..."
                   rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="input-field resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Category *
+                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+                  Category <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={formData.category}
-                  onChange={(e) => updateFormData('category', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                >
-                  <option value="">Select a category</option>
-                  {categories.map(cat => (
-                    <option key={cat.id} value={cat.id}>{cat.name}</option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={formData.category}
+                    onChange={(e) => updateFormData('category', e.target.value)}
+                    className="input-field appearance-none pr-10"
+                  >
+                    <option value="">Select a category</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                    <svg className="w-5 h-5 text-surface-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </div>
+                </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
                   Image URL (optional)
                 </label>
                 <input
@@ -196,23 +220,30 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
                   value={formData.imageUrl}
                   onChange={(e) => updateFormData('imageUrl', e.target.value)}
                   placeholder="https://example.com/image.jpg"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="input-field"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
                   Condition
                 </label>
-                <select
-                  value={formData.condition}
-                  onChange={(e) => updateFormData('condition', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                >
-                  <option value="excellent">Excellent</option>
-                  <option value="good">Good</option>
-                  <option value="fair">Fair</option>
-                </select>
+                <div className="grid grid-cols-3 gap-3">
+                  {['excellent', 'good', 'fair'].map(condition => (
+                    <button
+                      key={condition}
+                      type="button"
+                      onClick={() => updateFormData('condition', condition)}
+                      className={`py-2.5 px-4 rounded-xl text-sm font-medium capitalize transition-all duration-200 ${
+                        formData.condition === condition
+                          ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25'
+                          : 'bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300 hover:bg-surface-200 dark:hover:bg-surface-700 border border-surface-200 dark:border-surface-700'
+                      }`}
+                    >
+                      {condition}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           )}
@@ -222,42 +253,42 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
             <div className="space-y-5">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Daily Rental Rate *
+                  <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+                    Daily Rental Rate <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                    <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-surface-500 font-medium">$</span>
                     <input
                       type="number"
                       value={formData.rentalRatePerDay}
                       onChange={(e) => updateFormData('rentalRatePerDay', e.target.value)}
                       placeholder="50.00"
                       min="1"
-                      className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="input-field pl-8"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Security Deposit *
+                  <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+                    Security Deposit <span className="text-red-500">*</span>
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                    <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-surface-500 font-medium">$</span>
                     <input
                       type="number"
                       value={formData.depositAmount}
                       onChange={(e) => updateFormData('depositAmount', e.target.value)}
                       placeholder="500.00"
                       min="0"
-                      className="w-full pl-8 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                      className="input-field pl-8"
                     />
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
                   HTTP 402 Unlock Fee (BSV)
                 </label>
                 <input
@@ -267,21 +298,21 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
                   placeholder="0.0001"
                   step="0.0001"
                   min="0.0001"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="input-field"
                 />
-                <p className="mt-1 text-xs text-gray-500">
+                <p className="mt-2 text-xs text-surface-500 dark:text-surface-400">
                   Micropayment renters pay to view detailed rental info (location, access codes)
                 </p>
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800/50 rounded-xl p-4">
                 <div className="flex items-start gap-3">
-                  <svg className="w-5 h-5 text-blue-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                   </svg>
-                  <div className="text-sm text-blue-800">
-                    <p className="font-medium">Pricing Tips:</p>
-                    <ul className="list-disc list-inside mt-1 text-blue-700">
+                  <div className="text-sm text-primary-800 dark:text-primary-300">
+                    <p className="font-medium mb-1.5">Pricing Tips:</p>
+                    <ul className="list-disc list-inside space-y-1 text-primary-700 dark:text-primary-400">
                       <li>Set deposit at ~10x daily rate for valuable items</li>
                       <li>HTTP 402 fee prevents spam inquiries</li>
                       <li>Competitive pricing attracts more renters</li>
@@ -297,60 +328,62 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
             <div className="space-y-5">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    City *
+                  <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+                    City <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={formData.location.city}
                     onChange={(e) => updateLocation('city', e.target.value)}
                     placeholder="San Francisco"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="input-field"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    State *
+                  <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+                    State <span className="text-red-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={formData.location.state}
                     onChange={(e) => updateLocation('state', e.target.value)}
                     placeholder="CA"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    className="input-field"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Pickup Address * (shown after HTTP 402 payment)
+                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+                  Pickup Address <span className="text-red-500">*</span>
+                  <span className="text-xs text-surface-500 ml-1">(shown after HTTP 402 payment)</span>
                 </label>
                 <input
                   type="text"
                   value={formData.location.address}
                   onChange={(e) => updateLocation('address', e.target.value)}
                   placeholder="123 Market St, Suite 100"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="input-field"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Access Code (shown after HTTP 402 payment)
+                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+                  Access Code
+                  <span className="text-xs text-surface-500 ml-1">(shown after HTTP 402 payment)</span>
                 </label>
                 <input
                   type="text"
                   value={formData.accessCode}
                   onChange={(e) => updateFormData('accessCode', e.target.value)}
                   placeholder="e.g., CAMERA2024 or Apt #4B buzzer"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="input-field"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
                   Special Instructions
                 </label>
                 <textarea
@@ -358,26 +391,27 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
                   onChange={(e) => updateFormData('specialInstructions', e.target.value)}
                   placeholder="e.g., Equipment is in the blue case. Return with battery charged."
                   rows={2}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  className="input-field resize-none"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
                   Included Accessories
                 </label>
-                <div className="flex gap-2 mb-2">
+                <div className="flex gap-2 mb-3">
                   <input
                     type="text"
                     value={newAccessory}
                     onChange={(e) => setNewAccessory(e.target.value)}
                     placeholder="e.g., Battery, Charger, Memory Card"
-                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg"
-                    onKeyPress={(e) => e.key === 'Enter' && addAccessory()}
+                    className="input-field flex-1"
+                    onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addAccessory())}
                   />
                   <button
+                    type="button"
                     onClick={addAccessory}
-                    className="px-4 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg"
+                    className="btn-secondary px-4"
                   >
                     Add
                   </button>
@@ -387,14 +421,17 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
                     {formData.accessories.map((acc, i) => (
                       <span
                         key={i}
-                        className="px-3 py-1 bg-gray-100 rounded-full text-sm flex items-center gap-2"
+                        className="inline-flex items-center gap-2 px-3 py-1.5 bg-surface-100 dark:bg-surface-800 rounded-full text-sm text-surface-700 dark:text-surface-300 border border-surface-200 dark:border-surface-700"
                       >
                         {acc}
                         <button
+                          type="button"
                           onClick={() => removeAccessory(i)}
-                          className="text-gray-500 hover:text-red-500"
+                          className="text-surface-400 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                         >
-                          &times;
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
                         </button>
                       </span>
                     ))}
@@ -407,43 +444,43 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
           {/* Step 4: Review */}
           {step === 4 && (
             <div className="space-y-5">
-              <div className="bg-gray-50 rounded-xl p-6 space-y-4">
-                <h3 className="font-semibold text-lg text-gray-900">{formData.name}</h3>
-                <p className="text-gray-600">{formData.description}</p>
+              <div className="bg-surface-50 dark:bg-surface-800/50 rounded-xl p-6 space-y-4 border border-surface-200/50 dark:border-surface-700/50">
+                <h3 className="font-semibold text-xl text-surface-900 dark:text-white">{formData.name}</h3>
+                <p className="text-surface-600 dark:text-surface-400">{formData.description}</p>
                 
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-surface-200 dark:border-surface-700">
                   <div>
-                    <p className="text-sm text-gray-500">Category</p>
-                    <p className="font-medium text-gray-900 capitalize">{formData.category}</p>
+                    <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">Category</p>
+                    <p className="font-medium text-surface-900 dark:text-white capitalize">{formData.category}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Condition</p>
-                    <p className="font-medium text-gray-900 capitalize">{formData.condition}</p>
+                    <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">Condition</p>
+                    <p className="font-medium text-surface-900 dark:text-white capitalize">{formData.condition}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Daily Rate</p>
-                    <p className="font-medium text-gray-900">${formData.rentalRatePerDay}</p>
+                    <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">Daily Rate</p>
+                    <p className="font-medium text-primary-600 dark:text-primary-400">${formData.rentalRatePerDay}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Deposit</p>
-                    <p className="font-medium text-gray-900">${formData.depositAmount}</p>
+                    <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">Deposit</p>
+                    <p className="font-medium text-surface-900 dark:text-white">${formData.depositAmount}</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">HTTP 402 Fee</p>
-                    <p className="font-medium text-gray-900">{formData.unlockFee} BSV</p>
+                    <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">HTTP 402 Fee</p>
+                    <p className="font-medium text-accent-600 dark:text-accent-400">{formData.unlockFee} BSV</p>
                   </div>
                   <div>
-                    <p className="text-sm text-gray-500">Location</p>
-                    <p className="font-medium text-gray-900">{formData.location.city}, {formData.location.state}</p>
+                    <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">Location</p>
+                    <p className="font-medium text-surface-900 dark:text-white">{formData.location.city}, {formData.location.state}</p>
                   </div>
                 </div>
 
                 {formData.accessories.length > 0 && (
-                  <div className="pt-4 border-t border-gray-200">
-                    <p className="text-sm text-gray-500 mb-2">Accessories</p>
+                  <div className="pt-4 border-t border-surface-200 dark:border-surface-700">
+                    <p className="text-xs text-surface-500 dark:text-surface-400 mb-2">Accessories</p>
                     <div className="flex flex-wrap gap-2">
                       {formData.accessories.map((acc, i) => (
-                        <span key={i} className="px-3 py-1 bg-white rounded-full text-sm border">
+                        <span key={i} className="px-3 py-1 bg-white dark:bg-surface-700 rounded-full text-sm text-surface-700 dark:text-surface-300 border border-surface-200 dark:border-surface-600">
                           {acc}
                         </span>
                       ))}
@@ -452,14 +489,14 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
                 )}
               </div>
 
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-xl p-4">
                 <div className="flex items-start gap-3">
-                  <svg className="w-5 h-5 text-green-600 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                  <svg className="w-5 h-5 text-emerald-600 dark:text-emerald-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                     <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                   </svg>
-                  <div className="text-sm text-green-800">
-                    <p className="font-medium">Ready to List!</p>
-                    <p className="text-green-700">
+                  <div className="text-sm text-emerald-800 dark:text-emerald-300">
+                    <p className="font-medium mb-1">Ready to List!</p>
+                    <p className="text-emerald-700 dark:text-emerald-400">
                       A BRC-76 compliant token will be minted on the BSV blockchain representing your asset.
                     </p>
                   </div>
@@ -470,18 +507,21 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between">
+        <div className="px-6 py-4 bg-surface-50 dark:bg-surface-800/50 border-t border-surface-200 dark:border-surface-700 flex justify-between">
           {step > 1 ? (
             <button
               onClick={() => setStep(step - 1)}
-              className="px-6 py-2 text-gray-600 hover:text-gray-900 font-medium"
+              className="btn-ghost text-surface-600 dark:text-surface-400"
             >
+              <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
               Back
             </button>
           ) : (
             <button
               onClick={onClose}
-              className="px-6 py-2 text-gray-600 hover:text-gray-900 font-medium"
+              className="btn-ghost text-surface-600 dark:text-surface-400"
             >
               Cancel
             </button>
@@ -495,15 +535,18 @@ export default function CreateAssetModal({ onClose, onCreate, categories }: Crea
                 (step === 2 && !isStep2Valid) ||
                 (step === 3 && !isStep3Valid)
               }
-              className="px-6 py-2 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-medium rounded-lg transition-colors"
+              className="btn-primary"
             >
               Continue
+              <svg className="w-5 h-5 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
             </button>
           ) : (
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="px-6 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white font-medium rounded-lg transition-colors flex items-center gap-2"
+              className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:from-surface-300 disabled:to-surface-300 dark:disabled:from-surface-700 dark:disabled:to-surface-700 text-white font-semibold rounded-xl transition-all duration-300 flex items-center gap-2 shadow-lg shadow-emerald-500/25 disabled:shadow-none"
             >
               {loading ? (
                 <>

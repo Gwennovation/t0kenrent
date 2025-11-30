@@ -2,15 +2,17 @@ import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import WalletAuth from '@/components/WalletAuth'
 import RentalMarketplace from '@/components/RentalMarketplace'
+import { ThemeToggle } from '@/context/ThemeContext'
 
 export default function Home() {
   const [authenticated, setAuthenticated] = useState(false)
   const [userKey, setUserKey] = useState('')
   const [demoMode, setDemoMode] = useState(false)
   const [showMarketplace, setShowMarketplace] = useState(false)
+  const [isLoaded, setIsLoaded] = useState(false)
 
-  // Check for demo mode on load
   useEffect(() => {
+    setIsLoaded(true)
     const urlParams = new URLSearchParams(window.location.search)
     if (urlParams.get('demo') === 'true') {
       enableDemoMode()
@@ -24,7 +26,6 @@ export default function Home() {
   }
 
   function enableDemoMode() {
-    // Use the dev identity for demo
     setUserKey('04813250da3d3f1b3ee46f0c9062813bee38e54fcd66e7cb944ae7445dda3a536653a8612d47e44b54368afda1b8685e1aec0063f4d943300bfc8133bf1571d18e')
     setDemoMode(true)
     setShowMarketplace(true)
@@ -33,229 +34,325 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>T0kenRent - Decentralized Rental Tokenization Platform</title>
+        <title>T0kenRent - Decentralized Rental Platform</title>
         <meta name="description" content="Tokenize and rent everyday assets on the BSV blockchain with HTTP 402 payment gating and smart contract escrows" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-        {/* Header */}
-        <header className="bg-white shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-indigo-600 rounded-lg flex items-center justify-center">
-                <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-              </div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900">T0kenRent</h1>
-                <p className="text-xs text-gray-600">Decentralized Rental Platform • ChibiTech</p>
-              </div>
-            </div>
+      <div className={`min-h-screen transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
+        {/* Animated Background */}
+        <div className="fixed inset-0 -z-10 overflow-hidden">
+          <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-primary-500/10 via-transparent to-transparent rounded-full blur-3xl animate-float" />
+          <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-accent-500/10 via-transparent to-transparent rounded-full blur-3xl animate-float animation-delay-300" />
+          <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-primary-500/5 rounded-full blur-3xl animate-pulse-slow" />
+        </div>
 
-            <div className="flex items-center gap-4">
-              {demoMode && (
-                <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
-                  Demo Mode
-                </span>
-              )}
-              <div className="w-80">
-                {demoMode ? (
-                  <div className="flex items-center gap-3 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <span className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse"></span>
-                    <span className="text-sm font-medium text-yellow-800">Demo Mode Active</span>
+        {/* Header */}
+        <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-surface-900/80 border-b border-surface-200/50 dark:border-surface-700/50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16 sm:h-20">
+              {/* Logo */}
+              <div className="flex items-center gap-3 group cursor-pointer" onClick={() => { setShowMarketplace(false); setDemoMode(false); }}>
+                <div className="relative">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25 group-hover:shadow-xl group-hover:shadow-primary-500/30 transition-all duration-300 group-hover:scale-105">
+                    <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white dark:border-surface-900 animate-pulse" />
+                </div>
+                <div className="hidden sm:block">
+                  <h1 className="text-xl font-bold bg-gradient-to-r from-surface-900 to-surface-600 dark:from-white dark:to-surface-400 bg-clip-text text-transparent">
+                    T0kenRent
+                  </h1>
+                  <p className="text-xs text-surface-500 dark:text-surface-400 -mt-0.5">
+                    Decentralized Rentals
+                  </p>
+                </div>
+              </div>
+
+              {/* Right Section */}
+              <div className="flex items-center gap-3 sm:gap-4">
+                {/* Theme Toggle */}
+                <ThemeToggle />
+
+                {/* Demo Badge */}
+                {demoMode && (
+                  <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-full">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                    </span>
+                    <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">Demo Mode</span>
+                  </div>
+                )}
+
+                {/* Wallet / Demo Status */}
+                <div className="w-auto sm:w-80">
+                  {demoMode ? (
                     <button 
                       onClick={() => { setDemoMode(false); setShowMarketplace(false); }}
-                      className="ml-auto text-xs text-yellow-600 hover:text-yellow-800"
+                      className="btn-ghost text-sm flex items-center gap-2"
                     >
-                      Exit
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      <span className="hidden sm:inline">Exit Demo</span>
                     </button>
-                  </div>
-                ) : (
-                  <WalletAuth onAuthenticated={handleAuthenticated} />
-                )}
+                  ) : !showMarketplace ? (
+                    <div className="hidden sm:block">
+                      <WalletAuth onAuthenticated={handleAuthenticated} />
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 px-3 py-2 bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-xl">
+                      <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                      <span className="text-xs font-medium text-emerald-700 dark:text-emerald-400 truncate max-w-[100px] sm:max-w-[200px]">
+                        {userKey.slice(0, 8)}...{userKey.slice(-6)}
+                      </span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </header>
 
         {/* Main Content */}
-        <div className="py-8">
+        <main className="relative">
           {showMarketplace ? (
-            <RentalMarketplace userKey={userKey} demoMode={demoMode} />
+            <div className="animate-fade-in">
+              <RentalMarketplace userKey={userKey} demoMode={demoMode} />
+            </div>
           ) : (
-            <div className="max-w-4xl mx-auto px-4">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
               {/* Hero Section */}
-              <div className="bg-white rounded-2xl shadow-xl p-12 text-center space-y-8">
-                <div className="w-24 h-24 bg-gradient-to-br from-primary-100 to-indigo-100 rounded-full flex items-center justify-center mx-auto">
-                  <svg className="w-12 h-12 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                </div>
-                
-                <div>
-                  <h2 className="text-4xl font-bold text-gray-900 mb-4">
-                    Welcome to T0kenRent
-                  </h2>
-                  <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                    The decentralized platform for tokenizing and renting everyday assets.
-                    Powered by BSV blockchain with HTTP 402 payment gating.
-                  </p>
+              <div className="text-center max-w-4xl mx-auto mb-16 sm:mb-24">
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-100 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-full mb-6 animate-slide-down">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-500 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
+                  </span>
+                  <span className="text-sm font-medium text-primary-700 dark:text-primary-400">
+                    BSV Hackathon 2025 - Team ChibiTech
+                  </span>
                 </div>
 
-                {/* Demo Mode Button */}
-                <div className="flex flex-col items-center gap-4">
+                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 animate-slide-up">
+                  <span className="bg-gradient-to-r from-surface-900 via-surface-700 to-surface-900 dark:from-white dark:via-surface-300 dark:to-white bg-clip-text text-transparent">
+                    Rent Anything,
+                  </span>
+                  <br />
+                  <span className="bg-gradient-to-r from-primary-500 via-accent-500 to-primary-500 bg-clip-text text-transparent">
+                    Trust No One
+                  </span>
+                </h1>
+
+                <p className="text-lg sm:text-xl text-surface-600 dark:text-surface-400 mb-10 max-w-2xl mx-auto animate-slide-up animation-delay-100">
+                  The decentralized platform for tokenizing and renting everyday assets. 
+                  Secured by smart contracts, powered by BSV blockchain.
+                </p>
+
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up animation-delay-200">
                   <button
                     onClick={enableDemoMode}
-                    className="px-8 py-4 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-bold rounded-xl shadow-lg transition-all transform hover:scale-105"
+                    className="w-full sm:w-auto btn-primary text-lg px-8 py-4 flex items-center justify-center gap-3"
                   >
-                    Try Demo Mode (No Wallet Required)
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    Try Demo Mode
                   </button>
-                  <p className="text-sm text-gray-500">
-                    Or connect your BSV wallet above for full functionality
+                  <div className="hidden sm:block">
+                    <WalletAuth onAuthenticated={handleAuthenticated} />
+                  </div>
+                </div>
+
+                <p className="text-sm text-surface-500 dark:text-surface-500 mt-4 animate-slide-up animation-delay-300">
+                  No wallet? No problem. Try demo mode to explore the full experience.
+                </p>
+              </div>
+
+              {/* Feature Cards */}
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-16 sm:mb-24">
+                {/* Card 1 */}
+                <div className="feature-card animate-slide-up animation-delay-100">
+                  <div className="icon-wrapper">
+                    <svg className="w-7 h-7 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-semibold text-surface-900 dark:text-white mb-2">
+                    Asset Tokenization
+                  </h3>
+                  <p className="text-surface-600 dark:text-surface-400">
+                    Mint BRC-76 compliant tokens representing your rentable items with immutable on-chain metadata.
                   </p>
                 </div>
 
-                {/* Feature Cards */}
-                <div className="grid md:grid-cols-3 gap-6 mt-8">
-                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 text-left">
-                    <div className="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center mb-4">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                      </svg>
-                    </div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Tokenize Assets</h3>
-                    <p className="text-sm text-gray-600">
-                      Mint BRC-76 compliant tokens representing your rentable items with on-chain metadata.
-                    </p>
+                {/* Card 2 */}
+                <div className="feature-card animate-slide-up animation-delay-200">
+                  <div className="icon-wrapper">
+                    <svg className="w-7 h-7 text-accent-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
                   </div>
-
-                  <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-6 text-left">
-                    <div className="w-12 h-12 bg-green-500 rounded-lg flex items-center justify-center mb-4">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                      </svg>
-                    </div>
-                    <h3 className="font-semibold text-gray-900 mb-2">Secure Escrow</h3>
-                    <p className="text-sm text-gray-600">
-                      Smart contract escrows protect security deposits with 2-of-2 multisig on BSV.
-                    </p>
-                  </div>
-
-                  <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6 text-left">
-                    <div className="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center mb-4">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                      </svg>
-                    </div>
-                    <h3 className="font-semibold text-gray-900 mb-2">HTTP 402 Payments</h3>
-                    <p className="text-sm text-gray-600">
-                      Micropayments gate access to rental details, creating seamless pay-per-view interactions.
-                    </p>
-                  </div>
+                  <h3 className="text-xl font-semibold text-surface-900 dark:text-white mb-2">
+                    Smart Contract Escrow
+                  </h3>
+                  <p className="text-surface-600 dark:text-surface-400">
+                    Deposits secured by 2-of-2 multisig contracts. Both parties must agree to release funds.
+                  </p>
                 </div>
 
-                {/* How It Works */}
-                <div className="bg-gray-50 rounded-xl p-8 mt-8 text-left">
-                  <h3 className="font-bold text-xl text-gray-900 mb-6 text-center">How T0kenRent Works</h3>
-                  <div className="space-y-4">
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-sm">1</div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900">List Your Asset</h4>
-                        <p className="text-sm text-gray-600">Tokenize your item (camera, tools, bikes) as a BRC-76 token with rental terms.</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-sm">2</div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900">HTTP 402 Unlock</h4>
-                        <p className="text-sm text-gray-600">Renters pay a tiny micropayment to unlock detailed rental information and access codes.</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-sm">3</div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900">Escrow Deposit</h4>
-                        <p className="text-sm text-gray-600">Security deposit is locked in a smart contract escrow until the rental completes.</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start gap-4">
-                      <div className="flex-shrink-0 w-8 h-8 bg-primary-600 text-white rounded-full flex items-center justify-center font-bold text-sm">4</div>
-                      <div>
-                        <h4 className="font-semibold text-gray-900">Complete & Release</h4>
-                        <p className="text-sm text-gray-600">Both parties co-sign to release the escrow. Deposit returns to renter, minus rental fee.</p>
-                      </div>
-                    </div>
+                {/* Card 3 */}
+                <div className="feature-card animate-slide-up animation-delay-300 sm:col-span-2 lg:col-span-1">
+                  <div className="icon-wrapper">
+                    <svg className="w-7 h-7 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
                   </div>
-                </div>
-
-                {/* Wallet Options */}
-                <div className="bg-blue-50 rounded-xl p-6 mt-6">
-                  <h4 className="font-semibold text-gray-900 mb-3">Supported Wallets</h4>
-                  <div className="flex flex-wrap justify-center gap-4 text-sm">
-                    <a href="https://projectbabbage.com" target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
-                      MetaNet Client (Recommended)
-                    </a>
-                    <span className="px-4 py-2 bg-white rounded-lg shadow-sm text-gray-500">
-                      BSV Desktop via Bridge
-                    </span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-3">
-                    Have a BSV Desktop wallet? Use our <a href="https://github.com/Gwennovation/t0kenrent/blob/main/docs/wallet-integration.md" className="text-primary-600 hover:underline">wallet bridge</a> to connect!
+                  <h3 className="text-xl font-semibold text-surface-900 dark:text-white mb-2">
+                    HTTP 402 Payments
+                  </h3>
+                  <p className="text-surface-600 dark:text-surface-400">
+                    Micropayments unlock rental details instantly. Pay per view, not per subscription.
                   </p>
                 </div>
               </div>
 
-              {/* Stats Section */}
-              <div className="grid grid-cols-3 gap-6 mt-8">
-                <div className="bg-white rounded-xl p-6 text-center shadow-sm">
-                  <div className="text-3xl font-bold text-primary-600">~0%</div>
-                  <div className="text-sm text-gray-600 mt-1">Transaction Fees</div>
+              {/* How It Works */}
+              <div className="glass-card p-8 sm:p-12 mb-16 sm:mb-24 animate-slide-up animation-delay-400">
+                <div className="text-center mb-10">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-surface-900 dark:text-white mb-3">
+                    How It Works
+                  </h2>
+                  <p className="text-surface-600 dark:text-surface-400">
+                    Four simple steps to trustless rentals
+                  </p>
                 </div>
-                <div className="bg-white rounded-xl p-6 text-center shadow-sm">
-                  <div className="text-3xl font-bold text-primary-600">100%</div>
-                  <div className="text-sm text-gray-600 mt-1">On-Chain Security</div>
+
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                  {[
+                    { step: '01', title: 'List Your Asset', desc: 'Tokenize any item as a BRC-76 token with rental terms and pricing.' },
+                    { step: '02', title: 'Micropayment Unlock', desc: 'Renters pay tiny fee to access detailed rental information.' },
+                    { step: '03', title: 'Escrow Deposit', desc: 'Security deposit locked in smart contract until rental completes.' },
+                    { step: '04', title: 'Release & Review', desc: 'Both parties co-sign to release escrow and leave feedback.' },
+                  ].map((item, i) => (
+                    <div key={i} className="relative">
+                      <div className="text-6xl font-bold text-primary-500/10 dark:text-primary-500/20 mb-2">
+                        {item.step}
+                      </div>
+                      <h4 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
+                        {item.title}
+                      </h4>
+                      <p className="text-sm text-surface-600 dark:text-surface-400">
+                        {item.desc}
+                      </p>
+                      {i < 3 && (
+                        <div className="hidden lg:block absolute top-8 -right-4 text-surface-300 dark:text-surface-600">
+                          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </div>
+                      )}
+                    </div>
+                  ))}
                 </div>
-                <div className="bg-white rounded-xl p-6 text-center shadow-sm">
-                  <div className="text-3xl font-bold text-primary-600">Global</div>
-                  <div className="text-sm text-gray-600 mt-1">Accessibility</div>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-4 sm:gap-6 mb-16 sm:mb-24">
+                {[
+                  { value: '~0%', label: 'Transaction Fees', color: 'primary' },
+                  { value: '100%', label: 'On-Chain Security', color: 'accent' },
+                  { value: 'Global', label: 'Accessibility', color: 'primary' },
+                ].map((stat, i) => (
+                  <div 
+                    key={i} 
+                    className={`glass-card p-6 sm:p-8 text-center animate-slide-up`}
+                    style={{ animationDelay: `${(i + 5) * 100}ms` }}
+                  >
+                    <div className={`text-3xl sm:text-4xl font-bold mb-2 bg-gradient-to-r ${
+                      stat.color === 'primary' 
+                        ? 'from-primary-500 to-primary-600' 
+                        : 'from-accent-500 to-accent-600'
+                    } bg-clip-text text-transparent`}>
+                      {stat.value}
+                    </div>
+                    <div className="text-sm text-surface-600 dark:text-surface-400">
+                      {stat.label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA Section */}
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-500 to-accent-600 p-8 sm:p-12 text-center animate-slide-up animation-delay-500">
+                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRoLTJ2LTRoMnY0em0wLTZ2LTJoLTJ2Mmgyem0tNiAwaC0ydjJoMnYtMnptMCA2aC0ydjRoMnYtNHptLTYtNmgtMnYyaDJ2LTJ6bTAgNmgtMnY0aDJ2LTR6bTEyLTEydi0ySDI0djJoMTJ6bTAgMTJ2LTJIMjR2MmgxMnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30" />
+                <div className="relative">
+                  <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
+                    Ready to get started?
+                  </h2>
+                  <p className="text-white/80 mb-8 max-w-xl mx-auto">
+                    Join the future of peer-to-peer rentals. No intermediaries, no hidden fees.
+                  </p>
+                  <button
+                    onClick={enableDemoMode}
+                    className="px-8 py-4 bg-white text-primary-600 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+                  >
+                    Launch Demo
+                  </button>
                 </div>
               </div>
             </div>
           )}
-        </div>
+        </main>
 
         {/* Footer */}
-        <footer className="bg-white border-t border-gray-200 mt-16">
-          <div className="max-w-7xl mx-auto px-4 py-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <p className="text-sm text-gray-600">
-                  2025 ChibiTech. Built for BSV Hackathon.
-                </p>
-                <span className="text-gray-300">|</span>
-                <p className="text-sm text-gray-500">
-                  Powered by BSV Blockchain
-                </p>
+        <footer className="border-t border-surface-200 dark:border-surface-800 mt-auto">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-accent-500 rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-surface-900 dark:text-white">
+                    T0kenRent
+                  </p>
+                  <p className="text-xs text-surface-500 dark:text-surface-400">
+                    Team ChibiTech - BSV Hackathon 2025
+                  </p>
+                </div>
               </div>
-              <div className="flex gap-6">
-                <a href="https://github.com/Gwennovation/t0kenrent" className="text-sm text-gray-600 hover:text-primary-600">
-                  GitHub
+
+              <div className="flex items-center gap-6">
+                <a 
+                  href="https://github.com/Gwennovation/t0kenrent" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-surface-600 dark:text-surface-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+                >
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                    <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
+                  </svg>
                 </a>
-                <a href="/docs" className="text-sm text-gray-600 hover:text-primary-600">
-                  Documentation
-                </a>
-                <a href="https://docs.bsvblockchain.org" className="text-sm text-gray-600 hover:text-primary-600">
-                  BSV Docs
+                <a 
+                  href="https://bsvblockchain.org" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-surface-600 dark:text-surface-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+                >
+                  Powered by BSV
                 </a>
               </div>
             </div>
           </div>
         </footer>
-      </main>
+      </div>
     </>
   )
 }
