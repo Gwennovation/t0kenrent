@@ -163,7 +163,7 @@ The bridge reads from `Config/babbage-identity.json`:
   "source": "bsv-desktop-import",
   "brc100": {
     "version": "1.0",
-    "protocols": ["Pay MNEE", "messagebox", "tm_supplychain"]
+    "protocols": ["Pay MNEE", "messagebox", "tm_tokenrent"]
   }
 }
 ```

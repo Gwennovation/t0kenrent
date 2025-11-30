@@ -268,12 +268,10 @@ const OVERLAY_URL = 'https://overlay-us-1.bsvb.tech'
 
 // Topic Managers:
 - tm_tokenrent (rental transactions) - CUSTOM IMPLEMENTATION
-- tm_supplychain (rental stages)
 - tm_mnee (payments)
 
 // Lookup Services:
 - ls_tokenrent - CUSTOM IMPLEMENTATION
-- ls_supplychain
 - ls_mnee
 ```
 
