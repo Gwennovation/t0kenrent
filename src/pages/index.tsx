@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Head from 'next/head'
 import WalletAuth from '@/components/WalletAuth'
 import RentalMarketplace from '@/components/RentalMarketplace'
@@ -6,10 +6,28 @@ import RentalMarketplace from '@/components/RentalMarketplace'
 export default function Home() {
   const [authenticated, setAuthenticated] = useState(false)
   const [userKey, setUserKey] = useState('')
+  const [demoMode, setDemoMode] = useState(false)
+  const [showMarketplace, setShowMarketplace] = useState(false)
+
+  // Check for demo mode on load
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('demo') === 'true') {
+      enableDemoMode()
+    }
+  }, [])
 
   function handleAuthenticated(publicKey: string) {
     setUserKey(publicKey)
     setAuthenticated(true)
+    setShowMarketplace(true)
+  }
+
+  function enableDemoMode() {
+    // Use the dev identity for demo
+    setUserKey('04813250da3d3f1b3ee46f0c9062813bee38e54fcd66e7cb944ae7445dda3a536653a8612d47e44b54368afda1b8685e1aec0063f4d943300bfc8133bf1571d18e')
+    setDemoMode(true)
+    setShowMarketplace(true)
   }
 
   return (
@@ -33,19 +51,39 @@ export default function Home() {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">T0kenRent</h1>
-                <p className="text-xs text-gray-600">Decentralized Rental Platform</p>
+                <p className="text-xs text-gray-600">Decentralized Rental Platform • ChibiTech</p>
               </div>
             </div>
 
-            <div className="w-80">
-              <WalletAuth onAuthenticated={handleAuthenticated} />
+            <div className="flex items-center gap-4">
+              {demoMode && (
+                <span className="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded-full">
+                  Demo Mode
+                </span>
+              )}
+              <div className="w-80">
+                {demoMode ? (
+                  <div className="flex items-center gap-3 px-4 py-2 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <span className="w-3 h-3 bg-yellow-500 rounded-full animate-pulse"></span>
+                    <span className="text-sm font-medium text-yellow-800">Demo Mode Active</span>
+                    <button 
+                      onClick={() => { setDemoMode(false); setShowMarketplace(false); }}
+                      className="ml-auto text-xs text-yellow-600 hover:text-yellow-800"
+                    >
+                      Exit
+                    </button>
+                  </div>
+                ) : (
+                  <WalletAuth onAuthenticated={handleAuthenticated} />
+                )}
+              </div>
             </div>
           </div>
         </header>
 
         {/* Main Content */}
         <div className="py-8">
-          {authenticated ? (
+          {showMarketplace ? (
             <RentalMarketplace userKey={userKey} />
           ) : (
             <div className="max-w-4xl mx-auto px-4">
@@ -64,6 +102,19 @@ export default function Home() {
                   <p className="text-xl text-gray-600 max-w-2xl mx-auto">
                     The decentralized platform for tokenizing and renting everyday assets.
                     Powered by BSV blockchain with HTTP 402 payment gating.
+                  </p>
+                </div>
+
+                {/* Demo Mode Button */}
+                <div className="flex flex-col items-center gap-4">
+                  <button
+                    onClick={enableDemoMode}
+                    className="px-8 py-4 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600 text-white font-bold rounded-xl shadow-lg transition-all transform hover:scale-105"
+                  >
+                    Try Demo Mode (No Wallet Required)
+                  </button>
+                  <p className="text-sm text-gray-500">
+                    Or connect your BSV wallet above for full functionality
                   </p>
                 </div>
 
@@ -141,15 +192,20 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* CTA */}
-                <div className="pt-4">
-                  <p className="text-gray-500 mb-4">Connect your BSV wallet to start renting or listing assets</p>
-                  <div className="inline-flex items-center gap-2 text-sm text-primary-600">
-                    <svg className="w-5 h-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                    </svg>
-                    <span>Use the Connect Wallet button above</span>
+                {/* Wallet Options */}
+                <div className="bg-blue-50 rounded-xl p-6 mt-6">
+                  <h4 className="font-semibold text-gray-900 mb-3">Supported Wallets</h4>
+                  <div className="flex flex-wrap justify-center gap-4 text-sm">
+                    <a href="https://projectbabbage.com" target="_blank" rel="noopener noreferrer" className="px-4 py-2 bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
+                      MetaNet Client (Recommended)
+                    </a>
+                    <span className="px-4 py-2 bg-white rounded-lg shadow-sm text-gray-500">
+                      BSV Desktop via Bridge
+                    </span>
                   </div>
+                  <p className="text-xs text-gray-500 mt-3">
+                    Have a BSV Desktop wallet? Use our <a href="https://github.com/Gwennovation/t0kenrent/blob/main/docs/wallet-integration.md" className="text-primary-600 hover:underline">wallet bridge</a> to connect!
+                  </p>
                 </div>
               </div>
 
@@ -186,7 +242,7 @@ export default function Home() {
                 </p>
               </div>
               <div className="flex gap-6">
-                <a href="https://github.com/ChibiTech/T0kenRent" className="text-sm text-gray-600 hover:text-primary-600">
+                <a href="https://github.com/Gwennovation/t0kenrent" className="text-sm text-gray-600 hover:text-primary-600">
                   GitHub
                 </a>
                 <a href="/docs" className="text-sm text-gray-600 hover:text-primary-600">
