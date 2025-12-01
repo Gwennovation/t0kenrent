@@ -65,6 +65,8 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [successMessage, setSuccessMessage] = useState('')
   const [myListingsFilter, setMyListingsFilter] = useState<'all' | 'available' | 'rented'>('all')
+  const [selectedAssets, setSelectedAssets] = useState<Set<string>>(new Set())
+  const [bulkRentMode, setBulkRentMode] = useState(false)
 
   const categories = useMemo(() => [
     { id: 'all', name: 'All Categories', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z' },
@@ -142,6 +144,74 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
       alert('Failed to create asset: ' + getErrorMessage(error))
     }
   }, [userKey])
+
+  const toggleAssetSelection = useCallback((assetId: string) => {
+    setSelectedAssets(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(assetId)) {
+        newSet.delete(assetId)
+      } else {
+        newSet.add(assetId)
+      }
+      return newSet
+    })
+  }, [])
+
+  const selectAllVisibleAssets = useCallback(() => {
+    const availableAssets = filteredAssets.filter(a => a.status === 'available' && a.ownerKey !== userKey)
+    setSelectedAssets(new Set(availableAssets.map(a => a.id)))
+  }, [filteredAssets, userKey])
+
+  const clearSelection = useCallback(() => {
+    setSelectedAssets(new Set())
+  }, [])
+
+  const handleBulkRent = useCallback(async () => {
+    if (selectedAssets.size === 0) return
+    
+    const confirmed = confirm(`Rent ${selectedAssets.size} item(s)? This will create ${selectedAssets.size} separate rental transactions.`)
+    if (!confirmed) return
+
+    try {
+      const selectedAssetsList = Array.from(selectedAssets).map(assetId => {
+        const asset = assets.find(a => a.id === assetId)
+        return asset
+      }).filter(Boolean)
+
+      // Create rental requests for each selected asset
+      const rentalRequests = selectedAssetsList.map(asset => ({
+        assetId: asset!.id,
+        renterKey: userKey,
+        ownerKey: asset!.ownerKey,
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 1 day default
+        rentalDays: 1,
+        rentalFee: asset!.rentalRatePerDay,
+        depositAmount: asset!.depositAmount,
+        totalAmount: asset!.rentalRatePerDay + asset!.depositAmount
+      }))
+
+      const response = await fetch('/api/rentals/create-batch', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rentals: rentalRequests })
+      })
+
+      const result = await response.json()
+
+      if (result.success) {
+        setSuccessMessage(`Successfully rented ${result.created} item(s)!${result.failed > 0 ? ` ${result.failed} failed.` : ''}`)
+        clearSelection()
+        setBulkRentMode(false)
+        loadAssets() // Refresh
+        setTimeout(() => setSuccessMessage(''), 5000)
+      } else {
+        throw new Error(result.error || 'Batch rental failed')
+      }
+    } catch (error) {
+      alert('Failed to rent items: ' + getErrorMessage(error))
+    }
+  }, [selectedAssets, assets, userKey, clearSelection, loadAssets])
 
   const handleRentalCreated = useCallback((rental: Rental) => {
     setMyRentals(prev => [rental, ...prev])
@@ -331,6 +401,65 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
               ))}
             </div>
           </div>
+
+          {/* Bulk Rent Toolbar */}
+          {filteredAssets.some(a => a.status === 'available' && a.ownerKey !== userKey) && (
+            <div className="glass-card p-4 mb-6 flex items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setBulkRentMode(!bulkRentMode)
+                    if (bulkRentMode) clearSelection()
+                  }}
+                  className={`btn-${bulkRentMode ? 'secondary' : 'outline'} text-sm`}
+                >
+                  <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  {bulkRentMode ? 'Cancel Selection' : 'Rent Multiple Items'}
+                </button>
+                {bulkRentMode && (
+                  <>
+                    <span className="text-sm text-surface-600 dark:text-surface-400">
+                      {selectedAssets.size} selected
+                    </span>
+                    {selectedAssets.size > 0 && (
+                      <button
+                        type="button"
+                        onClick={clearSelection}
+                        className="text-sm text-surface-500 hover:text-surface-700 dark:hover:text-surface-300"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+              {bulkRentMode && (
+                <div className="flex gap-2">
+                  {selectedAssets.size < filteredAssets.filter(a => a.status === 'available' && a.ownerKey !== userKey).length && (
+                    <button
+                      type="button"
+                      onClick={selectAllVisibleAssets}
+                      className="btn-outline text-sm"
+                    >
+                      Select All Available
+                    </button>
+                  )}
+                  {selectedAssets.size > 0 && (
+                    <button
+                      type="button"
+                      onClick={handleBulkRent}
+                      className="btn-primary text-sm"
+                    >
+                      Rent {selectedAssets.size} Item{selectedAssets.size !== 1 ? 's' : ''}
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Asset Grid */}
           {loading ? (
