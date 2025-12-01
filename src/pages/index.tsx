@@ -135,12 +135,10 @@ export default function Home() {
               {/* Logo */}
               <div className="flex items-center gap-3 group cursor-pointer" onClick={() => { setShowMarketplace(false); setDemoMode(false); setActiveView('marketplace'); }}>
                 <div className="relative">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white dark:bg-surface-800 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25 group-hover:shadow-xl group-hover:shadow-primary-500/30 transition-all duration-300 group-hover:scale-105 p-1.5">
-                    <img 
-                      src="/genspark-logo.png" 
-                      alt="GenSpark Logo" 
-                      className="w-full h-full object-contain"
-                    />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25 group-hover:shadow-xl group-hover:shadow-primary-500/30 transition-all duration-300 group-hover:scale-105">
+                    <svg className="w-6 h-6 sm:w-7 sm:h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                    </svg>
                   </div>
                   <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white dark:border-surface-900 animate-pulse" />
                 </div>
@@ -534,12 +532,10 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-white dark:bg-surface-800 rounded-lg flex items-center justify-center shadow-md p-1">
-                  <img 
-                    src="/genspark-logo.png" 
-                    alt="GenSpark Logo" 
-                    className="w-full h-full object-contain"
-                  />
+                <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-accent-500 rounded-lg flex items-center justify-center shadow-md">
+                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                  </svg>
                 </div>
                 <div>
                   <p className="text-sm font-medium text-surface-900 dark:text-white">
