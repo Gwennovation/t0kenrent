@@ -17,6 +17,20 @@ interface CreateAssetModalProps {
 // Demo sample data for quick fill
 const demoSamples = [
   {
+    name: 'Beachfront Villa - Ocean View',
+    description: 'Luxurious 3-bedroom beachfront villa with stunning ocean views. Private pool, full kitchen, WiFi, and smart home features. Perfect for families or romantic getaways. Sleeps 6 comfortably.',
+    category: 'realestate',
+    imageUrl: 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=800',
+    rentalRatePerDay: '350',
+    depositAmount: '1000',
+    city: 'Miami Beach',
+    state: 'FL',
+    address: '123 Ocean Drive',
+    accessCode: 'VILLA-2024',
+    specialInstructions: 'Check-in after 3 PM, check-out before 11 AM. Please respect quiet hours after 10 PM. Pool maintenance on Tuesdays.',
+    accessories: ['Private Pool', 'Beach Access', 'WiFi', 'Smart TV', 'Full Kitchen', 'Washer/Dryer']
+  },
+  {
     name: 'Canon EOS R5 Camera Kit',
     description: 'Professional mirrorless camera with 45MP sensor. Includes 24-70mm lens, battery grip, and carrying case. Perfect for events and professional shoots.',
     category: 'photography',
