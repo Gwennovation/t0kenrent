@@ -6,8 +6,6 @@ T0kenRent enables peer-to-peer asset rentals using BSV blockchain technology. Th
 
 ## Live Demo
 
-Visit the application at:
-https://3000-ivkd2o96dkwj9eeevj6yh-18e660f9.sandbox.novita.ai
 
 ## Features
 
