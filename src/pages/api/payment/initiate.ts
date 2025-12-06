@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import connectDB from '@/lib/mongodb'
+import connectDB, { isMockMode } from '@/lib/mongodb'
 import RentalAsset from '@/models/RentalAsset'
+import { storage } from '@/lib/storage'
 
 /**
  * HTTP 402 Payment Initiation Endpoint
@@ -17,39 +18,66 @@ export default async function handler(
   }
 
   try {
-    await connectDB()
-
-    const { resourceId, resourceType, payerKey } = req.body
+    const { resourceId, resourceType, payerKey, userKey } = req.body
 
     if (!resourceId) {
       return res.status(400).json({ error: 'Resource ID is required' })
     }
 
-    // Find the rental asset
-    const asset = await RentalAsset.findOne({ tokenId: resourceId })
+    // Connect to database
+    await connectDB()
+    
+    let asset: any
+    let assetName: string
+    let unlockFee: number
+    let ownerKey: string
+    
+    if (isMockMode()) {
+      // Use in-memory storage
+      console.log('📦 Using in-memory storage for payment initiation')
+      asset = storage.getAssetByTokenId(resourceId)
+      
+      if (!asset) {
+        return res.status(404).json({ error: 'Asset not found' })
+      }
+      
+      assetName = asset.name
+      unlockFee = asset.unlockFee || 0.0001
+      ownerKey = asset.ownerKey
+    } else {
+      // Use MongoDB
+      console.log('✅ Using MongoDB for payment initiation')
+      asset = await RentalAsset.findOne({ tokenId: resourceId })
 
-    if (!asset) {
-      return res.status(404).json({ error: 'Asset not found' })
+      if (!asset) {
+        return res.status(404).json({ error: 'Asset not found' })
+      }
+      
+      assetName = asset.name
+      unlockFee = asset.unlockFee
+      ownerKey = asset.ownerKey
+      
+      // Store payment request in asset document (MongoDB only)
+      const paymentReference = `pay_${resourceId}_${Date.now()}_${Math.random().toString(36).substring(7)}`
+      
+      asset.http402Payments.push({
+        paymentReference,
+        amount: unlockFee,
+        payerKey: payerKey || userKey,
+        status: 'pending',
+        createdAt: new Date()
+      })
+      await asset.save()
     }
 
     // Create HTTP 402 payment request
     const paymentReference = `pay_${resourceId}_${Date.now()}_${Math.random().toString(36).substring(7)}`
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000) // 5 minutes
 
-    // Store payment request in asset document
-    asset.http402Payments.push({
-      paymentReference,
-      amount: asset.unlockFee,
-      payerKey,
-      status: 'pending',
-      createdAt: new Date()
-    })
-    await asset.save()
-
     // Return HTTP 402 response
     res.setHeader('Accept-Payment', 'BSV')
-    res.setHeader('Payment-Amount', asset.unlockFee.toString())
-    res.setHeader('Payment-Address', asset.ownerKey)
+    res.setHeader('Payment-Amount', unlockFee.toString())
+    res.setHeader('Payment-Address', ownerKey)
     res.setHeader('Payment-Reference', paymentReference)
 
     return res.status(402).json({
@@ -57,8 +85,8 @@ export default async function handler(
       message: 'Access to rental details requires micropayment',
       payment: {
         currency: 'BSV',
-        amount: asset.unlockFee,
-        address: asset.ownerKey,
+        amount: unlockFee,
+        address: ownerKey,
         reference: paymentReference,
         expiresAt: expiresAt.toISOString(),
         expiresIn: 300, // 5 minutes in seconds
@@ -66,8 +94,8 @@ export default async function handler(
         resourceType: resourceType || 'rental_details'
       },
       asset: {
-        name: asset.name,
-        tokenId: asset.tokenId
+        name: assetName,
+        tokenId: resourceId
       }
     })
 

@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { requestPayment } from '@/lib/handcash'
+import { requestPaymentServer } from '@/lib/handcash-server'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -17,8 +17,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Amount and destination required' })
     }
 
-    // Request payment via HandCash
-    const result = await requestPayment({
+    // Request payment via HandCash (server-side SDK)
+    const result = await requestPaymentServer({
       accessToken,
       destination,
       amount,
