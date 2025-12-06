@@ -75,12 +75,12 @@
   "theme_color": "#2563eb",
   "icons": [
     {
-      "src": "/t0kenrent-logo.png",
+      "src": "/t0kenrent logo.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/t0kenrent-logo.png",
+      "src": "/t0kenrent logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }

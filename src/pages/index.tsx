@@ -144,7 +144,7 @@ export default function Home() {
                 <div className="relative">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center transition-all duration-300 group-hover:scale-105">
                     <img 
-                      src="/t0kenrent-logo.png" 
+                      src="/t0kenrent logo.png" 
                       alt="T0kenRent Logo" 
                       className="w-full h-full object-contain"
                     />
@@ -543,8 +543,8 @@ export default function Home() {
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-white dark:bg-surface-800 rounded-lg flex items-center justify-center shadow-md p-1.5">
                   <img 
-                    src="/wallets/relysia.svg" 
-                    alt="Relysia Logo" 
+                    src="/t0kenrent logo.png" 
+                    alt="t0kenrent Logo" 
                     className="w-full h-full object-contain"
                   />
                 </div>
@@ -560,7 +560,7 @@ export default function Home() {
 
               <div className="flex items-center gap-6">
                 <a 
-                  href="https://github.com" 
+                  href="https://github.com/Gwennovation/t0kenrent" 
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-surface-600 dark:text-surface-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
@@ -577,20 +577,6 @@ export default function Home() {
                     className="text-sm text-surface-600 dark:text-surface-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
                   >
                     Powered by BSV
-                  </a>
-                  <div className="h-4 w-px bg-surface-300 dark:bg-surface-700" />
-                  <a 
-                    href="https://www.genspark.ai" 
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 text-sm text-surface-600 dark:text-surface-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors group"
-                  >
-                    <span>Built with</span>
-                    <img 
-                      src="/gradient-logo.png" 
-                      alt="GenSpark" 
-                      className="h-5 object-contain opacity-80 group-hover:opacity-100 transition-opacity"
-                    />
                   </a>
                 </div>
               </div>
