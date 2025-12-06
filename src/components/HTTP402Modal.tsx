@@ -248,6 +248,26 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
         <div className="p-6">
           {step === 'info' && (
             <div className="space-y-6">
+              {/* Demo Mode Banner */}
+              {(demoMode || !asset.ownerKey?.includes('@') && !asset.ownerKey?.startsWith('$')) && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-300 dark:border-amber-700 rounded-xl p-4">
+                  <div className="flex items-start gap-3">
+                    <svg className="w-6 h-6 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+                    </svg>
+                    <div className="flex-1">
+                      <p className="font-semibold text-amber-900 dark:text-amber-200 mb-1">
+                        🎭 Demo Mode - Simulated Payment
+                      </p>
+                      <p className="text-sm text-amber-800 dark:text-amber-300">
+                        This payment will be <strong>simulated for testing</strong>. No real BSV transaction will occur. 
+                        The flow demonstrates HTTP 402 micropayments without requiring actual funds.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div className="text-center">
                 <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-accent-100 to-accent-200 dark:from-accent-900/50 dark:to-accent-800/50 rounded-2xl mb-4">
                   <svg className="w-8 h-8 text-accent-600 dark:text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -258,7 +278,7 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
                   Unlock {asset.name}
                 </h3>
                 <p className="text-surface-600 dark:text-surface-400">
-                  {demoMode 
+                  {demoMode || !asset.ownerKey?.includes('@') && !asset.ownerKey?.startsWith('$')
                     ? 'Click below to simulate the HTTP 402 payment flow and view rental details.'
                     : 'Pay a small micropayment to access detailed rental information including pickup location and access codes.'
                   }
@@ -302,12 +322,19 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
               <button
                 type="button"
                 onClick={handlePayment}
-                className="w-full btn-accent flex items-center justify-center gap-2"
+                className={`w-full flex items-center justify-center gap-2 ${
+                  demoMode || !asset.ownerKey?.includes('@') && !asset.ownerKey?.startsWith('$')
+                    ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg shadow-amber-500/25'
+                    : 'btn-accent'
+                }`}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                {demoMode ? 'Simulate Payment' : `Pay with ${walletType === 'handcash' ? 'HandCash' : walletType === 'metanet' ? 'MetaNet' : 'Paymail'}`}
+                {demoMode || !asset.ownerKey?.includes('@') && !asset.ownerKey?.startsWith('$')
+                  ? '🎭 Simulate Payment (Demo)' 
+                  : `Pay with ${walletType === 'handcash' ? 'HandCash' : walletType === 'metanet' ? 'MetaNet' : 'Paymail'}`
+                }
               </button>
 
               {/* Wallet indicator */}
@@ -412,9 +439,22 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
                 </svg>
               </div>
               <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
-                {demoMode ? 'Demo Payment Complete!' : 'Payment Verified On-Chain!'}
+                {demoMode ? '🎭 Demo Payment Complete!' : 'Payment Verified On-Chain!'}
               </h3>
-              <p className="text-surface-600 dark:text-surface-400 mb-4">Rental details have been unlocked.</p>
+              <p className="text-surface-600 dark:text-surface-400 mb-4">
+                {demoMode 
+                  ? 'Payment simulated successfully. Rental details have been unlocked.'
+                  : 'Rental details have been unlocked.'
+                }
+              </p>
+              
+              {demoMode && (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-3 mb-4">
+                  <p className="text-sm text-amber-800 dark:text-amber-300">
+                    <strong>Demo Mode:</strong> No real transaction occurred. This demonstrates the HTTP 402 payment flow.
+                  </p>
+                </div>
+              )}
               
               {/* Transaction Details */}
               <div className="bg-surface-50 dark:bg-surface-800/50 rounded-xl p-4 text-left mb-4 border border-surface-200/50 dark:border-surface-700/50">

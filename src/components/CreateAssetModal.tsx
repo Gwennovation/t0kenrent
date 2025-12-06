@@ -96,7 +96,8 @@ export default function CreateAssetModal({ onClose, onCreate, categories, demoMo
     specialInstructions: '',
     unlockFee: '0.0001',
     condition: 'excellent',
-    accessories: [] as string[]
+    accessories: [] as string[],
+    paymentAddress: '' // PayMail or HandCash handle for receiving payments
   })
 
   function fillDemoData(sampleIndex: number) {
@@ -118,7 +119,8 @@ export default function CreateAssetModal({ onClose, onCreate, categories, demoMo
       specialInstructions: sample.specialInstructions,
       unlockFee: '0.0001',
       condition: 'excellent',
-      accessories: sample.accessories
+      accessories: sample.accessories,
+      paymentAddress: '' // Demo mode - no payment address needed
     })
     setShowDemoOptions(false)
     setStep(4) // Jump to review
@@ -167,7 +169,9 @@ export default function CreateAssetModal({ onClose, onCreate, categories, demoMo
         ...formData,
         rentalRatePerDay: parseFloat(formData.rentalRatePerDay),
         depositAmount: parseFloat(formData.depositAmount),
-        unlockFee: parseFloat(formData.unlockFee)
+        unlockFee: parseFloat(formData.unlockFee),
+        // Use paymentAddress if provided, otherwise fall back to ownerKey for demo mode
+        ownerKey: formData.paymentAddress || ownerKey || 'demo_owner'
       })
     } catch (error) {
       console.error('Failed to create asset:', error)
@@ -177,7 +181,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories, demoMo
   }
 
   const isStep1Valid = formData.name && formData.description && formData.category
-  const isStep2Valid = formData.rentalRatePerDay && formData.depositAmount
+  const isStep2Valid = formData.rentalRatePerDay && formData.depositAmount && (demoMode || formData.paymentAddress)
   const isStep3Valid = formData.location.city && formData.location.state && formData.location.address
 
   const steps = [
@@ -429,6 +433,25 @@ export default function CreateAssetModal({ onClose, onCreate, categories, demoMo
                 </p>
               </div>
 
+              <div>
+                <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+                  Payment Address {!demoMode && <span className="text-red-500">*</span>}
+                  <span className="text-xs text-surface-500 ml-1">(HandCash handle or PayMail)</span>
+                </label>
+                <input
+                  type="text"
+                  value={formData.paymentAddress}
+                  onChange={(e) => updateFormData('paymentAddress', e.target.value)}
+                  placeholder={demoMode ? "Optional in demo mode" : "$alice or alice@handcash.io"}
+                  className="input-field"
+                />
+                <p className="mt-2 text-xs text-surface-500 dark:text-surface-400">
+                  {demoMode 
+                    ? '💡 Demo mode: Leave empty to simulate payments without real transactions'
+                    : 'Your HandCash handle (e.g., $alice) or PayMail address where you\'ll receive rental payments'}
+                </p>
+              </div>
+
               <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800/50 rounded-xl p-4">
                 <div className="flex items-start gap-3">
                   <svg className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -613,19 +636,23 @@ export default function CreateAssetModal({ onClose, onCreate, categories, demoMo
                 )}
               </div>
 
-              {/* Owner Wallet Info - Auto-filled */}
+              {/* Payment Address Info */}
               <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800/50 rounded-xl p-4">
                 <div className="flex items-start gap-3">
                   <svg className="w-5 h-5 text-primary-600 dark:text-primary-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                   </svg>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-primary-800 dark:text-primary-300 mb-1">Owner Wallet (Auto-filled)</p>
+                    <p className="text-sm font-medium text-primary-800 dark:text-primary-300 mb-1">
+                      {formData.paymentAddress ? 'Payment Destination' : 'Demo Mode - No Payment Address'}
+                    </p>
                     <p className="font-mono text-xs text-primary-700 dark:text-primary-400 break-all">
-                      {ownerKey || 'Not connected'}
+                      {formData.paymentAddress || 'Payments will be simulated (demo mode)'}
                     </p>
                     <p className="text-xs text-primary-600 dark:text-primary-500 mt-1">
-                      Rental payments will be sent to this address
+                      {formData.paymentAddress 
+                        ? 'Rental payments will be sent to this address'
+                        : 'In demo mode, payments are simulated for testing'}
                     </p>
                   </div>
                 </div>
