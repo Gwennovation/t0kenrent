@@ -6,16 +6,16 @@ T0kenRent is a revolutionary decentralized marketplace for renting anything - fr
 
 ### Why T0kenRent?
 
-- 💰 **No Platform Fees** - Direct peer-to-peer transactions
-- 🔒 **Secure Escrow** - Funds held in 2-of-2 multisig contracts
-- ⚡ **Instant Payments** - Fast BSV micropayments
-- 📝 **Transparent Records** - All transactions on-chain
-- 🌍 **Global Access** - No geographical restrictions
-- 🎯 **Own Your Data** - No centralized database required
+- **No Platform Fees** - Direct peer-to-peer transactions
+- **Secure Escrow** - Funds held in 2-of-2 multisig contracts
+- **Instant Payments** - Fast BSV micropayments
+- **Transparent Records** - All transactions on-chain
+- **Global Access** - No geographical restrictions
+- **Own Your Data** - No centralized database required
 
 ## Live Demo
 
-🚀 **[Try T0kenRent Live](https://3000-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai)** - Experience the platform in action!
+**[Try T0kenRent Live](https://3000-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai)** - Experience the platform in action!
 
 Try the demo mode to explore features without connecting a wallet - just click "Try Demo Mode" or add `?demo=true` to the URL.
 
@@ -44,7 +44,7 @@ Want to try it instantly? **[Launch Live Demo](https://3000-i302m5njfk0occat3d5w
 
 ## Installation
 
-📖 **For detailed setup instructions with complete project structure, see [PROJECT_SETUP.md](PROJECT_SETUP.md)**
+**For detailed setup instructions with complete project structure, see [PROJECT_SETUP.md](PROJECT_SETUP.md)**
 
 ### Quick Install
 
@@ -103,12 +103,12 @@ Test T0kenRent without connecting a wallet - perfect for exploring features risk
 3. **URL Parameter**: Add `?demo=true` to any page URL
 
 **Sample assets available in demo mode:**
-- 📷 Canon EOS R5 Camera Kit ($75/day)
-- 🚴 Trek Mountain Bike ($45/day)
-- 🔧 Milwaukee Power Tool Set ($35/day)
-- 🎬 Epson 4K Projector ($55/day)
-- 🚁 DJI Mavic 3 Pro Drone ($95/day)
-- 🏖️ Beachfront Villa - Malibu ($450/day)
+- Canon EOS R5 Camera Kit ($75/day)
+- Trek Mountain Bike ($45/day)
+- Milwaukee Power Tool Set ($35/day)
+- Epson 4K Projector ($55/day)
+- DJI Mavic 3 Pro Drone ($95/day)
+- Beachfront Villa - Malibu ($450/day)
 
 **What you can test in demo mode:**
 - Browse and search the marketplace
@@ -353,18 +353,18 @@ MIT License - see LICENSE for details.
 
 Special thanks to the BSV ecosystem and the open-source community for making decentralized applications possible.
 
-- 🙏 **BSV Blockchain** - Enabling scalable blockchain applications
-- 🙏 **HandCash** - Seamless wallet integration
-- 🙏 **Babbage SDK** - MetaNet infrastructure
-- 🙏 **GenSpark** - AI-powered development assistance
+- **BSV Blockchain** - Enabling scalable blockchain applications
+- **HandCash** - Seamless wallet integration
+- **Babbage SDK** - MetaNet infrastructure
+- **GenSpark** - AI-powered development assistance
 
 ## Support & Community
 
-- 📧 **Issues**: [GitHub Issues](https://github.com/Gwennovation/t0kenrent/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/Gwennovation/t0kenrent/discussions)
-- 📖 **Documentation**: [/docs](/docs)
-- 🌐 **Live Demo**: [https://3000-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai](https://3000-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai)
+- **Issues**: [GitHub Issues](https://github.com/Gwennovation/t0kenrent/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/Gwennovation/t0kenrent/discussions)
+- **Documentation**: [/docs](/docs)
+- **Live Demo**: [https://3000-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai](https://3000-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai)
 
 ---
 
-**Built with ❤️ on BSV Blockchain** | **Powered by GenSpark AI**
+**Built on BSV Blockchain** | **Powered by GenSpark AI**

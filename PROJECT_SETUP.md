@@ -6,7 +6,7 @@
 
 ---
 
-## 📑 Table of Contents
+## Table of Contents
 
 1. [Project Overview](#project-overview)
 2. [Project Structure](#project-structure)
@@ -20,7 +20,7 @@
 
 ---
 
-## 🎯 Project Overview
+## Project Overview
 
 T0kenRent is a decentralized peer-to-peer rental marketplace built on the BSV blockchain. The platform enables users to rent and list assets with:
 
@@ -41,12 +41,12 @@ T0kenRent is a decentralized peer-to-peer rental marketplace built on the BSV bl
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 t0kenrent/
-├── 📂 src/                           # Source code directory
-│   ├── 📂 components/                # React UI components
+├── src/                              # Source code directory
+│   ├── components/                   # React UI components
 │   │   ├── RentalMarketplace.tsx     # Main marketplace interface
 │   │   ├── AssetCard.tsx             # Individual asset display card
 │   │   ├── CreateAssetModal.tsx      # Asset listing creation form
@@ -58,39 +58,39 @@ t0kenrent/
 │   │   ├── Portal.tsx                # Modal portal component
 │   │   └── ThemeToggle.tsx           # Light/dark theme switcher
 │   │
-│   ├── 📂 pages/                     # Next.js pages & routes
+│   ├── pages/                     # Next.js pages & routes
 │   │   ├── index.tsx                 # Landing/homepage
 │   │   ├── _app.tsx                  # App wrapper with providers
 │   │   ├── _document.tsx             # HTML document structure
-│   │   └── 📂 api/                   # API endpoints (backend)
-│   │       ├── 📂 assets/            # Asset management endpoints
+│   │   └── api/                   # API endpoints (backend)
+│   │       ├── assets/            # Asset management endpoints
 │   │       │   ├── create.ts         # POST - Create new asset
 │   │       │   ├── batch-create.ts   # POST - Create multiple assets
 │   │       │   ├── list.ts           # GET - List all assets
 │   │       │   ├── my.ts             # GET - User's assets
 │   │       │   └── unlock.ts         # POST - Unlock asset details
 │   │       │
-│   │       ├── 📂 auth/              # Authentication endpoints
+│   │       ├── auth/              # Authentication endpoints
 │   │       │   ├── handcash.ts       # HandCash OAuth callback
 │   │       │   └── paymail.ts        # Paymail resolution
 │   │       │
-│   │       ├── 📂 402/               # HTTP 402 payment protocol
+│   │       ├── 402/               # HTTP 402 payment protocol
 │   │       │   ├── initiate.ts       # POST - Start 402 payment
 │   │       │   └── callback.ts       # POST - Payment callback
 │   │       │
-│   │       ├── 📂 payment/           # Payment processing
+│   │       ├── payment/           # Payment processing
 │   │       │   ├── initiate.ts       # POST - Create payment request
 │   │       │   ├── verify.ts         # POST - Verify transaction
 │   │       │   └── handcash.ts       # POST - HandCash payment
 │   │       │
-│   │       ├── 📂 escrow/            # Escrow smart contracts
+│   │       ├── escrow/            # Escrow smart contracts
 │   │       │   ├── create.ts         # POST - Create escrow
 │   │       │   ├── fund.ts           # POST - Fund escrow
 │   │       │   ├── confirm.ts        # POST - Confirm funding
 │   │       │   ├── status.ts         # GET - Escrow status
 │   │       │   └── release.ts        # POST - Release funds
 │   │       │
-│   │       ├── 📂 rentals/           # Rental management
+│   │       ├── rentals/           # Rental management
 │   │       │   ├── create.ts         # POST - Create rental
 │   │       │   ├── batch-create.ts   # POST - Create multiple rentals
 │   │       │   ├── my.ts             # GET - User's rentals
@@ -98,11 +98,11 @@ t0kenrent/
 │   │       │   ├── mint-proof.ts     # POST - Mint rental proof
 │   │       │   └── submit-overlay.ts # POST - Submit to overlay
 │   │       │
-│   │       └── 📂 user/              # User management
+│   │       └── user/              # User management
 │   │           ├── profile.ts        # GET/POST - User profile
 │   │           └── stats.ts          # GET - User statistics
 │   │
-│   ├── 📂 lib/                       # Utility libraries
+│   ├── lib/                       # Utility libraries
 │   │   ├── handcash.ts               # HandCash SDK integration
 │   │   ├── escrow.ts                 # Escrow contract logic
 │   │   ├── http402.ts                # HTTP 402 implementation
@@ -112,26 +112,26 @@ t0kenrent/
 │   │   ├── pushdrop.ts               # PushDrop token protocol
 │   │   └── storage.ts                # In-memory storage (demo)
 │   │
-│   ├── 📂 models/                    # MongoDB data schemas
+│   ├── models/                    # MongoDB data schemas
 │   │   ├── User.ts                   # User account schema
 │   │   ├── RentalAsset.ts            # Asset listing schema
 │   │   ├── Rental.ts                 # Rental agreement schema
 │   │   └── Escrow.ts                 # Escrow contract schema
 │   │
-│   ├── 📂 context/                   # React context providers
+│   ├── context/                   # React context providers
 │   │   └── AuthContext.tsx           # Authentication state
 │   │
-│   ├── 📂 styles/                    # Global styles
+│   ├── styles/                    # Global styles
 │   │   └── globals.css               # Tailwind CSS & custom styles
 │   │
-│   └── 📂 types/                     # TypeScript definitions
+│   └── types/                     # TypeScript definitions
 │       └── index.ts                  # Shared type definitions
 │
-├── 📂 public/                        # Static assets
+├── public/                        # Static assets
 │   ├── favicon.ico                   # Website icon
 │   └── images/                       # Image assets
 │
-├── 📂 docs/                          # Documentation
+├── docs/                          # Documentation
 │   ├── QUICKSTART.md                 # Quick start guide
 │   ├── architecture.md               # Technical architecture
 │   ├── api.md                        # API reference
@@ -139,26 +139,26 @@ t0kenrent/
 │   ├── wallet-integration.md         # Wallet integration guide
 │   └── CONTRIBUTING.md               # Contribution guidelines
 │
-├── 📂 config/                        # Configuration files
+├── config/                        # Configuration files
 │   └── deployment-info.json          # Deployment metadata
 │
-├── 📂 scripts/                       # Utility scripts
+├── scripts/                       # Utility scripts
 │   └── setup.sh                      # Setup automation script
 │
-├── 📄 .env.example                   # Environment variables template
-├── 📄 .gitignore                     # Git ignore rules
-├── 📄 package.json                   # NPM dependencies
-├── 📄 package-lock.json              # Locked dependencies
-├── 📄 next.config.js                 # Next.js configuration
-├── 📄 tailwind.config.js             # Tailwind CSS configuration
-├── 📄 tsconfig.json                  # TypeScript configuration
-├── 📄 postcss.config.js              # PostCSS configuration
-├── 📄 Dockerfile                     # Docker container setup
-├── 📄 docker-compose.yml             # Docker Compose setup
-├── 📄 README.md                      # Main documentation
-├── 📄 PROJECT_SETUP.md               # This file
-├── 📄 LICENSE                        # MIT License
-└── 📄 DEPLOYMENT_STATUS.md           # Deployment information
+├── .env.example                   # Environment variables template
+├── .gitignore                     # Git ignore rules
+├── package.json                   # NPM dependencies
+├── package-lock.json              # Locked dependencies
+├── next.config.js                 # Next.js configuration
+├── tailwind.config.js             # Tailwind CSS configuration
+├── tsconfig.json                  # TypeScript configuration
+├── postcss.config.js              # PostCSS configuration
+├── Dockerfile                     # Docker container setup
+├── docker-compose.yml             # Docker Compose setup
+├── README.md                      # Main documentation
+├── PROJECT_SETUP.md               # This file
+├── LICENSE                        # MIT License
+└── DEPLOYMENT_STATUS.md           # Deployment information
 ```
 
 ### Key Directories Explained
@@ -174,7 +174,7 @@ t0kenrent/
 
 ---
 
-## 🔧 Prerequisites
+## Prerequisites
 
 Before setting up T0kenRent, ensure you have the following installed:
 
@@ -225,7 +225,7 @@ Before setting up T0kenRent, ensure you have the following installed:
 
 ---
 
-## 🚀 Step-by-Step Setup
+## Step-by-Step Setup
 
 Follow these steps to get T0kenRent running on your local machine:
 
@@ -406,7 +406,7 @@ mongosh
 
 ---
 
-## 🎮 Running the Application
+## Running the Application
 
 ### Development Mode (Recommended)
 
@@ -479,7 +479,7 @@ docker-compose logs -f
 
 ---
 
-## 🧪 Testing Features
+## Testing Features
 
 ### Demo Mode (No Wallet Required)
 
@@ -492,20 +492,20 @@ The easiest way to test all features without any setup:
 2. **Sample Assets Available**
    - 📷 Canon EOS R5 Camera Kit - $75/day
    - 🚴 Trek Mountain Bike - $45/day
-   - 🔧 Milwaukee Power Tool Set - $35/day
+   - Milwaukee Power Tool Set - $35/day
    - 🎬 Epson 4K Projector - $55/day
    - 🚁 DJI Mavic 3 Pro Drone - $95/day
    - 🏖️ Beachfront Villa - Malibu - $450/day
 
 3. **Test Features in Demo Mode**
-   - ✅ Browse marketplace
-   - ✅ Search and filter assets
-   - ✅ View asset details
-   - ✅ Create new asset listings
-   - ✅ Initiate rental agreements
-   - ✅ View rental dashboard
-   - ✅ Test multi-item rentals
-   - ✅ Experience full UI/UX
+   - Browse marketplace
+   - Search and filter assets
+   - View asset details
+   - Create new asset listings
+   - Initiate rental agreements
+   - View rental dashboard
+   - Test multi-item rentals
+   - Experience full UI/UX
 
 ### Testing with HandCash Wallet
 
@@ -563,7 +563,7 @@ curl http://localhost:3000/api/health
 
 ---
 
-## ⚙️ Environment Configuration
+## Environment Configuration
 
 ### Environment Variables Reference
 
@@ -607,7 +607,7 @@ curl http://localhost:3000/api/health
 
 ---
 
-## 🔍 Troubleshooting
+## Troubleshooting
 
 ### Common Issues and Solutions
 
@@ -729,7 +729,7 @@ npm run dev
 
 ---
 
-## 📚 Additional Resources
+## Additional Resources
 
 ### Documentation Files
 
@@ -767,7 +767,7 @@ npm run dev
 
 ---
 
-## 🎯 Next Steps
+## Next Steps
 
 After successfully setting up T0kenRent, you can:
 
@@ -799,7 +799,7 @@ After successfully setting up T0kenRent, you can:
 
 ---
 
-## ✅ Setup Verification Checklist
+## Setup Verification Checklist
 
 Use this checklist to verify your setup is complete:
 
@@ -828,7 +828,7 @@ Use this checklist to verify your setup is complete:
 
 ---
 
-## 📝 Support
+## Support
 
 If you encounter any issues not covered in this guide:
 
@@ -853,7 +853,7 @@ If you encounter any issues not covered in this guide:
 
 ---
 
-**Built with ❤️ on BSV Blockchain** | **Powered by GenSpark AI**
+**Built on BSV Blockchain** | **Powered by GenSpark AI**
 
 ---
 
