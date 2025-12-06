@@ -1,17 +1,24 @@
 /**
  * HandCash Connect Integration for T0kenRent
  * 
- * Implements HandCash Connect for wallet authentication and payments.
+ * Uses the official HandCash Connect SDK
  * Reference: https://docs.handcash.io/v3/getting-started
  */
+
+import { HandCashConnect } from '@handcash/handcash-connect'
 
 // HandCash Connect configuration
 const HANDCASH_APP_ID = process.env.NEXT_PUBLIC_HANDCASH_APP_ID || ''
 const HANDCASH_APP_SECRET = process.env.HANDCASH_APP_SECRET || ''
 
-// HandCash Connect endpoints - using the correct URL format
+// HandCash Connect endpoints
 const HANDCASH_AUTH_URL = 'https://app.handcash.io/#/authorizeApp'
-const HANDCASH_API_URL = 'https://cloud.handcash.io'
+
+// Initialize HandCash SDK
+const handCashConnect = new HandCashConnect({
+  appId: HANDCASH_APP_ID,
+  appSecret: HANDCASH_APP_SECRET
+})
 
 export interface HandCashProfile {
   id: string
@@ -74,7 +81,7 @@ export async function exchangeAuthCode(authToken: string): Promise<string> {
 }
 
 /**
- * Get user profile from HandCash
+ * Get user profile from HandCash using official SDK
  */
 export async function getHandCashProfile(authToken: string): Promise<HandCashProfile> {
   // Demo mode
@@ -90,53 +97,27 @@ export async function getHandCashProfile(authToken: string): Promise<HandCashPro
   }
   
   try {
-    console.log('🔍 Fetching HandCash profile...')
-    console.log('📡 API URL:', `${HANDCASH_API_URL}/v1/connect/profile/currentUserProfile`)
+    console.log('🔍 Fetching HandCash profile using SDK...')
     console.log('🔑 App ID:', HANDCASH_APP_ID)
-    console.log('🔐 App Secret exists:', !!HANDCASH_APP_SECRET)
-    console.log('🎫 Auth token:', authToken.substring(0, 20) + '...')
     console.log('🎫 Auth token length:', authToken.length)
     
-    const headers = {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${authToken}`,
-      'app-id': HANDCASH_APP_ID || '',
-      'app-secret': HANDCASH_APP_SECRET || ''
-    }
+    // Use the official SDK
+    const account = handCashConnect.getAccountFromAuthToken(authToken)
+    const profile = await account.profile.getCurrentProfile()
     
-    console.log('📤 Request headers:', {
-      'Content-Type': headers['Content-Type'],
-      'Authorization': headers['Authorization'].substring(0, 30) + '...',
-      'app-id': headers['app-id'],
-      'app-secret': headers['app-secret'] ? '***REDACTED***' : 'MISSING'
-    })
-    
-    const response = await fetch(`${HANDCASH_API_URL}/v1/connect/profile/currentUserProfile`, {
-      headers
-    })
-    
-    console.log('📥 HandCash API response status:', response.status)
-    
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('❌ HandCash profile fetch failed:', response.status, errorText)
-      throw new Error(`Failed to get profile: ${response.status} - ${errorText}`)
-    }
-    
-    const data = await response.json()
-    console.log('✅ HandCash profile data:', data)
+    console.log('✅ HandCash profile fetched:', profile.handle)
     
     return {
-      id: data.id || 'unknown',
-      handle: data.handle || 'unknown',
-      displayName: data.displayName || 'HandCash User',
-      avatarUrl: data.avatarUrl,
-      publicKey: data.publicKey || authToken.slice(0, 20),
-      paymail: data.paymail || `${data.handle}@handcash.io`
+      id: profile.id || 'unknown',
+      handle: profile.handle || 'unknown',
+      displayName: profile.displayName || profile.handle || 'HandCash User',
+      avatarUrl: profile.avatarUrl,
+      publicKey: profile.publicKey || authToken.slice(0, 20),
+      paymail: profile.paymail || `${profile.handle}@handcash.io`
     }
-  } catch (error) {
-    console.error('❌ HandCash profile error:', error)
-    throw error
+  } catch (error: any) {
+    console.error('❌ HandCash profile error:', error.message || error)
+    throw new Error(`Failed to get profile: ${error.message || 'Unknown error'}`)
   }
 }
 
@@ -166,44 +147,33 @@ export async function requestPayment(params: {
   }
   
   try {
-    const response = await fetch(`${HANDCASH_API_URL}/v1/connect/wallet/pay`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'authorization': `Bearer ${params.accessToken}`,
-        'app-id': HANDCASH_APP_ID || '',
-        'app-secret': HANDCASH_APP_SECRET || ''
-      },
-      body: JSON.stringify({
-        description: params.description,
-        appAction: 'rental_payment',
-        payments: [{
-          destination: params.destination,
-          currencyCode: params.currencyCode,
-          sendAmount: params.amount
-        }]
-      })
-    })
-    
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.message || 'Payment failed')
+    // Use the official SDK
+    const account = handCashConnect.getAccountFromAuthToken(params.accessToken)
+    const paymentParams = {
+      description: params.description,
+      appAction: 'rental_payment',
+      payments: [{
+        destination: params.destination,
+        currencyCode: params.currencyCode,
+        sendAmount: params.amount
+      }]
     }
     
-    const result = await response.json()
+    const result = await account.wallet.pay(paymentParams)
+    
     return {
       transactionId: result.transactionId,
       note: params.description,
       type: 'send',
       time: Date.now(),
       satoshiFees: result.satoshiFees || 0,
-      satoshiAmount: Math.ceil(params.amount * 100000000),
+      satoshiAmount: result.satoshiAmount || Math.ceil(params.amount * 100000000),
       fiatExchangeRate: result.fiatExchangeRate || 50,
       fiatCurrencyCode: params.currencyCode,
       participants: result.participants || []
     }
-  } catch (error) {
-    console.error('HandCash payment error:', error)
+  } catch (error: any) {
+    console.error('HandCash payment error:', error.message || error)
     throw error
   }
 }
@@ -236,27 +206,17 @@ export async function getBalance(accessToken: string): Promise<{
   }
   
   try {
-    const response = await fetch(`${HANDCASH_API_URL}/v1/connect/wallet/spendableBalance`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'authorization': `Bearer ${accessToken}`,
-        'app-id': HANDCASH_APP_ID || '',
-        'app-secret': HANDCASH_APP_SECRET || ''
-      }
-    })
+    // Use the official SDK
+    const account = handCashConnect.getAccountFromAuthToken(accessToken)
+    const balance = await account.wallet.getSpendableBalance()
     
-    if (!response.ok) {
-      console.warn('Could not fetch HandCash balance')
-      return {
-        spendableSatoshiBalance: 0,
-        spendableFiatBalance: 0,
-        currencyCode: 'USD'
-      }
+    return {
+      spendableSatoshiBalance: balance.spendableSatoshiBalance || 0,
+      spendableFiatBalance: balance.spendableFiatBalance || 0,
+      currencyCode: balance.currencyCode || 'USD'
     }
-    
-    return await response.json()
   } catch (error) {
-    console.error('HandCash balance error:', error)
+    console.warn('Could not fetch HandCash balance:', error)
     return {
       spendableSatoshiBalance: 0,
       spendableFiatBalance: 0,
