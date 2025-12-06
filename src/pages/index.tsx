@@ -35,6 +35,7 @@ export default function Home() {
   }, [])
 
   async function handleHandCashCallback(authToken: string) {
+    console.log('🔐 Starting HandCash authentication...')
     // Show loading state
     setIsAuthenticating(true)
     setAuthError(null)
@@ -45,6 +46,7 @@ export default function Home() {
     window.history.replaceState({}, '', url.pathname + url.search)
     
     try {
+      console.log('📡 Calling /api/auth/handcash...')
       const response = await fetch('/api/auth/handcash', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -52,17 +54,19 @@ export default function Home() {
       })
       
       const data = await response.json()
+      console.log('📥 Auth response:', response.status, data)
       
       if (response.ok && data.success) {
+        console.log('✅ Authentication successful!')
         handleAuthenticated(data.publicKey, data.handle, 'handcash', data.balance)
       } else {
         // Handle API error response
         const errorMessage = data.error || 'Authentication failed. Please try again.'
-        console.error('HandCash auth failed:', errorMessage)
+        console.error('❌ HandCash auth failed:', errorMessage)
         setAuthError(errorMessage)
       }
     } catch (error: any) {
-      console.error('HandCash callback error:', error)
+      console.error('❌ HandCash callback error:', error)
       setAuthError(error.message || 'Network error during authentication. Please check your connection and try again.')
     } finally {
       setIsAuthenticating(false)
@@ -70,6 +74,7 @@ export default function Home() {
   }
 
   function handleAuthenticated(publicKey: string, handle: string, wallet: string = 'demo', balance?: number) {
+    console.log('🎉 Setting authenticated state:', { publicKey, handle, wallet, balance })
     setUserKey(publicKey)
     setUserHandle(handle || publicKey.slice(0, 10))
     setWalletType(wallet as 'handcash' | 'metanet' | 'paymail' | 'demo')
@@ -89,6 +94,8 @@ export default function Home() {
       // Real wallet without balance info yet - will be fetched later
       setWalletBalance(null)
     }
+    
+    console.log('✅ Marketplace should now be visible, showMarketplace=true')
   }
 
   function enableDemoMode() {
