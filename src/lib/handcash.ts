@@ -90,6 +90,11 @@ export async function getHandCashProfile(authToken: string): Promise<HandCashPro
   }
   
   try {
+    console.log('🔍 Fetching HandCash profile...')
+    console.log('📡 API URL:', `${HANDCASH_API_URL}/v1/connect/profile/currentUserProfile`)
+    console.log('🔑 App ID:', HANDCASH_APP_ID)
+    console.log('🎫 Auth token length:', authToken.length)
+    
     const response = await fetch(`${HANDCASH_API_URL}/v1/connect/profile/currentUserProfile`, {
       headers: {
         'Authorization': `Bearer ${authToken}`,
@@ -98,13 +103,17 @@ export async function getHandCashProfile(authToken: string): Promise<HandCashPro
       }
     })
     
+    console.log('📥 HandCash API response status:', response.status)
+    
     if (!response.ok) {
       const errorText = await response.text()
-      console.error('HandCash profile fetch failed:', response.status, errorText)
-      throw new Error('Failed to get profile')
+      console.error('❌ HandCash profile fetch failed:', response.status, errorText)
+      throw new Error(`Failed to get profile: ${response.status} - ${errorText}`)
     }
     
     const data = await response.json()
+    console.log('✅ HandCash profile data:', data)
+    
     return {
       id: data.id || 'unknown',
       handle: data.handle || 'unknown',
@@ -114,7 +123,7 @@ export async function getHandCashProfile(authToken: string): Promise<HandCashPro
       paymail: data.paymail || `${data.handle}@handcash.io`
     }
   } catch (error) {
-    console.error('HandCash profile error:', error)
+    console.error('❌ HandCash profile error:', error)
     throw error
   }
 }
