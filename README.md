@@ -15,14 +15,14 @@ T0kenRent is a revolutionary decentralized marketplace for renting anything - fr
 
 ## Live Demo
 
-**[Try T0kenRent Live](https://3000-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai)** - Experience the platform in action!
+**[Try T0kenRent Live](https://3001-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai/)** - Experience the platform in action!
 
 Try the demo mode to explore features without connecting a wallet - just click "Try Demo Mode" or add `?demo=true` to the URL.
 
 
 ## Quick Start
 
-Want to try it instantly? **[Launch Live Demo](https://3000-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai/?demo=true)** and explore the platform without any setup!
+Want to try it instantly? **[Launch Live Demo](https://3001-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai/)** and explore the platform without any setup!
 
 ## Features
 
