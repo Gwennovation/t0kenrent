@@ -6,9 +6,9 @@ import { getHandCashAuthUrl } from '@/lib/handcash'
 
 // Wallet logo paths - using official logos
 const WALLET_LOGOS = {
-  handcash: '/wallets/handcash.png',
+  handcash: '/wallets/HandCash Logo.png',
   metanet: '/wallets/metanet.svg',
-  relysia: '/wallets/relysia.png'
+  relysia: '/wallets/Relysia Logo.png'
 }
 
 interface WalletSelectorProps {
