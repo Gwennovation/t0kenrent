@@ -93,15 +93,26 @@ export async function getHandCashProfile(authToken: string): Promise<HandCashPro
     console.log('🔍 Fetching HandCash profile...')
     console.log('📡 API URL:', `${HANDCASH_API_URL}/v1/connect/profile/currentUserProfile`)
     console.log('🔑 App ID:', HANDCASH_APP_ID)
+    console.log('🔐 App Secret exists:', !!HANDCASH_APP_SECRET)
+    console.log('🎫 Auth token:', authToken.substring(0, 20) + '...')
     console.log('🎫 Auth token length:', authToken.length)
     
+    const headers = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${authToken}`,
+      'app-id': HANDCASH_APP_ID || '',
+      'app-secret': HANDCASH_APP_SECRET || ''
+    }
+    
+    console.log('📤 Request headers:', {
+      'Content-Type': headers['Content-Type'],
+      'Authorization': headers['Authorization'].substring(0, 30) + '...',
+      'app-id': headers['app-id'],
+      'app-secret': headers['app-secret'] ? '***REDACTED***' : 'MISSING'
+    })
+    
     const response = await fetch(`${HANDCASH_API_URL}/v1/connect/profile/currentUserProfile`, {
-      headers: {
-        'Content-Type': 'application/json',
-        'authorization': `Bearer ${authToken}`,
-        'app-id': HANDCASH_APP_ID || '',
-        'app-secret': HANDCASH_APP_SECRET || ''
-      }
+      headers
     })
     
     console.log('📥 HandCash API response status:', response.status)
