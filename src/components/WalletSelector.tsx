@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { getPublicKey, waitForAuthentication, isAuthenticated } from 'babbage-sdk'
 import { getErrorMessage } from '@/lib/error-utils'
-import { getHandCashAuthUrl } from '@/lib/handcash'
+import { getHandCashAuthUrl } from '@/lib/handcash-client'
 
 // Wallet logo paths - using official logos
 const WALLET_LOGOS = {

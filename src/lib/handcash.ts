@@ -1,11 +1,9 @@
 /**
  * HandCash Connect Integration for T0kenRent
  * 
- * Uses the official HandCash Connect SDK
+ * Uses the official HandCash Connect SDK (server-side only)
  * Reference: https://docs.handcash.io/v3/getting-started
  */
-
-import { HandCashConnect } from '@handcash/handcash-connect'
 
 // HandCash Connect configuration
 const HANDCASH_APP_ID = process.env.NEXT_PUBLIC_HANDCASH_APP_ID || ''
@@ -14,11 +12,21 @@ const HANDCASH_APP_SECRET = process.env.HANDCASH_APP_SECRET || ''
 // HandCash Connect endpoints
 const HANDCASH_AUTH_URL = 'https://app.handcash.io/#/authorizeApp'
 
-// Initialize HandCash SDK
-const handCashConnect = new HandCashConnect({
-  appId: HANDCASH_APP_ID,
-  appSecret: HANDCASH_APP_SECRET
-})
+// Lazy import HandCash SDK (server-side only to avoid webpack issues)
+let HandCashConnect: any
+let handCashConnect: any
+
+async function getHandCashSDK() {
+  if (!HandCashConnect) {
+    const module = await import('@handcash/handcash-connect')
+    HandCashConnect = module.HandCashConnect
+    handCashConnect = new HandCashConnect({
+      appId: HANDCASH_APP_ID,
+      appSecret: HANDCASH_APP_SECRET
+    })
+  }
+  return handCashConnect
+}
 
 export interface HandCashProfile {
   id: string
@@ -101,19 +109,22 @@ export async function getHandCashProfile(authToken: string): Promise<HandCashPro
     console.log('🔑 App ID:', HANDCASH_APP_ID)
     console.log('🎫 Auth token length:', authToken.length)
     
-    // Use the official SDK
-    const account = handCashConnect.getAccountFromAuthToken(authToken)
-    const profile = await account.profile.getCurrentProfile()
+    // Use the official SDK (lazy-loaded)
+    const sdk = await getHandCashSDK()
+    const account = sdk.getAccountFromAuthToken(authToken)
+    const { publicProfile } = await account.profile.getCurrentProfile()
     
-    console.log('✅ HandCash profile fetched:', profile.handle)
+    console.log('✅ HandCash profile fetched:', publicProfile.handle)
     
+    // Note: publicProfile from SDK doesn't include publicKey
+    // We'll need to get it from a separate call if needed
     return {
-      id: profile.id || 'unknown',
-      handle: profile.handle || 'unknown',
-      displayName: profile.displayName || profile.handle || 'HandCash User',
-      avatarUrl: profile.avatarUrl,
-      publicKey: profile.publicKey || authToken.slice(0, 20),
-      paymail: profile.paymail || `${profile.handle}@handcash.io`
+      id: publicProfile.id || 'unknown',
+      handle: publicProfile.handle || 'unknown',
+      displayName: publicProfile.displayName || publicProfile.handle || 'HandCash User',
+      avatarUrl: publicProfile.avatarUrl,
+      publicKey: (publicProfile as any).publicKey || authToken.slice(0, 20), // Fallback
+      paymail: publicProfile.paymail || `${publicProfile.handle}@handcash.io`
     }
   } catch (error: any) {
     console.error('❌ HandCash profile error:', error.message || error)
@@ -147,9 +158,10 @@ export async function requestPayment(params: {
   }
   
   try {
-    // Use the official SDK
-    const account = handCashConnect.getAccountFromAuthToken(params.accessToken)
-    const paymentParams = {
+    // Use the official SDK (lazy-loaded)
+    const sdk = await getHandCashSDK()
+    const account = sdk.getAccountFromAuthToken(params.accessToken)
+    const paymentParams: any = {
       description: params.description,
       appAction: 'rental_payment',
       payments: [{
@@ -170,7 +182,7 @@ export async function requestPayment(params: {
       satoshiAmount: result.satoshiAmount || Math.ceil(params.amount * 100000000),
       fiatExchangeRate: result.fiatExchangeRate || 50,
       fiatCurrencyCode: params.currencyCode,
-      participants: result.participants || []
+      participants: (result.participants || []) as any
     }
   } catch (error: any) {
     console.error('HandCash payment error:', error.message || error)
@@ -206,8 +218,9 @@ export async function getBalance(accessToken: string): Promise<{
   }
   
   try {
-    // Use the official SDK
-    const account = handCashConnect.getAccountFromAuthToken(accessToken)
+    // Use the official SDK (lazy-loaded)
+    const sdk = await getHandCashSDK()
+    const account = sdk.getAccountFromAuthToken(accessToken)
     const balance = await account.wallet.getSpendableBalance()
     
     return {

@@ -7,7 +7,7 @@
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { exchangeAuthCode, getHandCashProfile, getBalance } from '@/lib/handcash'
+import { getHandCashProfileServer, getBalanceServer } from '@/lib/handcash-server'
 import connectDB, { isMockMode } from '@/lib/mongodb'
 import { User } from '@/models'
 import { storage } from '@/lib/storage'
@@ -38,14 +38,14 @@ export default async function handler(
       return res.status(400).json({ success: false, error: 'Auth token required' })
     }
 
-    // Exchange auth token for access token
-    const accessToken = await exchangeAuthCode(authToken)
+    // The authToken from HandCash callback IS the access token
+    const accessToken = authToken
     
-    // Get user profile
-    const profile = await getHandCashProfile(accessToken)
+    // Get user profile (server-side only)
+    const profile = await getHandCashProfileServer(accessToken)
     
-    // Get wallet balance
-    const balanceInfo = await getBalance(accessToken)
+    // Get wallet balance (server-side only)
+    const balanceInfo = await getBalanceServer(accessToken)
     const balance = balanceInfo.spendableSatoshiBalance / 100000000 // Convert to BSV
 
     // Connect to MongoDB
@@ -55,24 +55,24 @@ export default async function handler(
     if (isMockMode()) {
       // Fallback to in-memory storage for demo
       console.log('📦 Using in-memory storage (MongoDB not connected)')
-      let user = storage.getUserByKey(profile.publicKey)
+      let user = storage.getUserByKey(profile.id)
       if (!user) {
-        user = storage.createUser(profile.publicKey, {
-          displayName: profile.displayName || profile.handle,
+        user = storage.createUser(profile.id, {
+          displayName: profile.displayName,
           email: undefined,
           avatar: profile.avatarUrl
         })
       } else {
-        storage.updateUser(profile.publicKey, {
-          displayName: profile.displayName || profile.handle,
+        storage.updateUser(profile.id, {
+          displayName: profile.displayName,
           avatar: profile.avatarUrl
         })
       }
     } else {
       // Use MongoDB
       console.log('✅ Using MongoDB for user storage')
-      await User.findOrCreate(profile.publicKey, 'handcash', {
-        handle: profile.handle,
+      await User.findOrCreate(profile.id, 'handcash', {
+        handle: profile.id,
         displayName: profile.displayName,
         avatarUrl: profile.avatarUrl,
         paymail: profile.paymail
@@ -81,8 +81,8 @@ export default async function handler(
 
     return res.status(200).json({
       success: true,
-      publicKey: profile.publicKey,
-      handle: profile.handle,
+      publicKey: profile.id, // Use id as public key
+      handle: profile.id,
       displayName: profile.displayName,
       paymail: profile.paymail,
       balance,
