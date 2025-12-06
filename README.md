@@ -98,7 +98,7 @@ JWT_SECRET=your_secret_key
 Test T0kenRent without connecting a wallet - perfect for exploring features risk-free!
 
 **Three ways to access demo mode:**
-1. **Direct Link**: [Open Demo Mode](https://3000-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai/?demo=true)
+1. **Direct Link**: [Open Demo Mode](https://3001-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai/?demo=true)
 2. **Demo Button**: Click "Try Demo Mode" on the homepage
 3. **URL Parameter**: Add `?demo=true` to any page URL
 
@@ -363,7 +363,7 @@ Special thanks to the BSV ecosystem and the open-source community for making dec
 - **Issues**: [GitHub Issues](https://github.com/Gwennovation/t0kenrent/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/Gwennovation/t0kenrent/discussions)
 - **Documentation**: [/docs](/docs)
-- **Live Demo**: [https://3000-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai](https://3000-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai)
+- **Live Demo**: [https://3001-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai](https://3001-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai)
 
 ---
 
