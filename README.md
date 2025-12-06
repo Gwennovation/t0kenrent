@@ -44,6 +44,10 @@ Want to try it instantly? **[Launch Live Demo](https://3000-i302m5njfk0occat3d5w
 
 ## Installation
 
+📖 **For detailed setup instructions with complete project structure, see [PROJECT_SETUP.md](PROJECT_SETUP.md)**
+
+### Quick Install
+
 ```bash
 # Clone the repository
 git clone https://github.com/Gwennovation/t0kenrent.git
@@ -58,6 +62,8 @@ cp .env.example .env.local
 # Start development server
 npm run dev
 ```
+
+Open http://localhost:3000 to view the application.
 
 ## Environment Variables
 
@@ -295,6 +301,18 @@ npm run build        # Production build
 npm run start        # Start production server
 npm run lint         # Run ESLint
 ```
+
+## Documentation
+
+| Document | Description |
+|----------|-------------|
+| [PROJECT_SETUP.md](PROJECT_SETUP.md) | **Complete setup guide with project structure** |
+| [docs/QUICKSTART.md](docs/QUICKSTART.md) | Quick start guide for developers |
+| [docs/architecture.md](docs/architecture.md) | Technical architecture details |
+| [docs/api.md](docs/api.md) | API endpoint reference |
+| [docs/http402.md](docs/http402.md) | HTTP 402 payment protocol |
+| [docs/wallet-integration.md](docs/wallet-integration.md) | Wallet integration guide |
+| [DEPLOYMENT_STATUS.md](DEPLOYMENT_STATUS.md) | Current deployment information |
 
 ## Contributing
 
