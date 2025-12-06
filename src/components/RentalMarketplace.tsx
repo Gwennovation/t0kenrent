@@ -157,6 +157,32 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
     })
   }, [])
 
+  const handleRentalCreated = useCallback((rental: Rental) => {
+    setMyRentals(prev => [rental, ...prev])
+    setSuccessMessage(`Rental confirmed for "${rental.assetName}"!`)
+    setTimeout(() => setSuccessMessage(''), 5000)
+    loadAssets() // Refresh to update asset status
+  }, [loadAssets])
+
+  const filteredAssets = useMemo(() => {
+    return assets.filter(asset => {
+      const matchesSearch = asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                           asset.description.toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesCategory = selectedCategory === 'all' || asset.category === selectedCategory
+      return matchesSearch && matchesCategory
+    })
+  }, [assets, searchQuery, selectedCategory])
+
+  const activeRentals = useMemo(() => myRentals.filter(r => r.status === 'active'), [myRentals])
+  const completedRentals = useMemo(() => myRentals.filter(r => r.status === 'completed'), [myRentals])
+
+  // Filter my listings by status
+  const filteredMyAssets = useMemo(() => {
+    if (myListingsFilter === 'all') return myAssets
+    return myAssets.filter(asset => asset.status === myListingsFilter)
+  }, [myAssets, myListingsFilter])
+
+  // Bulk rental callbacks (defined after filteredAssets)
   const selectAllVisibleAssets = useCallback(() => {
     const availableAssets = filteredAssets.filter(a => a.status === 'available' && a.ownerKey !== userKey)
     setSelectedAssets(new Set(availableAssets.map(a => a.id)))
@@ -212,31 +238,6 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
       alert('Failed to rent items: ' + getErrorMessage(error))
     }
   }, [selectedAssets, assets, userKey, clearSelection, loadAssets])
-
-  const handleRentalCreated = useCallback((rental: Rental) => {
-    setMyRentals(prev => [rental, ...prev])
-    setSuccessMessage(`Rental confirmed for "${rental.assetName}"!`)
-    setTimeout(() => setSuccessMessage(''), 5000)
-    loadAssets() // Refresh to update asset status
-  }, [loadAssets])
-
-  const filteredAssets = useMemo(() => {
-    return assets.filter(asset => {
-      const matchesSearch = asset.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                           asset.description.toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesCategory = selectedCategory === 'all' || asset.category === selectedCategory
-      return matchesSearch && matchesCategory
-    })
-  }, [assets, searchQuery, selectedCategory])
-
-  const activeRentals = useMemo(() => myRentals.filter(r => r.status === 'active'), [myRentals])
-  const completedRentals = useMemo(() => myRentals.filter(r => r.status === 'completed'), [myRentals])
-
-  // Filter my listings by status
-  const filteredMyAssets = useMemo(() => {
-    if (myListingsFilter === 'all') return myAssets
-    return myAssets.filter(asset => asset.status === myListingsFilter)
-  }, [myAssets, myListingsFilter])
 
   const tabs = useMemo(() => [
     { id: 'browse', label: 'Browse Items', count: filteredAssets.length },
