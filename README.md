@@ -1,11 +1,28 @@
 # T0kenRent
 
-Decentralized Peer-to-Peer Rental Platform on BSV
+**Decentralized Peer-to-Peer Rental Platform on BSV Blockchain**
 
-T0kenRent enables peer-to-peer asset rentals using BSV blockchain technology. The platform provides secure payments through micropayments and smart contract escrow, with complete transaction records stored on-chain.
+T0kenRent is a revolutionary decentralized marketplace for renting anything - from cameras and tools to vacation homes. Built on the BSV blockchain, it eliminates middlemen and provides secure, trustless transactions through smart contract escrow and micropayments.
+
+### Why T0kenRent?
+
+- 💰 **No Platform Fees** - Direct peer-to-peer transactions
+- 🔒 **Secure Escrow** - Funds held in 2-of-2 multisig contracts
+- ⚡ **Instant Payments** - Fast BSV micropayments
+- 📝 **Transparent Records** - All transactions on-chain
+- 🌍 **Global Access** - No geographical restrictions
+- 🎯 **Own Your Data** - No centralized database required
 
 ## Live Demo
 
+🚀 **[Try T0kenRent Live](https://3000-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai)** - Experience the platform in action!
+
+Try the demo mode to explore features without connecting a wallet - just click "Try Demo Mode" or add `?demo=true` to the URL.
+
+
+## Quick Start
+
+Want to try it instantly? **[Launch Live Demo](https://3000-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai/?demo=true)** and explore the platform without any setup!
 
 ## Features
 
@@ -15,6 +32,8 @@ T0kenRent enables peer-to-peer asset rentals using BSV blockchain technology. Th
 - **On-Chain Transaction Records**: All transactions recorded on the BSV blockchain
 - **1Sat Ordinal Integration**: Assets can be linked to ordinals for ownership verification
 - **Overlay Network**: Transaction broadcasting through BSV overlay services
+- **Multi-Item Rentals**: Batch creation and rental of multiple items at once
+- **Real Estate Category**: Support for vacation rentals and staycations
 
 ## Requirements
 
@@ -70,18 +89,29 @@ JWT_SECRET=your_secret_key
 
 ## Demo Mode
 
-Test T0kenRent without connecting a wallet:
+Test T0kenRent without connecting a wallet - perfect for exploring features risk-free!
 
-1. Open the application
-2. Click the "Try Demo Mode" button
-3. Alternatively, append `?demo=true` to any URL
+**Three ways to access demo mode:**
+1. **Direct Link**: [Open Demo Mode](https://3000-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai/?demo=true)
+2. **Demo Button**: Click "Try Demo Mode" on the homepage
+3. **URL Parameter**: Add `?demo=true` to any page URL
 
-Sample assets available in demo mode:
-- Canon EOS R5 Camera Kit ($75/day)
-- Trek Mountain Bike ($45/day)
-- Milwaukee Power Tool Set ($35/day)
-- Epson 4K Projector ($55/day)
-- DJI Mavic 3 Pro Drone ($95/day)
+**Sample assets available in demo mode:**
+- 📷 Canon EOS R5 Camera Kit ($75/day)
+- 🚴 Trek Mountain Bike ($45/day)
+- 🔧 Milwaukee Power Tool Set ($35/day)
+- 🎬 Epson 4K Projector ($55/day)
+- 🚁 DJI Mavic 3 Pro Drone ($95/day)
+- 🏖️ Beachfront Villa - Malibu ($450/day)
+
+**What you can test in demo mode:**
+- Browse and search the marketplace
+- Filter by category and price
+- Create new asset listings
+- Initiate rental agreements
+- View the rental dashboard
+- Test multi-item rental features
+- Experience the full user interface
 
 ## Architecture
 
@@ -276,17 +306,47 @@ See docs/CONTRIBUTING.md for detailed guidelines.
 4. Push to branch (`git push origin feature/your-feature`)
 5. Open Pull Request
 
+## Technologies Used
+
+### Blockchain & Payments
+- **BSV Blockchain** - Scalable, low-cost transactions
+- **HandCash SDK** - Wallet integration and authentication
+- **Babbage SDK** - MetaNet wallet support
+- **PushDrop** - Token protocol implementation
+- **WhatsOnChain API** - Blockchain explorer and verification
+
+### Frontend
+- **Next.js 14** - React framework with SSR/SSG
+- **TypeScript** - Type-safe development
+- **Tailwind CSS** - Utility-first styling
+- **React 18** - UI library with hooks
+
+### Backend
+- **Next.js API Routes** - Serverless API endpoints
+- **MongoDB** - Optional persistent storage
+- **JWT** - Session management
+- **In-Memory Storage** - Demo mode support
+
 ## License
 
 MIT License - see LICENSE for details.
 
 ## Acknowledgments
 
-- BSV Blockchain - Scalable, low-cost transactions
-- HandCash - Wallet integration
-- Babbage SDK - MetaNet wallet support
-- WhatsOnChain - Blockchain explorer API
+Special thanks to the BSV ecosystem and the open-source community for making decentralized applications possible.
+
+- 🙏 **BSV Blockchain** - Enabling scalable blockchain applications
+- 🙏 **HandCash** - Seamless wallet integration
+- 🙏 **Babbage SDK** - MetaNet infrastructure
+- 🙏 **GenSpark** - AI-powered development assistance
+
+## Support & Community
+
+- 📧 **Issues**: [GitHub Issues](https://github.com/Gwennovation/t0kenrent/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/Gwennovation/t0kenrent/discussions)
+- 📖 **Documentation**: [/docs](/docs)
+- 🌐 **Live Demo**: [https://3000-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai](https://3000-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai)
 
 ---
 
-Built on BSV Blockchain
+**Built with ❤️ on BSV Blockchain** | **Powered by GenSpark AI**
