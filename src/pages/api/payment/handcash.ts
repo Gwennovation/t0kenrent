@@ -17,6 +17,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(400).json({ error: 'Amount and destination required' })
     }
 
+    console.log('💳 Processing HandCash payment:', {
+      destination: destination?.substring(0, 20) + '...',
+      amount,
+      description,
+      hasValidFormat: destination?.includes('@') || destination?.startsWith('$')
+    })
+
     // Request payment via HandCash (server-side SDK)
     const result = await requestPaymentServer({
       accessToken,
