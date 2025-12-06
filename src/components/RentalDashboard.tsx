@@ -63,9 +63,9 @@ export default function RentalDashboard({ userKey, demoMode = false, walletType 
   const loadDashboardData = useCallback(async () => {
     setLoading(true)
     try {
-      // Fetch rentals
+      // Fetch rentals (both as renter and owner)
       const [rentalsRes, assetsRes] = await Promise.all([
-        fetch(`/api/rentals/my?userKey=${userKey}`),
+        fetch(`/api/rentals/my?userKey=${userKey}&role=all`),
         fetch(`/api/assets/my?owner=${userKey}`)
       ])
 

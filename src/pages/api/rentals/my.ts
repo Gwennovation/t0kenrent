@@ -25,14 +25,32 @@ export default async function handler(
 
     if (isMockMode()) {
       // Use in-memory storage for demo
-      rentals = role === 'owner' 
-        ? storage.getRentalsByOwner(userKey as string)
-        : storage.getRentalsByRenter(userKey as string)
+      if (role === 'owner') {
+        rentals = storage.getRentalsByOwner(userKey as string)
+      } else if (role === 'renter') {
+        rentals = storage.getRentalsByRenter(userKey as string)
+      } else {
+        // Get all rentals where user is involved (either as renter or owner)
+        const asRenter = storage.getRentalsByRenter(userKey as string)
+        const asOwner = storage.getRentalsByOwner(userKey as string)
+        // Combine and deduplicate
+        const allRentals = [...asRenter, ...asOwner]
+        const uniqueRentals = Array.from(new Map(allRentals.map(r => [r.id, r])).values())
+        rentals = uniqueRentals.sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        )
+      }
     } else {
       // Use MongoDB
-      const query = role === 'owner' 
-        ? { ownerKey: userKey }
-        : { renterKey: userKey }
+      let query: any
+      if (role === 'owner') {
+        query = { ownerKey: userKey }
+      } else if (role === 'renter') {
+        query = { renterKey: userKey }
+      } else {
+        // Get all rentals where user is involved (both renter and owner)
+        query = { $or: [{ renterKey: userKey }, { ownerKey: userKey }] }
+      }
       
       rentals = await Rental.find(query)
         .sort({ createdAt: -1 })

@@ -498,6 +498,9 @@ class InMemoryStorage {
       this.users.set(owner.publicKey, owner)
     }
     
+    // Persist to localStorage
+    this.saveToLocalStorage()
+    
     return rental
   }
 
