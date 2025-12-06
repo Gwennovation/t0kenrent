@@ -72,7 +72,7 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
             accessToken: handcashToken,
             amount: asset.unlockFee,
             destination: asset.ownerKey,
-            description: `Unlock ${asset.name} rental details`,
+            description: `T0kenRent: ${asset.name.substring(0, 12)}`,
             paymentReference: paymentInfo.payment.reference
           })
         })
@@ -90,7 +90,7 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
         const { createAction } = await import('babbage-sdk')
 
         const result = await createAction({
-          description: `HTTP 402 payment to unlock ${asset.name} rental details`,
+          description: `T0kenRent unlock: ${asset.name.substring(0, 8)}`,
           outputs: [
             {
               satoshis: Math.ceil(asset.unlockFee * 100000000),
@@ -153,7 +153,7 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
       amount: asset.unlockFee,
       amountUSD: (asset.unlockFee * BSV_PRICE_USD).toFixed(4),
       recipient: asset.ownerKey.slice(0, 10) + '...' + asset.ownerKey.slice(-6),
-      description: `Unlock ${asset.name} rental details`
+      description: `T0kenRent: ${asset.name.substring(0, 12)}`
     })
     
     // Simulate wallet approval delay

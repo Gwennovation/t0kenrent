@@ -49,8 +49,14 @@ export async function requestPaymentServer(params: {
   description: string
 }) {
   const account = handCashConnect.getAccountFromAuthToken(params.accessToken)
+  
+  // HandCash API requires description/note to be max 25 characters
+  const truncatedDescription = params.description.length > 25 
+    ? params.description.substring(0, 22) + '...'
+    : params.description
+  
   const paymentParams: any = {
-    description: params.description,
+    description: truncatedDescription,
     appAction: 'rental_payment',
     payments: [{
       destination: params.destination,
@@ -63,7 +69,7 @@ export async function requestPaymentServer(params: {
   
   return {
     transactionId: result.transactionId,
-    note: params.description,
+    note: truncatedDescription,
     type: 'send' as const,
     time: Date.now(),
     satoshiFees: result.satoshiFees || 0,
