@@ -34,6 +34,12 @@ ACCESS_TOKEN_EXPIRY_MINUTES=30
 JWT_SECRET=t0kenrent_secure_jwt_secret_key_change_in_production_min_32_chars
 ```
 
+### Database (MongoDB)
+```
+MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/t0kenrent?retryWrites=true&w=majority
+```
+**Note:** If MONGODB_URI is not set, the application will run in **MOCK MODE** using in-memory storage (data will not persist across deployments).
+
 ### Application
 ```
 NODE_ENV=production

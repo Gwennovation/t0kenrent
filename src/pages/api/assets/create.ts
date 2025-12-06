@@ -25,6 +25,8 @@
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next'
+import connectDB, { isMockMode } from '@/lib/mongodb'
+import { RentalAsset, User } from '@/models'
 import { storage, StoredAsset } from '@/lib/storage'
 import { verifyOrdinalExists, verifyOrdinalOwnership, createDemoOrdinal } from '@/lib/ordinals'
 
@@ -81,8 +83,29 @@ export default async function handler(
       })
     }
 
-    // Ensure user exists
-    storage.getOrCreateUser(ownerKey)
+    // Connect to MongoDB
+    await connectDB()
+
+    if (isMockMode()) {
+      console.log('📦 Using in-memory storage for asset creation')
+      
+      // Ensure user exists
+      storage.getOrCreateUser(ownerKey)
+    } else {
+      console.log('💾 Using MongoDB for asset creation')
+      
+      // Ensure user exists in MongoDB
+      let user = await User.findOne({ publicKey: ownerKey })
+      if (!user) {
+        user = await User.create({
+          publicKey: ownerKey,
+          totalListings: 0,
+          totalRentals: 0,
+          totalEarnings: 0,
+          totalSpent: 0
+        })
+      }
+    }
 
     // Handle 1Sat ordinal linking
     let verifiedOrdinalId: string | undefined
@@ -124,46 +147,119 @@ export default async function handler(
     }
 
     // Create the asset
-    const asset = storage.createAsset({
-      name,
-      description,
-      category,
-      imageUrl,
-      rentalRatePerDay: parseFloat(rentalRatePerDay) || 0,
-      depositAmount: parseFloat(depositAmount) || 0,
-      currency,
-      location: {
-        city: location.city,
-        state: location.state
-      },
-      rentalDetails: {
-        pickupLocation: {
-          address: location.address,
+    let asset: any
+
+    if (isMockMode()) {
+      // Use in-memory storage
+      asset = storage.createAsset({
+        name,
+        description,
+        category,
+        imageUrl,
+        rentalRatePerDay: parseFloat(rentalRatePerDay) || 0,
+        depositAmount: parseFloat(depositAmount) || 0,
+        currency,
+        location: {
           city: location.city,
           state: location.state
         },
-        accessCode,
-        specialInstructions,
-        ...(ownerContact && {
-          ownerContact: {
-            name: ownerContact.name,
-            phone: ownerContact.phone,
-            email: ownerContact.email
-          }
-        })
-      },
-      status: 'available',
-      unlockFee: parseFloat(String(unlockFee)) || 0.0001,
-      ownerKey,
-      condition,
-      accessories
-    })
+        rentalDetails: {
+          pickupLocation: {
+            address: location.address,
+            city: location.city,
+            state: location.state
+          },
+          accessCode,
+          specialInstructions,
+          ...(ownerContact && {
+            ownerContact: {
+              name: ownerContact.name,
+              phone: ownerContact.phone,
+              email: ownerContact.email
+            }
+          })
+        },
+        status: 'available',
+        unlockFee: parseFloat(String(unlockFee)) || 0.0001,
+        ownerKey,
+        condition,
+        accessories
+      })
+    } else {
+      // Use MongoDB
+      const tokenId = `token_${Date.now()}_${Math.random().toString(36).substring(7)}`
+      
+      const rentalAsset = await RentalAsset.create({
+        tokenId,
+        name,
+        description,
+        category,
+        imageUrl,
+        rentalRatePerDay: parseFloat(rentalRatePerDay) || 0,
+        depositAmount: parseFloat(depositAmount) || 0,
+        currency,
+        location: {
+          city: location.city,
+          state: location.state,
+          coordinates: location.coordinates
+        },
+        rentalDetails: {
+          pickupLocation: {
+            address: location.address,
+            city: location.city,
+            state: location.state
+          },
+          accessCode,
+          specialInstructions,
+          ...(ownerContact && {
+            ownerContact: {
+              name: ownerContact.name,
+              phone: ownerContact.phone,
+              email: ownerContact.email
+            }
+          })
+        },
+        status: 'available',
+        unlockFee: parseFloat(String(unlockFee)) || 0.0001,
+        ownerKey,
+        condition,
+        accessories,
+        totalRentals: 0,
+        totalEarnings: 0,
+        rating: 0
+      })
+
+      // Update user's totalListings
+      await User.findOneAndUpdate(
+        { publicKey: ownerKey },
+        { $inc: { totalListings: 1 } }
+      )
+
+      asset = {
+        id: rentalAsset._id.toString(),
+        tokenId: rentalAsset.tokenId,
+        name: rentalAsset.name,
+        description: rentalAsset.description,
+        category: rentalAsset.category,
+        imageUrl: rentalAsset.imageUrl,
+        rentalRatePerDay: rentalAsset.rentalRatePerDay,
+        depositAmount: rentalAsset.depositAmount,
+        currency: rentalAsset.currency,
+        location: rentalAsset.location,
+        rentalDetails: rentalAsset.rentalDetails,
+        status: rentalAsset.status,
+        unlockFee: rentalAsset.unlockFee,
+        ownerKey: rentalAsset.ownerKey,
+        condition: rentalAsset.condition,
+        accessories: rentalAsset.accessories,
+        createdAt: rentalAsset.createdAt
+      }
+      
+      console.log(`✅ Asset created in MongoDB: ${asset.id}`)
+    }
 
     // If ordinal was verified, update asset with ordinal ID
-    // Note: In a full implementation, tokenId would be derived from ordinalId
     if (verifiedOrdinalId) {
-      // The tokenId is already generated by storage, but we can associate the ordinal
-      // In a production system, you'd store this association in the database
       console.log(`Asset ${asset.id} linked to ordinal: ${verifiedOrdinalId}`)
     }
 
