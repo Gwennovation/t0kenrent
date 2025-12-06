@@ -233,12 +233,89 @@ class InMemoryStorage {
   private rentals: Map<string, StoredRental> = new Map()
   private users: Map<string, StoredUser> = new Map()
   private unlockedAssets: Map<string, Set<string>> = new Map() // userKey -> Set of assetIds
+  private isClient = typeof window !== 'undefined'
+  private storageKey = 't0kenrent_storage_v1'
 
   constructor() {
-    // Initialize with default assets
-    DEFAULT_ASSETS.forEach(asset => {
-      this.assets.set(asset.id, asset)
-    })
+    // Load from localStorage if in browser
+    if (this.isClient) {
+      this.loadFromLocalStorage()
+    } else {
+      // Server-side: Initialize with default assets only
+      DEFAULT_ASSETS.forEach(asset => {
+        this.assets.set(asset.id, asset)
+      })
+    }
+  }
+
+  private loadFromLocalStorage(): void {
+    try {
+      const stored = localStorage.getItem(this.storageKey)
+      if (stored) {
+        const data = JSON.parse(stored)
+        
+        // Restore assets
+        if (data.assets) {
+          this.assets = new Map(Object.entries(data.assets))
+        }
+        
+        // Restore rentals
+        if (data.rentals) {
+          this.rentals = new Map(Object.entries(data.rentals))
+        }
+        
+        // Restore users
+        if (data.users) {
+          this.users = new Map(Object.entries(data.users))
+        }
+        
+        // Restore unlocked assets
+        if (data.unlockedAssets) {
+          this.unlockedAssets = new Map(
+            Object.entries(data.unlockedAssets).map(([key, value]) => [key, new Set(value as string[])])
+          )
+        }
+        
+        console.log('✅ Loaded data from localStorage:', {
+          assets: this.assets.size,
+          rentals: this.rentals.size,
+          users: this.users.size,
+          unlockedAssets: this.unlockedAssets.size
+        })
+      } else {
+        // First time: Initialize with default assets
+        DEFAULT_ASSETS.forEach(asset => {
+          this.assets.set(asset.id, asset)
+        })
+        this.saveToLocalStorage()
+      }
+    } catch (error) {
+      console.error('Error loading from localStorage:', error)
+      // Fallback to default assets
+      DEFAULT_ASSETS.forEach(asset => {
+        this.assets.set(asset.id, asset)
+      })
+    }
+  }
+
+  private saveToLocalStorage(): void {
+    if (!this.isClient) return
+    
+    try {
+      const data = {
+        assets: Object.fromEntries(this.assets),
+        rentals: Object.fromEntries(this.rentals),
+        users: Object.fromEntries(this.users),
+        unlockedAssets: Object.fromEntries(
+          Array.from(this.unlockedAssets.entries()).map(([key, value]) => [key, Array.from(value)])
+        ),
+        lastUpdated: new Date().toISOString()
+      }
+      
+      localStorage.setItem(this.storageKey, JSON.stringify(data))
+    } catch (error) {
+      console.error('Error saving to localStorage:', error)
+    }
   }
 
   // Asset methods
@@ -294,6 +371,9 @@ class InMemoryStorage {
       this.users.set(user.publicKey, user)
     }
     
+    // Persist to localStorage
+    this.saveToLocalStorage()
+    
     return asset
   }
 
@@ -303,11 +383,20 @@ class InMemoryStorage {
     
     const updated = { ...asset, ...updates }
     this.assets.set(id, updated)
+    
+    // Persist to localStorage
+    this.saveToLocalStorage()
+    
     return updated
   }
 
   deleteAsset(id: string): boolean {
-    return this.assets.delete(id)
+    const result = this.assets.delete(id)
+    if (result) {
+      // Persist to localStorage
+      this.saveToLocalStorage()
+    }
+    return result
   }
 
   // Unlock tracking
@@ -316,6 +405,9 @@ class InMemoryStorage {
       this.unlockedAssets.set(userKey, new Set())
     }
     this.unlockedAssets.get(userKey)!.add(assetId)
+    
+    // Persist to localStorage
+    this.saveToLocalStorage()
   }
 
   isAssetUnlocked(userKey: string, assetId: string): boolean {
@@ -377,6 +469,9 @@ class InMemoryStorage {
       this.users.set(renter.publicKey, renter)
     }
     
+    // Persist to localStorage
+    this.saveToLocalStorage()
+    
     return rental
   }
 
@@ -431,6 +526,10 @@ class InMemoryStorage {
     }
     
     this.users.set(publicKey, user)
+    
+    // Persist to localStorage
+    this.saveToLocalStorage()
+    
     return user
   }
 
@@ -440,6 +539,10 @@ class InMemoryStorage {
     
     const updated = { ...user, ...updates }
     this.users.set(publicKey, updated)
+    
+    // Persist to localStorage
+    this.saveToLocalStorage()
+    
     return updated
   }
 
