@@ -67,7 +67,14 @@ export default async function handler(
       })
     }
 
-    const results = []
+    const results: Array<{
+      success: boolean
+      assetId?: string
+      rentalId?: string
+      escrowId?: string
+      error?: string
+      rental?: any
+    }> = []
     let created = 0
     let failed = 0
 
@@ -100,7 +107,7 @@ export default async function handler(
         }
 
         // Check if asset exists and is available
-        const asset = await storage.getAsset(assetId)
+        const asset = storage.getAssetById(assetId)
         if (!asset) {
           results.push({
             success: false,
@@ -127,9 +134,8 @@ export default async function handler(
         const rentalId = `rental_${timestamp}_${random}`
         const escrowId = `escrow_${timestamp}_${random}`
 
-        // Create rental record
-        const rental = {
-          id: rentalId,
+        // Create rental (this also updates asset status and stats automatically)
+        const rental = storage.createRental({
           assetId,
           assetName: asset.name,
           renterKey,
@@ -141,25 +147,15 @@ export default async function handler(
           depositAmount: parseFloat(depositAmount) || asset.depositAmount,
           totalAmount: parseFloat(totalAmount) || (asset.rentalRatePerDay + asset.depositAmount),
           status: 'active',
-          escrowId,
-          createdAt: new Date().toISOString(),
           pickupLocation: pickupLocation || asset.rentalDetails?.pickupLocation?.address,
           accessCode: accessCode || asset.rentalDetails?.accessCode
-        }
-
-        // Save rental
-        await storage.saveRental(rental)
-
-        // Update asset status to rented
-        asset.status = 'rented'
-        asset.totalRentals = (asset.totalRentals || 0) + 1
-        await storage.updateAsset(assetId, asset)
+        })
 
         results.push({
           success: true,
-          rentalId,
-          assetId,
-          escrowId
+          rentalId: rental.id,
+          assetId: rental.assetId,
+          escrowId: rental.escrowId
         })
         created++
 

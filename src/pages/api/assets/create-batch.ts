@@ -68,7 +68,13 @@ export default async function handler(
       })
     }
 
-    const results = []
+    const results: Array<{
+      success: boolean
+      tokenId?: string
+      ordinalId?: string
+      error?: string
+      asset?: Partial<StoredAsset>
+    }> = []
     let created = 0
     let failed = 0
 
@@ -142,7 +148,6 @@ export default async function handler(
         const newAsset: StoredAsset = {
           id: tokenId,
           tokenId,
-          ordinalId: verifiedOrdinalId,
           name,
           description,
           category,
@@ -153,13 +158,11 @@ export default async function handler(
           ownerKey,
           location: {
             city: location.city,
-            state: location.state,
-            address: location.address
+            state: location.state
           },
           rentalDetails: {
             pickupLocation: {
-              address: location.address,
-              coordinates: location.coordinates
+              address: location.address
             },
             accessCode,
             specialInstructions,
@@ -169,13 +172,13 @@ export default async function handler(
           unlockFee: parseFloat(unlockFee) || 0.0001,
           condition,
           accessories: Array.isArray(accessories) ? accessories : [],
-          createdAt: new Date(),
+          createdAt: new Date().toISOString(),
           totalRentals: 0,
           totalEarnings: 0
         }
 
         // Store the asset
-        await storage.saveAsset(newAsset)
+        storage.createAsset(newAsset)
 
         results.push({
           success: true,
