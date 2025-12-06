@@ -312,7 +312,7 @@ npm run lint         # Run ESLint
 | [docs/api.md](docs/api.md) | API endpoint reference |
 | [docs/http402.md](docs/http402.md) | HTTP 402 payment protocol |
 | [docs/wallet-integration.md](docs/wallet-integration.md) | Wallet integration guide |
-| [DEPLOYMENT_STATUS.md](DEPLOYMENT_STATUS.md) | Current deployment information |
+| [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) | Contribution guidelines |
 
 ## Contributing
 
