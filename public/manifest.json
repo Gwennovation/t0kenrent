@@ -4,7 +4,7 @@
     "version": "1.0.0",
     "description": "Decentralized Rental Tokenization and Escrow Platform - Tokenize and rent everyday assets on BSV blockchain with HTTP 402 payment gating",
     "author": "ChibiTech",
-    "icon": "/logo.png",
+    "icon": "/t0kenrent-logo.png",
     "groupPermissions": {
       "protocolPermissions": [
         {
@@ -75,12 +75,12 @@
   "theme_color": "#2563eb",
   "icons": [
     {
-      "src": "/logo-192.png",
+      "src": "/t0kenrent-logo.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/logo-512.png",
+      "src": "/t0kenrent-logo.png",
       "sizes": "512x512",
       "type": "image/png"
     }

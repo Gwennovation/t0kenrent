@@ -19,8 +19,9 @@ export default function Document() {
         <meta name="theme-color" content="#18181b" media="(prefers-color-scheme: dark)" />
         
         {/* Favicon */}
-        <link rel="icon" href="/favicon.ico" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <link rel="icon" href="/favicon.png" type="image/png" />
+        <link rel="apple-touch-icon" href="/t0kenrent-logo.png" />
+        <link rel="shortcut icon" href="/favicon.png" type="image/png" />
         
         {/* SEO Meta Tags */}
         <meta name="application-name" content="T0kenRent" />
