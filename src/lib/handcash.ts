@@ -97,9 +97,10 @@ export async function getHandCashProfile(authToken: string): Promise<HandCashPro
     
     const response = await fetch(`${HANDCASH_API_URL}/v1/connect/profile/currentUserProfile`, {
       headers: {
-        'Authorization': `Bearer ${authToken}`,
-        'app-id': HANDCASH_APP_ID,
-        'app-secret': HANDCASH_APP_SECRET
+        'Content-Type': 'application/json',
+        'authorization': `Bearer ${authToken}`,
+        'app-id': HANDCASH_APP_ID || '',
+        'app-secret': HANDCASH_APP_SECRET || ''
       }
     })
     
@@ -158,9 +159,9 @@ export async function requestPayment(params: {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${params.accessToken}`,
-        'app-id': HANDCASH_APP_ID,
-        'app-secret': HANDCASH_APP_SECRET
+        'authorization': `Bearer ${params.accessToken}`,
+        'app-id': HANDCASH_APP_ID || '',
+        'app-secret': HANDCASH_APP_SECRET || ''
       },
       body: JSON.stringify({
         description: params.description,
@@ -226,9 +227,10 @@ export async function getBalance(accessToken: string): Promise<{
   try {
     const response = await fetch(`${HANDCASH_API_URL}/v1/connect/wallet/spendableBalance`, {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'app-id': HANDCASH_APP_ID,
-        'app-secret': HANDCASH_APP_SECRET
+        'Content-Type': 'application/json',
+        'authorization': `Bearer ${accessToken}`,
+        'app-id': HANDCASH_APP_ID || '',
+        'app-secret': HANDCASH_APP_SECRET || ''
       }
     })
     
