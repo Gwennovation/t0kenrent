@@ -15,14 +15,14 @@ T0kenRent is a revolutionary decentralized marketplace for renting anything - fr
 
 ## Live Demo
 
-**[Try T0kenRent Live](https://3001-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai/)** - Experience the platform in action!
+**[Try T0kenRent Live](https://t0kenrent.vercel.app/)** - Experience the platform in action!
 
 Try the demo mode to explore features without connecting a wallet - just click "Try Demo Mode" or add `?demo=true` to the URL.
 
 
 ## Quick Start
 
-Want to try it instantly? **[Launch Live Demo](https://3001-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai/)** and explore the platform without any setup!
+Want to try it instantly? **[Launch Live Demo](https://t0kenrent.vercel.app/)** and explore the platform without any setup!
 
 ## Features
 
@@ -98,7 +98,7 @@ JWT_SECRET=your_secret_key
 Test T0kenRent without connecting a wallet - perfect for exploring features risk-free!
 
 **Three ways to access demo mode:**
-1. **Direct Link**: [Open Demo Mode](https://3001-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai/?demo=true)
+1. **Direct Link**: [Open Demo Mode](https://t0kenrent.vercel.app/?demo=true)
 2. **Demo Button**: Click "Try Demo Mode" on the homepage
 3. **URL Parameter**: Add `?demo=true` to any page URL
 
@@ -304,10 +304,18 @@ npm run lint         # Run ESLint
 
 ## Documentation
 
+### Setup & Deployment
 | Document | Description |
 |----------|-------------|
-| [PROJECT_SETUP.md](PROJECT_SETUP.md) | **Complete setup guide with project structure** |
+| [PROJECT_SETUP.md](PROJECT_SETUP.md) | Complete setup guide with project structure |
 | [docs/QUICKSTART.md](docs/QUICKSTART.md) | Quick start guide for developers |
+| [docs/DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) | Deployment guide for multiple platforms |
+| [docs/VERCEL_ENV_VARS.md](docs/VERCEL_ENV_VARS.md) | Vercel environment variables reference |
+| [docs/TROUBLESHOOTING_HANDCASH.md](docs/TROUBLESHOOTING_HANDCASH.md) | HandCash authentication troubleshooting |
+
+### Technical Documentation
+| Document | Description |
+|----------|-------------|
 | [docs/architecture.md](docs/architecture.md) | Technical architecture details |
 | [docs/api.md](docs/api.md) | API endpoint reference |
 | [docs/http402.md](docs/http402.md) | HTTP 402 payment protocol |
@@ -363,7 +371,7 @@ Special thanks to the BSV ecosystem and the open-source community for making dec
 - **Issues**: [GitHub Issues](https://github.com/Gwennovation/t0kenrent/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/Gwennovation/t0kenrent/discussions)
 - **Documentation**: [/docs](/docs)
-- **Live Demo**: [https://3001-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai](https://3001-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai)
+- **Live Demo**: [https://t0kenrent.vercel.app](https://t0kenrent.vercel.app)
 
 ---
 
