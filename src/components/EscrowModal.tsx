@@ -188,6 +188,7 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           assetId: asset.id,
+          asset: asset, // Send full asset data for demo mode
           renterKey: userKey,
           startDate: new Date(startDate).toISOString(),
           endDate: new Date(endDate).toISOString(),

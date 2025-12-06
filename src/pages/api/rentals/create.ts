@@ -12,6 +12,7 @@ export default async function handler(
   try {
     const {
       assetId,
+      asset: providedAsset, // Accept asset data for demo mode
       renterKey,
       startDate,
       endDate,
@@ -28,13 +29,22 @@ export default async function handler(
       return res.status(400).json({ error: 'Missing required fields' })
     }
 
-    // Get the asset
-    const asset = storage.getAssetById(assetId)
+    // Get the asset (try storage first, then use provided asset)
+    let asset = storage.getAssetById(assetId)
+    
+    if (!asset && providedAsset) {
+      // Use provided asset data (for demo mode where server-side storage is empty)
+      asset = providedAsset
+      // Store it temporarily for this request
+      storage.createAsset(providedAsset)
+    }
+    
     if (!asset) {
-      return res.status(404).json({ error: 'Asset not found' })
+      return res.status(404).json({ error: 'Asset not found. Please provide asset data.' })
     }
 
-    if (asset.status !== 'available') {
+    // Skip status check if asset is provided (demo mode)
+    if (!providedAsset && asset.status !== 'available') {
       return res.status(400).json({ error: 'Asset is not available for rent' })
     }
 
