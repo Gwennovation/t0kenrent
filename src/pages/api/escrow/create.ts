@@ -19,6 +19,8 @@
  */
 
 import type { NextApiRequest, NextApiResponse } from 'next'
+import connectDB, { isMockMode } from '@/lib/mongodb'
+import { RentalAsset, Escrow as EscrowModel } from '@/models'
 import { storage, globalEscrowStore } from '@/lib/storage'
 import { 
   createEscrowContract, 
@@ -34,6 +36,7 @@ interface CreateEscrowResponse {
   success: boolean
   escrowId?: string
   escrowAddress?: string
+  escrowScript?: string
   multisigScript?: string
   requiredSignatures?: number
   timeoutBlocks?: number
@@ -60,6 +63,9 @@ export default async function handler(
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' })
   }
+
+  await connectDB()
+  const mockMode = isMockMode()
 
   try {
     const {
@@ -97,36 +103,121 @@ export default async function handler(
       })
     }
 
-    // Find the asset
-    let asset = storage.getAssetById(targetAssetId)
-    if (!asset) {
-      // Try by token ID
-      asset = storage.getAssetByTokenId(targetAssetId)
+    if (mockMode) {
+      // Find the asset in in-memory storage
+      let asset = storage.getAssetById(targetAssetId)
+      if (!asset) {
+        asset = storage.getAssetByTokenId(targetAssetId)
+      }
+
+      if (!asset) {
+        return res.status(404).json({
+          success: false,
+          error: 'Asset not found'
+        })
+      }
+
+      if (asset.status !== 'available') {
+        return res.status(400).json({
+          success: false,
+          error: 'Asset is not available for rent'
+        })
+      }
+
+      // Use provided amounts or asset defaults
+      const actualDeposit = depositAmount || asset.depositAmount
+      const actualRentalFee = rentalFee || calculateRentalFee(
+        asset.rentalRatePerDay,
+        rentalPeriod.startDate,
+        rentalPeriod.endDate
+      )
+
+      // Create the escrow contract
+      const escrow = createEscrowContract({
+        ownerKey: ownerKey || asset.ownerKey,
+        renterKey,
+        depositAmount: actualDeposit,
+        rentalFee: actualRentalFee,
+        currency: asset.currency || 'USD',
+        rentalId: `rental_${Date.now()}`,
+        assetId: asset.id,
+        assetName: asset.name
+      })
+
+      // Store escrow in memory
+      escrowStore.set(escrow.id, escrow)
+
+      // Update asset status to pending
+      storage.updateAsset(asset.id, { status: 'pending' })
+
+      // Log escrow creation to overlay (non-blocking)
+      logEscrowEvent({
+        escrowId: escrow.id,
+        rentalId: escrow.rentalId,
+        eventType: 'created',
+        renterKey: escrow.renterKey,
+        ownerKey: escrow.ownerKey,
+        totalAmount: escrow.totalAmount,
+        depositAmount: escrow.depositAmount,
+        rentalFee: escrow.rentalFee
+      }).catch(err => console.error('Failed to log escrow creation:', err))
+
+      // Get status info
+      const statusInfo = getEscrowStatus(escrow)
+
+      return res.status(201).json({
+        success: true,
+        escrowId: escrow.id,
+        escrowAddress: escrow.address,
+        escrowScript: escrow.redeemScript,
+        multisigScript: escrow.multisigScript,
+        requiredSignatures: 2,
+        timeoutBlocks: escrow.timeoutBlocks,
+        totalAmount: escrow.totalAmount,
+        depositAmount: escrow.depositAmount,
+        rentalFee: escrow.rentalFee,
+        status: escrow.status,
+        statusInfo: {
+          status: statusInfo.status,
+          canRelease: statusInfo.canRelease,
+          message: statusInfo.message
+        },
+        rentalPeriod: {
+          startDate: rentalPeriod.startDate,
+          endDate: rentalPeriod.endDate
+        }
+      })
     }
-    
+
+    // ======= MONGODB MODE =======
+    const mongoQuery: any[] = [{ tokenId: targetAssetId }]
+    if (/^[0-9a-fA-F]{24}$/.test(targetAssetId)) {
+      mongoQuery.push({ _id: targetAssetId })
+    }
+
+    const asset = await RentalAsset.findOne({ $or: mongoQuery })
+
     if (!asset) {
-      return res.status(404).json({ 
-        success: false, 
-        error: 'Asset not found' 
+      return res.status(404).json({
+        success: false,
+        error: 'Asset not found'
       })
     }
 
     if (asset.status !== 'available') {
-      return res.status(400).json({ 
-        success: false, 
-        error: 'Asset is not available for rent' 
+      return res.status(400).json({
+        success: false,
+        error: 'Asset is not available for rent'
       })
     }
 
-    // Use provided amounts or asset defaults
-    const actualDeposit = depositAmount || asset.depositAmount
-    const actualRentalFee = rentalFee || calculateRentalFee(
+    const actualDeposit = typeof depositAmount === 'number' ? depositAmount : asset.depositAmount
+    const actualRentalFee = typeof rentalFee === 'number' ? rentalFee : calculateRentalFee(
       asset.rentalRatePerDay,
       rentalPeriod.startDate,
       rentalPeriod.endDate
     )
 
-    // Create the escrow contract
     const escrow = createEscrowContract({
       ownerKey: ownerKey || asset.ownerKey,
       renterKey,
@@ -134,17 +225,41 @@ export default async function handler(
       rentalFee: actualRentalFee,
       currency: asset.currency || 'USD',
       rentalId: `rental_${Date.now()}`,
-      assetId: asset.id,
+      assetId: asset._id.toString(),
       assetName: asset.name
     })
 
-    // Store escrow in memory
+    // Store escrow in global map for status endpoint compatibility
     escrowStore.set(escrow.id, escrow)
 
-    // Update asset status to pending
-    storage.updateAsset(asset.id, { status: 'pending' })
+    // Persist escrow to MongoDB
+    await EscrowModel.create({
+      escrowId: escrow.id,
+      rentalTokenId: asset.tokenId,
+      assetName: asset.name,
+      ownerKey: ownerKey || asset.ownerKey,
+      renterKey,
+      rentalPeriod: {
+        startDate: new Date(rentalPeriod.startDate),
+        endDate: new Date(rentalPeriod.endDate)
+      },
+      depositAmount: actualDeposit,
+      rentalFee: actualRentalFee,
+      totalAmount: escrow.totalAmount,
+      currency: asset.currency || 'USD',
+      escrowAddress: escrow.address,
+      escrowScript: escrow.redeemScript,
+      multisigScript: escrow.multisigScript,
+      ownerPubKey: ownerKey || asset.ownerKey,
+      renterPubKey: renterKey,
+      timeoutBlocks: escrow.timeoutBlocks,
+      status: 'created'
+    })
 
-    // Log escrow creation to overlay (non-blocking)
+    // Update asset status to pending and save
+    asset.status = 'pending'
+    await asset.save()
+
     logEscrowEvent({
       escrowId: escrow.id,
       rentalId: escrow.rentalId,
@@ -156,13 +271,13 @@ export default async function handler(
       rentalFee: escrow.rentalFee
     }).catch(err => console.error('Failed to log escrow creation:', err))
 
-    // Get status info
     const statusInfo = getEscrowStatus(escrow)
 
     return res.status(201).json({
       success: true,
       escrowId: escrow.id,
       escrowAddress: escrow.address,
+      escrowScript: escrow.redeemScript,
       multisigScript: escrow.multisigScript,
       requiredSignatures: 2,
       timeoutBlocks: escrow.timeoutBlocks,
