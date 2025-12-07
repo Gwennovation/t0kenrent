@@ -4,6 +4,8 @@ import { getPublicKey, waitForAuthentication, isAuthenticated } from 'babbage-sd
 import { getErrorMessage } from '@/lib/error-utils'
 import { getHandCashAuthUrl } from '@/lib/handcash-client'
 
+type WalletConnectionType = 'handcash' | 'metanet' | 'paymail' | 'demo'
+
 // Wallet logo paths - using official logos
 const WALLET_LOGOS = {
   handcash: '/wallets/HandCash Logo.png',
@@ -12,7 +14,7 @@ const WALLET_LOGOS = {
 }
 
 interface WalletSelectorProps {
-  onAuthenticated: (publicKey: string, handle: string, walletType: string, balance?: number) => void
+  onAuthenticated: (publicKey: string, handle: string, walletType: WalletConnectionType, balance?: number) => void
   compact?: boolean
 }
 

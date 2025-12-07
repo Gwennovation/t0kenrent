@@ -5,6 +5,13 @@ import RentalMarketplace from '@/components/RentalMarketplace'
 import RentalDashboard from '@/components/RentalDashboard'
 import { ThemeToggle } from '@/context/ThemeContext'
 
+const WALLET_SESSION_KEYS = {
+  type: 't0kenrent_wallet_type',
+  key: 't0kenrent_wallet_key',
+  handle: 't0kenrent_wallet_handle',
+  balance: 't0kenrent_wallet_balance'
+} as const
+
 export default function Home() {
   const [authenticated, setAuthenticated] = useState(false)
   const [userKey, setUserKey] = useState('')
@@ -18,19 +25,62 @@ export default function Home() {
   const [isAuthenticating, setIsAuthenticating] = useState(false)
   const [authError, setAuthError] = useState<string | null>(null)
 
+  const hasRealWallet = walletType !== 'demo'
+
+  function restoreWalletSession() {
+    if (typeof window === 'undefined') {
+      return false
+    }
+
+    const storedWalletType = sessionStorage.getItem(WALLET_SESSION_KEYS.type) as ('handcash' | 'metanet' | 'paymail' | 'demo' | null)
+    const storedPublicKey = sessionStorage.getItem(WALLET_SESSION_KEYS.key)
+
+    if (!storedWalletType || storedWalletType === 'demo' || !storedPublicKey) {
+      return false
+    }
+
+    const storedHandle = sessionStorage.getItem(WALLET_SESSION_KEYS.handle) || storedPublicKey.slice(0, 10)
+    const storedBalanceRaw = sessionStorage.getItem(WALLET_SESSION_KEYS.balance)
+    const parsedBalance = storedBalanceRaw ? Number(storedBalanceRaw) : undefined
+
+    handleAuthenticated(
+      storedPublicKey,
+      storedHandle,
+      storedWalletType,
+      parsedBalance !== undefined && !Number.isNaN(parsedBalance) ? parsedBalance : undefined
+    )
+
+    return true
+  }
+
   useEffect(() => {
     setIsLoaded(true)
-    
-    // Check for demo mode in URL
-    const urlParams = new URLSearchParams(window.location.search)
-    if (urlParams.get('demo') === 'true') {
-      enableDemoMode()
+
+    if (typeof window === 'undefined') {
+      return
     }
-    
-    // Check for HandCash callback
+
+    const currentUrl = new URL(window.location.href)
+    const urlParams = currentUrl.searchParams
+
     const authToken = urlParams.get('authToken')
     if (authToken) {
       handleHandCashCallback(authToken)
+      return
+    }
+
+    const sessionRestored = restoreWalletSession()
+    if (sessionRestored) {
+      if (urlParams.get('demo') === 'true') {
+        urlParams.delete('demo')
+        const searchString = urlParams.toString()
+        window.history.replaceState({}, '', `${currentUrl.pathname}${searchString ? `?${searchString}` : ''}`)
+      }
+      return
+    }
+
+    if (urlParams.get('demo') === 'true') {
+      enableDemoMode()
     }
   }, [])
 
@@ -73,33 +123,58 @@ export default function Home() {
     }
   }
 
-  function handleAuthenticated(publicKey: string, handle: string, wallet: string = 'demo', balance?: number) {
+  function handleAuthenticated(
+    publicKey: string,
+    handle: string,
+    wallet: 'handcash' | 'metanet' | 'paymail' | 'demo' = 'demo',
+    balance?: number
+  ) {
     console.log('🎉 Setting authenticated state:', { publicKey, handle, wallet, balance })
     setUserKey(publicKey)
-    setUserHandle(handle || publicKey.slice(0, 10))
-    setWalletType(wallet as 'handcash' | 'metanet' | 'paymail' | 'demo')
+
+    const normalizedHandle = handle?.trim() ? handle : publicKey.slice(0, 10)
+    setUserHandle(normalizedHandle)
+    setWalletType(wallet)
     setAuthenticated(true)
     setShowMarketplace(true)
-    
-    // Only set demo mode if explicitly using demo wallet
+
     const isDemo = wallet === 'demo'
     setDemoMode(isDemo)
-    
-    // Set balance - only use random balance for demo mode
+
+    if (typeof window !== 'undefined') {
+      if (isDemo) {
+        Object.values(WALLET_SESSION_KEYS).forEach((key) => sessionStorage.removeItem(key))
+      } else {
+        sessionStorage.setItem(WALLET_SESSION_KEYS.type, wallet)
+        sessionStorage.setItem(WALLET_SESSION_KEYS.key, publicKey)
+        sessionStorage.setItem(WALLET_SESSION_KEYS.handle, normalizedHandle)
+        if (typeof balance === 'number' && !Number.isNaN(balance)) {
+          sessionStorage.setItem(WALLET_SESSION_KEYS.balance, balance.toString())
+        } else {
+          sessionStorage.removeItem(WALLET_SESSION_KEYS.balance)
+        }
+      }
+    }
+
     if (isDemo) {
-      setWalletBalance(Math.random() * 10 + 0.5) // Random demo balance 0.5-10.5 BSV
-    } else if (balance !== undefined) {
+      setWalletBalance(Math.random() * 10 + 0.5)
+    } else if (typeof balance === 'number' && !Number.isNaN(balance)) {
       setWalletBalance(balance)
     } else {
-      // Real wallet without balance info yet - will be fetched later
       setWalletBalance(null)
     }
-    
+
     console.log('✅ Marketplace should now be visible, showMarketplace=true')
   }
 
   function enableDemoMode() {
-    const demoKey = 'demo_user_' + Date.now().toString(36)
+    if (walletType !== 'demo') {
+      setShowMarketplace(true)
+      setDemoMode(false)
+      return
+    }
+
+    const demoKey = `demo_user_${Date.now().toString(36)}`
     setUserKey(demoKey)
     setUserHandle('Demo User')
     setWalletType('demo')
@@ -117,6 +192,13 @@ export default function Home() {
     setShowMarketplace(false)
     setWalletBalance(null)
     setAuthError(null)
+
+    if (typeof window !== 'undefined') {
+      Object.values(WALLET_SESSION_KEYS).forEach((key) => sessionStorage.removeItem(key))
+      sessionStorage.removeItem('handcash_token')
+      sessionStorage.removeItem('handcash_handle')
+      sessionStorage.removeItem('user_paymail')
+    }
   }
 
   return (
@@ -140,7 +222,18 @@ export default function Home() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex items-center justify-between h-16 sm:h-20">
               {/* Logo */}
-              <div className="flex items-center gap-3 group cursor-pointer" onClick={() => { setShowMarketplace(false); setDemoMode(false); setActiveView('marketplace'); }}>
+              <div
+                className="flex items-center gap-3 group cursor-pointer"
+                onClick={() => {
+                  if (hasRealWallet) {
+                    setShowMarketplace(true)
+                  } else {
+                    setShowMarketplace(false)
+                  }
+                  setDemoMode(false)
+                  setActiveView('marketplace')
+                }}
+              >
                 <div className="relative">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center transition-all duration-300 group-hover:scale-105">
                     <img 
@@ -379,27 +472,48 @@ export default function Home() {
                 </div>
 
                 {/* Demo Mode Button */}
-                <div className="flex flex-col items-center gap-3 animate-slide-up animation-delay-300">
-                  <div className="flex items-center gap-4">
-                    <div className="h-px w-16 bg-surface-300 dark:bg-surface-700" />
-                    <span className="text-sm text-surface-500 dark:text-surface-400">or</span>
-                    <div className="h-px w-16 bg-surface-300 dark:bg-surface-700" />
+                {hasRealWallet ? (
+                  <div className="flex flex-col items-center gap-3 animate-slide-up animation-delay-300">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMarketplace(true)
+                        setActiveView('marketplace')
+                      }}
+                      className="btn-primary text-base px-6 py-3 flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                      Enter Marketplace
+                    </button>
+                    <p className="text-sm text-surface-500 dark:text-surface-500 text-center">
+                      Demo mode is disabled while a wallet is connected. Disconnect to explore the simulation.
+                    </p>
                   </div>
-                  <button
-                    type="button"
-                    onClick={enableDemoMode}
-                    className="btn-secondary text-base px-6 py-3 flex items-center justify-center gap-2"
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    Try Demo Mode
-                  </button>
-                  <p className="text-sm text-surface-500 dark:text-surface-500">
-                    Explore the full experience without connecting a wallet
-                  </p>
-                </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-3 animate-slide-up animation-delay-300">
+                    <div className="flex items-center gap-4">
+                      <div className="h-px w-16 bg-surface-300 dark:bg-surface-700" />
+                      <span className="text-sm text-surface-500 dark:text-surface-400">or</span>
+                      <div className="h-px w-16 bg-surface-300 dark:bg-surface-700" />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={enableDemoMode}
+                      className="btn-secondary text-base px-6 py-3 flex items-center justify-center gap-2"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Try Demo Mode
+                    </button>
+                    <p className="text-sm text-surface-500 dark:text-surface-500">
+                      Explore the full experience without connecting a wallet
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* Feature Cards */}
@@ -523,13 +637,26 @@ export default function Home() {
                   <p className="text-white/80 mb-8 max-w-xl mx-auto">
                     List your items, rent what you need, all secured by BSV blockchain technology.
                   </p>
-                  <button
-                    type="button"
-                    onClick={enableDemoMode}
-                    className="px-8 py-4 bg-white text-primary-600 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
-                  >
-                    Launch Demo
-                  </button>
+                  {hasRealWallet ? (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowMarketplace(true)
+                        setActiveView('marketplace')
+                      }}
+                      className="px-8 py-4 bg-white text-primary-600 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+                    >
+                      Open Marketplace
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={enableDemoMode}
+                      className="px-8 py-4 bg-white text-primary-600 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
+                    >
+                      Launch Demo
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
