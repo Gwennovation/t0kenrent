@@ -33,7 +33,9 @@ async function connectDB() {
   }
   
   if (!MONGODB_URI) {
-    console.log('📦 Running in MOCK MODE - no MONGODB_URI configured')
+    console.log('⚠️  WARNING: No MONGODB_URI configured!')
+    console.log('⚠️  DATA WILL NOT PERSIST - using temporary in-memory storage')
+    console.log('⚠️  Add MONGODB_URI environment variable to enable persistence')
     cached.mockMode = true
     return null
   }
@@ -67,8 +69,11 @@ async function connectDB() {
     console.error('❌ MongoDB connection error:', e.message || e)
     
     // Fall back to mock mode instead of crashing (both dev and production)
-    console.log('📦 Falling back to MOCK MODE due to connection error')
-    console.log('💡 App will use in-memory storage. Add valid MONGODB_URI to enable persistence.')
+    console.log('⚠️  WARNING: MongoDB connection failed!')
+    console.log('⚠️  Error:', e.message || e)
+    console.log('⚠️  DATA WILL NOT PERSIST - using temporary in-memory storage')
+    console.log('⚠️  Fix: Update MONGODB_URI in Vercel environment variables')
+    console.log('⚠️  Current issue: Authentication failed - password may be incorrect')
     cached.mockMode = true
     return null
   }
