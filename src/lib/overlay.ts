@@ -9,6 +9,8 @@ import { createAction } from 'babbage-sdk'
 import { Script } from '@bsv/sdk'
 import { Buffer } from 'buffer'
 
+import { broadcastOpReturn } from '@/lib/onchain'
+
 const OVERLAY_URL: string =
   process.env.OVERLAY_URL || 'https://overlay-us-1.bsvb.tech'
 
@@ -20,6 +22,7 @@ const TOPICS = {
 }
 
 const LOOKUP_SERVICE = 'ls_tokenrent'
+const HAS_SERVER_LOG_WALLET = Boolean(process.env.BSV_ESCROW_WIF || process.env.BSV_SERVICE_WIF)
 
 export interface OverlayTransactionOutput {
   vout: number
@@ -83,6 +86,38 @@ export async function broadcastToOverlay(
   }
 }
 
+async function broadcastWithServerWallet(
+  scriptHex: string,
+  topic: string,
+  metadata: Record<string, string> | undefined,
+  description: string
+): Promise<string | null> {
+  if (!HAS_SERVER_LOG_WALLET) {
+    return null
+  }
+
+  try {
+    const { txid, rawTx } = await broadcastOpReturn(scriptHex, description)
+
+    try {
+      await broadcastToOverlay(
+        {
+          toBinary: () => Buffer.from(rawTx, 'hex')
+        },
+        topic,
+        metadata
+      )
+    } catch (overlayError) {
+      console.warn('Overlay mirror broadcast failed:', overlayError)
+    }
+
+    return txid
+  } catch (error) {
+    console.error('Server wallet broadcast failed:', error)
+    return null
+  }
+}
+
 /**
  * Get transaction by TXID from overlay
  */
@@ -126,11 +161,24 @@ export interface RentalEventData {
  * Log a rental event on the overlay network
  */
 export async function logRentalEvent(data: RentalEventData): Promise<string> {
+  const script = createRentalEventScript(data)
+  const metadata = {
+    'Rental-ID': data.rentalId,
+    'Asset-ID': data.assetId,
+    'Event-Type': data.eventType
+  }
+  const description = `T0kenRent: ${data.eventType} - ${data.assetName}`
+
+  if (HAS_SERVER_LOG_WALLET) {
+    const serverTxId = await broadcastWithServerWallet(script, TOPICS.RENTAL, metadata, description)
+    if (serverTxId) {
+      return serverTxId
+    }
+  }
+
   try {
-    const script = createRentalEventScript(data)
-    
     const result: any = await createAction({
-      description: `T0kenRent: ${data.eventType} - ${data.assetName}`,
+      description,
       outputs: [
         {
           satoshis: 1,
@@ -140,14 +188,15 @@ export async function logRentalEvent(data: RentalEventData): Promise<string> {
       ]
     })
 
-    await broadcastToOverlay(result, TOPICS.RENTAL, {
-      'Rental-ID': data.rentalId,
-      'Asset-ID': data.assetId,
-      'Event-Type': data.eventType
-    })
+    await broadcastToOverlay(result, TOPICS.RENTAL, metadata)
 
     return result.txid
-  } catch (error: unknown) {
+  } catch (error: any) {
+    if (error?.code === 'ERR_NO_METANET_IDENTITY') {
+      console.warn('No MetaNet identity available for rental event logging; skipping on-chain log.')
+      return 'skipped_no_identity'
+    }
+
     console.error('Failed to log rental event:', error)
     const message = error instanceof Error ? error.message : String(error)
     throw new Error(`Failed to log rental event: ${message}`)
@@ -204,11 +253,24 @@ export interface EscrowEventData {
  * Log an escrow event on the overlay network
  */
 export async function logEscrowEvent(data: EscrowEventData): Promise<string> {
+  const script = createEscrowEventScript(data)
+  const metadata = {
+    'Escrow-ID': data.escrowId,
+    'Rental-ID': data.rentalId,
+    'Event-Type': data.eventType
+  }
+  const description = `T0kenRent Escrow: ${data.eventType} - ${data.escrowId}`
+
+  if (HAS_SERVER_LOG_WALLET) {
+    const serverTxId = await broadcastWithServerWallet(script, TOPICS.ESCROW, metadata, description)
+    if (serverTxId) {
+      return serverTxId
+    }
+  }
+
   try {
-    const script = createEscrowEventScript(data)
-    
     const result: any = await createAction({
-      description: `T0kenRent Escrow: ${data.eventType} - ${data.escrowId}`,
+      description,
       outputs: [
         {
           satoshis: 1,
@@ -218,14 +280,15 @@ export async function logEscrowEvent(data: EscrowEventData): Promise<string> {
       ]
     })
 
-    await broadcastToOverlay(result, TOPICS.ESCROW, {
-      'Escrow-ID': data.escrowId,
-      'Rental-ID': data.rentalId,
-      'Event-Type': data.eventType
-    })
+    await broadcastToOverlay(result, TOPICS.ESCROW, metadata)
 
     return result.txid
-  } catch (error: unknown) {
+  } catch (error: any) {
+    if (error?.code === 'ERR_NO_METANET_IDENTITY') {
+      console.warn('No MetaNet identity available for escrow event logging; skipping on-chain log.')
+      return 'skipped_no_identity'
+    }
+
     console.error('Failed to log escrow event:', error)
     const message = error instanceof Error ? error.message : String(error)
     throw new Error(`Failed to log escrow event: ${message}`)
@@ -279,11 +342,24 @@ export interface PaymentEventData {
  * Log an HTTP 402 payment event on the overlay network
  */
 export async function logPaymentEvent(data: PaymentEventData): Promise<string> {
+  const script = createPaymentEventScript(data)
+  const metadata = {
+    'Payment-Ref': data.paymentRef,
+    'Asset-ID': data.assetId,
+    'Event-Type': data.eventType
+  }
+  const description = `T0kenRent 402 Payment: ${data.eventType}`
+
+  if (HAS_SERVER_LOG_WALLET) {
+    const serverTxId = await broadcastWithServerWallet(script, TOPICS.PAYMENT, metadata, description)
+    if (serverTxId) {
+      return serverTxId
+    }
+  }
+
   try {
-    const script = createPaymentEventScript(data)
-    
     const result: any = await createAction({
-      description: `T0kenRent 402 Payment: ${data.eventType}`,
+      description,
       outputs: [
         {
           satoshis: 1,
@@ -293,14 +369,15 @@ export async function logPaymentEvent(data: PaymentEventData): Promise<string> {
       ]
     })
 
-    await broadcastToOverlay(result, TOPICS.PAYMENT, {
-      'Payment-Ref': data.paymentRef,
-      'Asset-ID': data.assetId,
-      'Event-Type': data.eventType
-    })
+    await broadcastToOverlay(result, TOPICS.PAYMENT, metadata)
 
     return result.txid
-  } catch (error: unknown) {
+  } catch (error: any) {
+    if (error?.code === 'ERR_NO_METANET_IDENTITY') {
+      console.warn('No MetaNet identity available for payment event logging; skipping on-chain log.')
+      return 'skipped_no_identity'
+    }
+
     console.error('Failed to log payment event:', error)
     const message = error instanceof Error ? error.message : String(error)
     throw new Error(`Failed to log payment event: ${message}`)
