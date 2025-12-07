@@ -19,7 +19,7 @@ const demoSamples = [
   {
     name: 'Beachfront Villa - Ocean View',
     description: 'Luxurious 3-bedroom beachfront villa with stunning ocean views. Private pool, full kitchen, WiFi, and smart home features. Perfect for families or romantic getaways. Sleeps 6 comfortably.',
-    category: 'realestate',
+    category: 'staycations',
     imageUrl: 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?w=800',
     rentalRatePerDay: '350',
     depositAmount: '1000',
