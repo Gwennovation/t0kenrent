@@ -31,6 +31,8 @@ export default async function handler(
     let assetName: string
     let unlockFee: number
     let ownerKey: string
+
+    const paymentReference = `pay_${resourceId}_${Date.now()}_${Math.random().toString(36).substring(7)}`
     
     if (isMockMode()) {
       // Use in-memory storage
@@ -58,8 +60,10 @@ export default async function handler(
       ownerKey = asset.ownerKey
       
       // Store payment request in asset document (MongoDB only)
-      const paymentReference = `pay_${resourceId}_${Date.now()}_${Math.random().toString(36).substring(7)}`
-      
+      if (!Array.isArray(asset.http402Payments)) {
+        asset.http402Payments = []
+      }
+
       asset.http402Payments.push({
         paymentReference,
         amount: unlockFee,
@@ -71,7 +75,6 @@ export default async function handler(
     }
 
     // Create HTTP 402 payment request
-    const paymentReference = `pay_${resourceId}_${Date.now()}_${Math.random().toString(36).substring(7)}`
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000) // 5 minutes
 
     // Return HTTP 402 response

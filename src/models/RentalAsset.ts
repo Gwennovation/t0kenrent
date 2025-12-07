@@ -66,7 +66,7 @@ const RentalAssetSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ['photography', 'tools', 'electronics', 'sports', 'vehicles', 'other']
+    enum: ['photography', 'tools', 'electronics', 'sports', 'vehicles', 'realestate', 'other']
   },
   imageUrl: String,
   condition: {
