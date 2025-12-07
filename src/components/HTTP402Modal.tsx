@@ -27,9 +27,10 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
   const [error, setError] = useState('')
   const [txid, setTxid] = useState('')
   const [paymentDetails, setPaymentDetails] = useState<any>(null)
+  const isDemoExperience = demoMode || walletType === 'demo'
 
   async function handlePayment() {
-    if (demoMode) {
+    if (isDemoExperience) {
       handleDemoPayment()
       return
     }
@@ -215,7 +216,7 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
                 <div>
                   <h2 className="text-lg font-bold text-white">HTTP 402 Payment</h2>
                   <p className="text-accent-200 text-sm">
-                    {demoMode ? 'Demo Mode - Simulated' : 'Pay to unlock rental details'}
+                    {isDemoExperience ? 'Demo Mode - Simulated' : 'Pay to unlock rental details'}
                   </p>
                 </div>
               </div>
@@ -233,7 +234,7 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
         </div>
 
         {/* Demo Mode Banner */}
-        {demoMode && (
+        {isDemoExperience && (
           <div className="bg-amber-50 dark:bg-amber-900/30 border-b border-amber-200 dark:border-amber-800/50 px-6 py-3">
             <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -249,7 +250,7 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
           {step === 'info' && (
             <div className="space-y-6">
               {/* Demo Mode Banner */}
-              {(demoMode || !asset.ownerKey?.includes('@') && !asset.ownerKey?.startsWith('$')) && (
+              {isDemoExperience && (
                 <div className="bg-amber-50 dark:bg-amber-900/20 border-2 border-amber-300 dark:border-amber-700 rounded-xl p-4">
                   <div className="flex items-start gap-3">
                     <svg className="w-6 h-6 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -278,7 +279,7 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
                   Unlock {asset.name}
                 </h3>
                 <p className="text-surface-600 dark:text-surface-400">
-                  {demoMode || !asset.ownerKey?.includes('@') && !asset.ownerKey?.startsWith('$')
+                  {isDemoExperience
                     ? 'Click below to simulate the HTTP 402 payment flow and view rental details.'
                     : 'Pay a small micropayment to access detailed rental information including pickup location and access codes.'
                   }
@@ -293,7 +294,7 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
                 <div className="flex justify-between">
                   <span className="text-surface-600 dark:text-surface-400">Unlock Fee</span>
                   <span className="font-bold text-accent-600 dark:text-accent-400">
-                    {demoMode ? '(Simulated) ' : ''}{asset.unlockFee} BSV
+                    {isDemoExperience ? '(Simulated) ' : ''}{asset.unlockFee} BSV
                   </span>
                 </div>
                 <div className="flex justify-between text-sm">
@@ -323,7 +324,7 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
                 type="button"
                 onClick={handlePayment}
                 className={`w-full flex items-center justify-center gap-2 ${
-                  demoMode || !asset.ownerKey?.includes('@') && !asset.ownerKey?.startsWith('$')
+                  isDemoExperience
                     ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-lg shadow-amber-500/25'
                     : 'btn-accent'
                 }`}
@@ -331,14 +332,14 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
-                {demoMode || !asset.ownerKey?.includes('@') && !asset.ownerKey?.startsWith('$')
+                {isDemoExperience
                   ? '🎭 Simulate Payment (Demo)' 
                   : `Pay with ${walletType === 'handcash' ? 'HandCash' : walletType === 'metanet' ? 'MetaNet' : 'Paymail'}`
                 }
               </button>
 
               {/* Wallet indicator */}
-              {!demoMode && (
+              {!isDemoExperience && (
                 <p className="text-xs text-center text-surface-500 dark:text-surface-400 mt-2">
                   Using: <span className="font-medium">{walletType === 'handcash' ? 'HandCash' : walletType === 'metanet' ? 'MetaNet/Babbage' : 'Paymail/QR'}</span>
                 </p>
@@ -388,7 +389,7 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                {demoMode ? 'Simulating wallet popup...' : 'Check your wallet...'}
+                {isDemoExperience ? 'Simulating wallet popup...' : 'Check your wallet...'}
               </p>
             </div>
           )}
@@ -405,10 +406,10 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
                 </div>
               </div>
               <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
-                {demoMode ? 'Simulating Payment' : 'Broadcasting Transaction'}
+                {isDemoExperience ? 'Simulating Payment' : 'Broadcasting Transaction'}
               </h3>
               <p className="text-surface-600 dark:text-surface-400">
-                {demoMode ? 'Processing...' : 'Sending payment to BSV network...'}
+                {isDemoExperience ? 'Processing...' : 'Sending payment to BSV network...'}
               </p>
             </div>
           )}
@@ -422,10 +423,10 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
               </div>
               <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">Verifying Payment</h3>
               <p className="text-surface-600 dark:text-surface-400 mb-6">
-                {demoMode ? 'Verifying...' : 'Verifying your payment...'}
+                {isDemoExperience ? 'Verifying...' : 'Verifying your payment...'}
               </p>
               <div className="bg-surface-100 dark:bg-surface-800 rounded-xl p-4 border border-surface-200 dark:border-surface-700">
-                <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">Transaction ID {demoMode && '(Demo)'}</p>
+                <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">Transaction ID {isDemoExperience && '(Demo)'}</p>
                 <p className="text-sm font-mono text-surface-700 dark:text-surface-300 truncate">{txid}</p>
               </div>
             </div>
@@ -439,16 +440,16 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
                 </svg>
               </div>
               <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
-                {demoMode ? '🎭 Demo Payment Complete!' : 'Payment Verified On-Chain!'}
+                {isDemoExperience ? '🎭 Demo Payment Complete!' : 'Payment Verified On-Chain!'}
               </h3>
               <p className="text-surface-600 dark:text-surface-400 mb-4">
-                {demoMode 
+                {isDemoExperience 
                   ? 'Payment simulated successfully. Rental details have been unlocked.'
                   : 'Rental details have been unlocked.'
                 }
               </p>
               
-              {demoMode && (
+              {isDemoExperience && (
                 <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg p-3 mb-4">
                   <p className="text-sm text-amber-800 dark:text-amber-300">
                     <strong>Demo Mode:</strong> No real transaction occurred. This demonstrates the HTTP 402 payment flow.
@@ -475,7 +476,7 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
                   </div>
                 </div>
                 <div className="mt-3 pt-3 border-t border-surface-200 dark:border-surface-700">
-                  <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">Transaction ID {demoMode && '(Demo)'}</p>
+                  <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">Transaction ID {isDemoExperience && '(Demo)'}</p>
                   <p className="text-xs font-mono text-surface-700 dark:text-surface-300 break-all">{txid}</p>
                 </div>
               </div>
@@ -492,7 +493,7 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
                 View on WhatsOnChain (Blockchain Explorer)
               </a>
               
-              {demoMode && (
+              {isDemoExperience && (
                 <p className="text-xs text-amber-600 dark:text-amber-400 mt-3">
                   Demo mode: This was a simulated payment for demonstration.
                 </p>

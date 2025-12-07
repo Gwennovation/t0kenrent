@@ -38,6 +38,7 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
   const [escrowAddress, setEscrowAddress] = useState('')
   
   const [startDate, setStartDate] = useState('')
+  const isDemoExperience = demoMode || walletType === 'demo'
   const [endDate, setEndDate] = useState('')
   const [rentalDays, setRentalDays] = useState(1)
 
@@ -63,7 +64,7 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
       return
     }
 
-    if (demoMode) {
+    if (isDemoExperience) {
       handleDemoEscrow()
       return
     }
@@ -310,7 +311,7 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
                 <div>
                   <h2 className="text-lg font-bold text-white">Confirm Rental</h2>
                   <p className="text-emerald-200 text-sm">
-                    {demoMode ? 'Demo Mode - Simulated' : 'Review and confirm your rental'}
+                    {isDemoExperience ? 'Demo Mode - Simulated' : 'Review and confirm your rental'}
                   </p>
                 </div>
               </div>
@@ -328,7 +329,7 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
         </div>
 
         {/* Demo Mode Banner */}
-        {demoMode && (
+        {isDemoExperience && (
           <div className="bg-amber-50 dark:bg-amber-900/30 border-b border-amber-200 dark:border-amber-800/50 px-6 py-3">
             <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -426,7 +427,7 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
                   <div className="border-t border-surface-200 dark:border-surface-700 pt-3 flex justify-between">
                     <span className="font-semibold text-surface-900 dark:text-white">Total to Escrow</span>
                     <span className="font-bold text-emerald-600 dark:text-emerald-400">
-                      {demoMode ? '(Simulated) ' : ''}${totalAmount.toFixed(2)}
+                      {isDemoExperience ? '(Simulated) ' : ''}${totalAmount.toFixed(2)}
                     </span>
                   </div>
                 </div>
@@ -465,11 +466,11 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
-                {demoMode ? 'Simulate Rental' : `Pay with ${walletType === 'handcash' ? 'HandCash' : walletType === 'metanet' ? 'MetaNet' : 'Paymail'}`}
+                {isDemoExperience ? 'Simulate Rental' : `Pay with ${walletType === 'handcash' ? 'HandCash' : walletType === 'metanet' ? 'MetaNet' : 'Paymail'}`}
               </button>
 
               {/* Wallet indicator */}
-              {!demoMode && (
+              {!isDemoExperience && (
                 <p className="text-xs text-center text-surface-500 dark:text-surface-400 mt-2">
                   Payment via: <span className="font-medium">{walletType === 'handcash' ? 'HandCash' : walletType === 'metanet' ? 'MetaNet/Babbage' : 'Paymail/QR'}</span>
                 </p>
@@ -489,10 +490,10 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
                 </div>
               </div>
               <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
-                {demoMode ? 'Processing...' : 'Setting Up Rental'}
+                {isDemoExperience ? 'Processing...' : 'Setting Up Rental'}
               </h3>
               <p className="text-surface-600 dark:text-surface-400">
-                {demoMode ? 'Processing your rental...' : 'Securing your deposit...'}
+                {isDemoExperience ? 'Processing your rental...' : 'Securing your deposit...'}
               </p>
             </div>
           )}
@@ -505,14 +506,14 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
                 </svg>
               </div>
               <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
-                {demoMode ? 'Processing...' : 'Completing Payment'}
+                {isDemoExperience ? 'Processing...' : 'Completing Payment'}
               </h3>
               <p className="text-surface-600 dark:text-surface-400 mb-6">
-                {demoMode ? 'Almost done...' : 'Please confirm the payment in your wallet...'}
+                {isDemoExperience ? 'Almost done...' : 'Please confirm the payment in your wallet...'}
               </p>
               {escrowAddress && (
                 <div className="bg-surface-100 dark:bg-surface-800 rounded-xl p-4 border border-surface-200 dark:border-surface-700">
-                  <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">Rental ID {demoMode && '(Demo)'}</p>
+                  <p className="text-xs text-surface-500 dark:text-surface-400 mb-1">Rental ID {isDemoExperience && '(Demo)'}</p>
                   <p className="text-sm font-mono text-surface-700 dark:text-surface-300 truncate">{escrowAddress}</p>
                 </div>
               )}
@@ -527,10 +528,10 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
                 </svg>
               </div>
               <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
-                {demoMode ? 'Demo Rental Complete!' : 'Rental Confirmed!'}
+                {isDemoExperience ? 'Demo Rental Complete!' : 'Rental Confirmed!'}
               </h3>
               <p className="text-surface-600 dark:text-surface-400 mb-6">
-                {demoMode 
+                {isDemoExperience 
                   ? 'This is a simulated rental for demo purposes.'
                   : 'Your rental is confirmed! The item is now reserved for you.'
                 }
@@ -568,7 +569,7 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
                 </div>
               </div>
 
-              {demoMode && (
+              {isDemoExperience && (
                 <p className="text-sm text-amber-600 dark:text-amber-400 mb-4">
                   This was a simulated rental for demo purposes.
                 </p>
