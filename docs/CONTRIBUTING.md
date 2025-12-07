@@ -71,7 +71,7 @@ Edit `.env` with your configuration:
 
 ```bash
 MONGODB_URI="mongodb://localhost:27017/t0kenrent"
-NETWORK="test"  # Use testnet for development
+NETWORK="test" # Use testnet for development
 OVERLAY_URL="https://overlay-us-1.bsvb.tech"
 ```
 
@@ -117,11 +117,11 @@ Before creating a new issue:
 1. Search existing issues to avoid duplicates
 2. Use issue templates when available
 3. Provide detailed information:
-   - Clear description of the problem/feature
-   - Steps to reproduce (for bugs)
-   - Expected behavior
-   - Screenshots if applicable
-   - Environment details
+- Clear description of the problem/feature
+- Steps to reproduce (for bugs)
+- Expected behavior
+- Screenshots if applicable
+- Environment details
 
 ## Pull Request Process
 
@@ -212,13 +212,13 @@ Once approved:
 ```typescript
 // Good
 interface RentalAsset {
-  tokenId: string;
-  name: string;
-  rentalRatePerDay: number;
+tokenId: string;
+name: string;
+rentalRatePerDay: number;
 }
 
 async function createAsset(data: Partial<RentalAsset>): Promise<RentalAsset> {
-  // ...
+// ...
 }
 
 // Avoid
@@ -234,16 +234,16 @@ function f(d) { /* ... */ }
 
 ```tsx
 interface AssetCardProps {
-  asset: RentalAsset;
-  onSelect: (id: string) => void;
+asset: RentalAsset;
+onSelect: (id: string) => void;
 }
 
 export function AssetCard({ asset, onSelect }: AssetCardProps) {
-  return (
-    <div onClick={() => onSelect(asset.tokenId)}>
-      {asset.name}
-    </div>
-  );
+return (
+<div onClick={() => onSelect(asset.tokenId)}>
+{asset.name}
+</div>
+);
 }
 ```
 
@@ -256,19 +256,19 @@ export function AssetCard({ asset, onSelect }: AssetCardProps) {
 ```tsx
 // Good
 <button className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg">
-  Click me
+Click me
 </button>
 
 // For repeated patterns, create a component
 export function Button({ children, ...props }) {
-  return (
-    <button 
-      className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
-      {...props}
-    >
-      {children}
-    </button>
-  );
+return (
+<button 
+className="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg"
+{...props}
+>
+{children}
+</button>
+);
 }
 ```
 
@@ -281,24 +281,24 @@ export function Button({ children, ...props }) {
 
 ```typescript
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
+if (req.method !== 'POST') {
+return res.status(405).json({ error: 'Method not allowed' });
+}
 
-  try {
-    const { name, amount } = req.body;
-    
-    if (!name || !amount) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
+try {
+const { name, amount } = req.body;
 
-    const result = await processRequest(name, amount);
-    
-    return res.status(200).json({ success: true, data: result });
-  } catch (error) {
-    console.error('Handler error:', error);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
+if (!name || !amount) {
+return res.status(400).json({ error: 'Missing required fields' });
+}
+
+const result = await processRequest(name, amount);
+
+return res.status(200).json({ success: true, data: result });
+} catch (error) {
+console.error('Handler error:', error);
+return res.status(500).json({ error: 'Internal server error' });
+}
 }
 ```
 
@@ -310,10 +310,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
 ```typescript
 try {
-  await riskyOperation();
+await riskyOperation();
 } catch (error) {
-  console.error('Operation failed:', { error, context: { userId, assetId } });
-  throw new Error(`Failed to process: ${getErrorMessage(error)}`);
+console.error('Operation failed:', { error, context: { userId, assetId } });
+throw new Error(`Failed to process: ${getErrorMessage(error)}`);
 }
 ```
 
@@ -343,21 +343,21 @@ npm run test:e2e
 
 ```typescript
 describe('HTTP402Modal', () => {
-  it('should display payment amount', () => {
-    render(<HTTP402Modal asset={mockAsset} />);
-    expect(screen.getByText('0.0001 BSV')).toBeInTheDocument();
-  });
+it('should display payment amount', () => {
+render(<HTTP402Modal asset={mockAsset} />);
+expect(screen.getByText('0.0001 BSV')).toBeInTheDocument();
+});
 
-  it('should call onSuccess after payment verification', async () => {
-    const onSuccess = jest.fn();
-    render(<HTTP402Modal asset={mockAsset} onSuccess={onSuccess} />);
-    
-    await userEvent.click(screen.getByRole('button', { name: /pay/i }));
-    
-    await waitFor(() => {
-      expect(onSuccess).toHaveBeenCalled();
-    });
-  });
+it('should call onSuccess after payment verification', async () => {
+const onSuccess = jest.fn();
+render(<HTTP402Modal asset={mockAsset} onSuccess={onSuccess} />);
+
+await userEvent.click(screen.getByRole('button', { name: /pay/i }));
+
+await waitFor(() => {
+expect(onSuccess).toHaveBeenCalled();
+});
+});
 });
 ```
 
@@ -371,19 +371,19 @@ describe('HTTP402Modal', () => {
 
 ```typescript
 /**
- * Creates a 2-of-2 multisig escrow for rental deposits.
- * 
- * @param ownerKey - Public key of the asset owner
- * @param renterKey - Public key of the renter
- * @param amount - Total escrow amount (deposit + rental fee)
- * @returns Escrow contract details including address and script
- */
+* Creates a 2-of-2 multisig escrow for rental deposits.
+* 
+* @param ownerKey - Public key of the asset owner
+* @param renterKey - Public key of the renter
+* @param amount - Total escrow amount (deposit + rental fee)
+* @returns Escrow contract details including address and script
+*/
 async function createEscrow(
-  ownerKey: string,
-  renterKey: string,
-  amount: number
+ownerKey: string,
+renterKey: string,
+amount: number
 ): Promise<EscrowContract> {
-  // Implementation
+// Implementation
 }
 ```
 

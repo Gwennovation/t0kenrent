@@ -1,10 +1,10 @@
-# 📚 T0kenRent Complete Documentation Index
+# T0kenRent Complete Documentation Index
 
 Welcome to the T0kenRent documentation! This guide will help you navigate all available documentation.
 
 ---
 
-## 🎯 Quick Links
+## Quick Links
 
 - **Live Demo**: https://t0kenrent.vercel.app
 - **GitHub Repository**: https://github.com/Gwennovation/t0kenrent
@@ -12,9 +12,9 @@ Welcome to the T0kenRent documentation! This guide will help you navigate all av
 
 ---
 
-## 📖 Documentation Structure
+## Documentation Structure
 
-### 🌟 **Getting Started**
+### **Getting Started**
 
 | Document | Description | Link |
 |----------|-------------|------|
@@ -26,7 +26,7 @@ Welcome to the T0kenRent documentation! This guide will help you navigate all av
 
 ---
 
-### 🏗️ **Technical Documentation**
+### **Technical Documentation**
 
 | Document | Description | Link |
 |----------|-------------|------|
@@ -40,7 +40,7 @@ Welcome to the T0kenRent documentation! This guide will help you navigate all av
 
 ---
 
-### 🚀 **Deployment & Configuration**
+### **Deployment & Configuration**
 
 | Document | Description | Link |
 |----------|-------------|------|
@@ -51,7 +51,7 @@ Welcome to the T0kenRent documentation! This guide will help you navigate all av
 
 ---
 
-### 🤝 **Contributing**
+### **Contributing**
 
 | Document | Description | Link |
 |----------|-------------|------|
@@ -61,7 +61,7 @@ Welcome to the T0kenRent documentation! This guide will help you navigate all av
 
 ---
 
-### 📁 **Additional Resources**
+### **Additional Resources**
 
 | Resource | Description | Link |
 |----------|-------------|------|
@@ -72,7 +72,7 @@ Welcome to the T0kenRent documentation! This guide will help you navigate all av
 
 ---
 
-## 🎯 Documentation by Topic
+## Documentation by Topic
 
 ### For Hackathon Judges
 
@@ -111,7 +111,7 @@ Welcome to the T0kenRent documentation! This guide will help you navigate all av
 
 ---
 
-## 🔍 Quick Reference
+## Quick Reference
 
 ### Key Features Documentation
 
@@ -135,41 +135,41 @@ Welcome to the T0kenRent documentation! This guide will help you navigate all av
 
 ---
 
-## 📂 Directory Structure
+## Directory Structure
 
 ```
 t0kenrent/
-├── README.md                          ⭐ Start here!
-├── PROJECT_SETUP.md                   📘 Development setup
-│
-├── docs/                              📚 All documentation
-│   ├── README.md                      Index of docs
-│   ├── QUICKSTART.md                  5-min quick start
-│   ├── architecture.md                System design
-│   ├── api.md                         API reference
-│   ├── http402.md                     Micropayments
-│   ├── wallet-integration.md          Multi-wallet guide
-│   ├── DEPLOYMENT_GUIDE.md            Production deploy
-│   ├── VERCEL_ENV_VARS.md            Environment vars
-│   ├── USER_DATA_PERSISTENCE.md       Data architecture
-│   ├── CONTRIBUTING.md                How to contribute
-│   ├── T0kenRent-Whitepaper-v1.0.pdf Whitepaper
-│   ├── contracts/                     Smart contracts
-│   └── overlay/                       BSV overlay docs
-│
-├── src/                               💻 Source code
-│   ├── components/                    React components
-│   ├── pages/                         Next.js pages & API
-│   ├── lib/                           Utilities & integrations
-│   ├── models/                        MongoDB models
-│   └── styles/                        CSS & styling
-│
-└── public/                            🎨 Static assets
+README.md Start here!
+PROJECT_SETUP.md Development setup
+
+docs/ All documentation
+README.md Index of docs
+QUICKSTART.md 5-min quick start
+architecture.md System design
+api.md API reference
+http402.md Micropayments
+wallet-integration.md Multi-wallet guide
+DEPLOYMENT_GUIDE.md Production deploy
+VERCEL_ENV_VARS.md Environment vars
+USER_DATA_PERSISTENCE.md Data architecture
+CONTRIBUTING.md How to contribute
+T0kenRent-Whitepaper-v1.0.pdf Whitepaper
+contracts/ Smart contracts
+overlay/ BSV overlay docs
+
+src/ Source code
+components/ React components
+pages/ Next.js pages & API
+lib/ Utilities & integrations
+models/ MongoDB models
+styles/ CSS & styling
+
+public/ Static assets
 ```
 
 ---
 
-## 🌐 Online Documentation
+## Online Documentation
 
 ### GitHub Repository
 All documentation is available on GitHub:
@@ -189,18 +189,18 @@ All documentation is available on GitHub:
 
 ---
 
-## 🎓 Learning Path
+## Learning Path
 
 ### 1. **Complete Beginner**
 Start here if you're new to blockchain or T0kenRent:
 
 ```
 README.md
-  ↓
+↓
 docs/QUICKSTART.md
-  ↓
+↓
 Try Live Demo (https://t0kenrent.vercel.app)
-  ↓
+↓
 docs/architecture.md (optional)
 ```
 
@@ -209,11 +209,11 @@ Start here if you want to run or contribute:
 
 ```
 PROJECT_SETUP.md
-  ↓
+↓
 docs/api.md
-  ↓
+↓
 docs/wallet-integration.md
-  ↓
+↓
 docs/CONTRIBUTING.md
 ```
 
@@ -222,9 +222,9 @@ Start here if you want to deploy your own instance:
 
 ```
 docs/DEPLOYMENT_GUIDE.md
-  ↓
+↓
 docs/VERCEL_ENV_VARS.md
-  ↓
+↓
 PROJECT_SETUP.md (MongoDB setup)
 ```
 
@@ -233,17 +233,17 @@ Start here for technical evaluation:
 
 ```
 README.md
-  ↓
+↓
 docs/architecture.md
-  ↓
+↓
 docs/http402.md
-  ↓
+↓
 docs/T0kenRent-Whitepaper-v1.0.pdf
 ```
 
 ---
 
-## 📊 Documentation Statistics
+## Documentation Statistics
 
 - **Total Documentation Files**: 11 markdown files + 1 PDF
 - **Lines of Documentation**: ~15,000 lines
@@ -254,7 +254,7 @@ docs/T0kenRent-Whitepaper-v1.0.pdf
 
 ---
 
-## 🔍 Search Tips
+## Search Tips
 
 ### Find Specific Information
 
@@ -274,7 +274,7 @@ Search the entire codebase and documentation:
 
 ---
 
-## 📞 Getting Help
+## Getting Help
 
 ### Documentation Issues
 If you find errors or want to improve documentation:
@@ -289,7 +289,7 @@ If you find errors or want to improve documentation:
 
 ---
 
-## ✅ Documentation Checklist
+## Documentation Checklist
 
 Before diving in, make sure you've reviewed:
 
@@ -301,7 +301,7 @@ Before diving in, make sure you've reviewed:
 
 ---
 
-## 🎯 Most Important Documents
+## Most Important Documents
 
 If you only read 3 documents, read these:
 
@@ -311,22 +311,22 @@ If you only read 3 documents, read these:
 
 ---
 
-## 📚 Full Documentation List
+## Full Documentation List
 
 **11 Core Documentation Files:**
 
-1. ✅ README.md
-2. ✅ PROJECT_SETUP.md
-3. ✅ docs/README.md
-4. ✅ docs/QUICKSTART.md
-5. ✅ docs/architecture.md
-6. ✅ docs/api.md
-7. ✅ docs/http402.md
-8. ✅ docs/wallet-integration.md
-9. ✅ docs/DEPLOYMENT_GUIDE.md
-10. ✅ docs/VERCEL_ENV_VARS.md
-11. ✅ docs/USER_DATA_PERSISTENCE.md
-12. ✅ docs/CONTRIBUTING.md
+1. README.md
+2. PROJECT_SETUP.md
+3. docs/README.md
+4. docs/QUICKSTART.md
+5. docs/architecture.md
+6. docs/api.md
+7. docs/http402.md
+8. docs/wallet-integration.md
+9. docs/DEPLOYMENT_GUIDE.md
+10. docs/VERCEL_ENV_VARS.md
+11. docs/USER_DATA_PERSISTENCE.md
+12. docs/CONTRIBUTING.md
 
 **Additional Resources:**
 - docs/T0kenRent-Whitepaper-v1.0.pdf
@@ -335,7 +335,7 @@ If you only read 3 documents, read these:
 
 ---
 
-**Happy Learning! 🚀**
+**Happy Learning! **
 
 For questions or contributions, visit:
 **https://github.com/Gwennovation/t0kenrent**

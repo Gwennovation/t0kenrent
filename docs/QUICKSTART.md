@@ -123,23 +123,23 @@ PORT=3001 npm run dev
 ## Commands
 
 ```bash
-npm run dev      # Start development server
-npm run build    # Build for production
-npm run start    # Start production server
-npm run lint     # Run linter
+npm run dev # Start development server
+npm run build # Build for production
+npm run start # Start production server
+npm run lint # Run linter
 ```
 
 ## Project Structure
 
 ```
 t0kenrent/
-├── src/
-│   ├── components/   # React components
-│   ├── pages/api/    # API routes
-│   ├── lib/          # Utilities
-│   └── models/       # MongoDB schemas
-├── docs/             # Documentation
-└── public/           # Static assets
+src/
+components/ # React components
+pages/api/ # API routes
+lib/ # Utilities
+models/ # MongoDB schemas
+docs/ # Documentation
+public/ # Static assets
 ```
 
 ## Next Steps

@@ -75,9 +75,9 @@ NEXT_PUBLIC_APP_URL=https://your-app.vercel.app
 1. Go to https://dashboard.handcash.io/
 2. Select your app (ID: `692c5eedaecc93a4d1907d4e`)
 3. Update Redirect URL to your Vercel URL:
-   ```
-   https://your-app.vercel.app
-   ```
+```
+https://your-app.vercel.app
+```
 4. Save changes
 
 ### Step 5: Redeploy
@@ -113,11 +113,11 @@ Create `netlify.toml` in your project root:
 
 ```toml
 [build]
-  command = "npm run build"
-  publish = ".next"
+command = "npm run build"
+publish = ".next"
 
 [[plugins]]
-  package = "@netlify/plugin-nextjs"
+package = "@netlify/plugin-nextjs"
 ```
 
 ### Step 4: Deploy
@@ -183,11 +183,11 @@ git push origin main
 2. Click "New" → "Web Service"
 3. Connect your GitHub repository
 4. Configure:
-   - **Name**: t0kenrent
-   - **Environment**: Node
-   - **Build Command**: `npm install && npm run build`
-   - **Start Command**: `npm start`
-   - **Plan**: Free
+- **Name**: t0kenrent
+- **Environment**: Node
+- **Build Command**: `npm install && npm run build`
+- **Start Command**: `npm start`
+- **Plan**: Free
 
 ### Step 3: Add Environment Variables
 
@@ -199,7 +199,7 @@ In Render dashboard, go to "Environment" and add all variables.
 
 | Platform | Pros | Cons | Best For |
 |----------|------|------|----------|
-| **Vercel** | Best Next.js support, auto SSL, fast CDN | Limited build minutes (free) | Next.js apps (⭐ Recommended) |
+| **Vercel** | Best Next.js support, auto SSL, fast CDN | Limited build minutes (free) | Next.js apps ( Recommended) |
 | **Netlify** | Great UI, plugins, forms | Less Next.js optimized | Static sites |
 | **Railway** | Simple, good for APIs | Costs after free tier | Full-stack apps |
 | **Render** | Free tier, databases | Slower cold starts | Full apps with DB |
@@ -263,7 +263,7 @@ vercel login
 vercel
 ```
 
-That's it! 🚀
+That's it! 
 
 ---
 

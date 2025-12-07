@@ -99,8 +99,8 @@ Select **Option 1: Import WIF private key** and paste your key.
 ```bash
 # Import via API (development only)
 curl -X POST http://localhost:3000/api/bridge/identity \
-  -H "Content-Type: application/json" \
-  -d '{"wif": "YOUR_WIF_PRIVATE_KEY"}'
+-H "Content-Type: application/json" \
+-d '{"wif": "YOUR_WIF_PRIVATE_KEY"}'
 ```
 
 ### Step 3: Verify Identity
@@ -112,10 +112,10 @@ node scripts/wallet-bridge.js --view
 You should see:
 ```json
 {
-  "id": "810a68535a51...",
-  "publicKey": "04813250da3d...",
-  "source": "bsv-desktop-import",
-  "createdAt": "2025-11-30T..."
+"id": "810a68535a51...",
+"publicKey": "04813250da3d...",
+"source": "bsv-desktop-import",
+"createdAt": "2025-11-30T..."
 }
 ```
 
@@ -128,12 +128,12 @@ BabbageBridge is a compatibility layer that implements the Babbage SDK interface
 ### How It Works
 
 ```
-+-----------------+     +-----------------+     +-----------------+
-|   Your BSV      |---->|  BabbageBridge  |---->|    T0kenRent    |
-| Desktop Wallet  |     |  (BRC-100 API)  |     |   Application   |
-+-----------------+     +-----------------+     +-----------------+
-     Private Key         Implements SDK         Calls getPublicKey,
-     (WIF/Hex)          Interface              createAction, etc.
++-----------------+ +-----------------+ +-----------------+
+| Your BSV |---->| BabbageBridge |---->| T0kenRent |
+| Desktop Wallet | | (BRC-100 API) | | Application |
++-----------------+ +-----------------+ +-----------------+
+Private Key Implements SDK Calls getPublicKey,
+(WIF/Hex) Interface createAction, etc.
 ```
 
 ### Architecture
@@ -141,13 +141,13 @@ BabbageBridge is a compatibility layer that implements the Babbage SDK interface
 ```typescript
 // BabbageBridge implements these Babbage SDK methods:
 interface BRC100Wallet {
-  isAuthenticated(): Promise<boolean>
-  waitForAuthentication(): Promise<boolean>
-  getPublicKey(options): Promise<string>
-  createAction(options): Promise<CreateActionResult>
-  createSignature(options): Promise<string>
-  encrypt(options): Promise<string>
-  decrypt(options): Promise<string>
+isAuthenticated(): Promise<boolean>
+waitForAuthentication(): Promise<boolean>
+getPublicKey(options): Promise<string>
+createAction(options): Promise<CreateActionResult>
+createSignature(options): Promise<string>
+encrypt(options): Promise<string>
+decrypt(options): Promise<string>
 }
 ```
 
@@ -157,14 +157,14 @@ The bridge reads from `Config/babbage-identity.json`:
 
 ```json
 {
-  "id": "your-identity-hash",
-  "publicKey": "04...",
-  "privateKey": "...",
-  "source": "bsv-desktop-import",
-  "brc100": {
-    "version": "1.0",
-    "protocols": ["Pay MNEE", "messagebox", "tm_tokenrent"]
-  }
+"id": "your-identity-hash",
+"publicKey": "04...",
+"privateKey": "...",
+"source": "bsv-desktop-import",
+"brc100": {
+"version": "1.0",
+"protocols": ["Pay MNEE", "messagebox", "tm_tokenrent"]
+}
 }
 ```
 
@@ -180,15 +180,15 @@ const identity = await fetch('/api/bridge/identity').then(r => r.json())
 
 // Inject bridge
 injectBabbageBridge({
-  privateKey: identity.privateKey,
-  publicKey: identity.publicKey,
-  identityId: identity.id
+privateKey: identity.privateKey,
+publicKey: identity.publicKey,
+identityId: identity.id
 })
 
 // Now window.Babbage is available
 const pubKey = await window.Babbage.getPublicKey({
-  protocolID: [2, 'Pay MNEE'],
-  keyID: '1'
+protocolID: [2, 'Pay MNEE'],
+keyID: '1'
 })
 ```
 
@@ -216,11 +216,11 @@ Create an on-chain attestation linking your old address to your new BRC-100 iden
 
 ```javascript
 const attestation = {
-  type: 'identity-link',
-  oldAddress: '1ABC...', // Your BSV Desktop address
-  newIdentityId: '810a68...', // BRC-100 identity
-  message: 'I attest this identity is mine',
-  signature: '...' // Signed with old address private key
+type: 'identity-link',
+oldAddress: '1ABC...', // Your BSV Desktop address
+newIdentityId: '810a68...', // BRC-100 identity
+message: 'I attest this identity is mine',
+signature: '...' // Signed with old address private key
 }
 
 // Broadcast as OP_RETURN transaction
@@ -244,15 +244,15 @@ T0kenRent uses certificates for:
 Certificate structure:
 ```json
 {
-  "type": "t0kenrent-certificate",
-  "certifier": "certifier-public-key",
-  "subject": "your-identity-id",
-  "fields": {
-    "Name": "encrypted-name",
-    "Email": "encrypted-email",
-    "Verified": true
-  },
-  "signature": "..."
+"type": "t0kenrent-certificate",
+"certifier": "certifier-public-key",
+"subject": "your-identity-id",
+"fields": {
+"Name": "encrypted-name",
+"Email": "encrypted-email",
+"Verified": true
+},
+"signature": "..."
 }
 ```
 

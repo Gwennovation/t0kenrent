@@ -1,7 +1,7 @@
 # T0kenRent - Complete Project Setup Guide
 
-**Last Updated**: December 6, 2025  
-**Version**: 1.0.0  
+**Last Updated**: December 6, 2025 
+**Version**: 1.0.0 
 **Live Demo**: https://3000-i302m5njfk0occat3d5wz-c81df28e.sandbox.novita.ai
 
 ---
@@ -45,120 +45,120 @@ T0kenRent is a decentralized peer-to-peer rental marketplace built on the BSV bl
 
 ```
 t0kenrent/
-├── src/                              # Source code directory
-│   ├── components/                   # React UI components
-│   │   ├── RentalMarketplace.tsx     # Main marketplace interface
-│   │   ├── AssetCard.tsx             # Individual asset display card
-│   │   ├── CreateAssetModal.tsx      # Asset listing creation form
-│   │   ├── EscrowModal.tsx           # Escrow creation & management
-│   │   ├── HTTP402Modal.tsx          # Micropayment unlock interface
-│   │   ├── RentalCard.tsx            # Rental agreement display
-│   │   ├── RentalDashboard.tsx       # User dashboard for rentals
-│   │   ├── WalletSelector.tsx        # Wallet connection interface
-│   │   ├── Portal.tsx                # Modal portal component
-│   │   └── ThemeToggle.tsx           # Light/dark theme switcher
-│   │
-│   ├── pages/                     # Next.js pages & routes
-│   │   ├── index.tsx                 # Landing/homepage
-│   │   ├── _app.tsx                  # App wrapper with providers
-│   │   ├── _document.tsx             # HTML document structure
-│   │   └── api/                   # API endpoints (backend)
-│   │       ├── assets/            # Asset management endpoints
-│   │       │   ├── create.ts         # POST - Create new asset
-│   │       │   ├── batch-create.ts   # POST - Create multiple assets
-│   │       │   ├── list.ts           # GET - List all assets
-│   │       │   ├── my.ts             # GET - User's assets
-│   │       │   └── unlock.ts         # POST - Unlock asset details
-│   │       │
-│   │       ├── auth/              # Authentication endpoints
-│   │       │   ├── handcash.ts       # HandCash OAuth callback
-│   │       │   └── paymail.ts        # Paymail resolution
-│   │       │
-│   │       ├── 402/               # HTTP 402 payment protocol
-│   │       │   ├── initiate.ts       # POST - Start 402 payment
-│   │       │   └── callback.ts       # POST - Payment callback
-│   │       │
-│   │       ├── payment/           # Payment processing
-│   │       │   ├── initiate.ts       # POST - Create payment request
-│   │       │   ├── verify.ts         # POST - Verify transaction
-│   │       │   └── handcash.ts       # POST - HandCash payment
-│   │       │
-│   │       ├── escrow/            # Escrow smart contracts
-│   │       │   ├── create.ts         # POST - Create escrow
-│   │       │   ├── fund.ts           # POST - Fund escrow
-│   │       │   ├── confirm.ts        # POST - Confirm funding
-│   │       │   ├── status.ts         # GET - Escrow status
-│   │       │   └── release.ts        # POST - Release funds
-│   │       │
-│   │       ├── rentals/           # Rental management
-│   │       │   ├── create.ts         # POST - Create rental
-│   │       │   ├── batch-create.ts   # POST - Create multiple rentals
-│   │       │   ├── my.ts             # GET - User's rentals
-│   │       │   ├── complete.ts       # POST - Complete rental
-│   │       │   ├── mint-proof.ts     # POST - Mint rental proof
-│   │       │   └── submit-overlay.ts # POST - Submit to overlay
-│   │       │
-│   │       └── user/              # User management
-│   │           ├── profile.ts        # GET/POST - User profile
-│   │           └── stats.ts          # GET - User statistics
-│   │
-│   ├── lib/                       # Utility libraries
-│   │   ├── handcash.ts               # HandCash SDK integration
-│   │   ├── escrow.ts                 # Escrow contract logic
-│   │   ├── http402.ts                # HTTP 402 implementation
-│   │   ├── mongodb.ts                # MongoDB connection
-│   │   ├── overlay.ts                # BSV overlay network
-│   │   ├── ordinals.ts               # 1Sat ordinals integration
-│   │   ├── pushdrop.ts               # PushDrop token protocol
-│   │   └── storage.ts                # In-memory storage (demo)
-│   │
-│   ├── models/                    # MongoDB data schemas
-│   │   ├── User.ts                   # User account schema
-│   │   ├── RentalAsset.ts            # Asset listing schema
-│   │   ├── Rental.ts                 # Rental agreement schema
-│   │   └── Escrow.ts                 # Escrow contract schema
-│   │
-│   ├── context/                   # React context providers
-│   │   └── AuthContext.tsx           # Authentication state
-│   │
-│   ├── styles/                    # Global styles
-│   │   └── globals.css               # Tailwind CSS & custom styles
-│   │
-│   └── types/                     # TypeScript definitions
-│       └── index.ts                  # Shared type definitions
-│
-├── public/                        # Static assets
-│   ├── favicon.ico                   # Website icon
-│   └── images/                       # Image assets
-│
-├── docs/                          # Documentation
-│   ├── QUICKSTART.md                 # Quick start guide
-│   ├── architecture.md               # Technical architecture
-│   ├── api.md                        # API reference
-│   ├── http402.md                    # HTTP 402 protocol docs
-│   ├── wallet-integration.md         # Wallet integration guide
-│   └── CONTRIBUTING.md               # Contribution guidelines
-│
-├── config/                        # Configuration files
-│   └── deployment-info.json          # Deployment metadata
-│
-├── scripts/                       # Utility scripts
-│   └── setup.sh                      # Setup automation script
-│
-├── .env.example                   # Environment variables template
-├── .gitignore                     # Git ignore rules
-├── package.json                   # NPM dependencies
-├── package-lock.json              # Locked dependencies
-├── next.config.js                 # Next.js configuration
-├── tailwind.config.js             # Tailwind CSS configuration
-├── tsconfig.json                  # TypeScript configuration
-├── postcss.config.js              # PostCSS configuration
-├── Dockerfile                     # Docker container setup
-├── docker-compose.yml             # Docker Compose setup
-├── README.md                      # Main documentation
-├── PROJECT_SETUP.md               # This file
-├── LICENSE                        # MIT License
-└── DEPLOYMENT_STATUS.md           # Deployment information
+src/ # Source code directory
+components/ # React UI components
+RentalMarketplace.tsx # Main marketplace interface
+AssetCard.tsx # Individual asset display card
+CreateAssetModal.tsx # Asset listing creation form
+EscrowModal.tsx # Escrow creation & management
+HTTP402Modal.tsx # Micropayment unlock interface
+RentalCard.tsx # Rental agreement display
+RentalDashboard.tsx # User dashboard for rentals
+WalletSelector.tsx # Wallet connection interface
+Portal.tsx # Modal portal component
+ThemeToggle.tsx # Light/dark theme switcher
+
+pages/ # Next.js pages & routes
+index.tsx # Landing/homepage
+_app.tsx # App wrapper with providers
+_document.tsx # HTML document structure
+api/ # API endpoints (backend)
+assets/ # Asset management endpoints
+create.ts # POST - Create new asset
+batch-create.ts # POST - Create multiple assets
+list.ts # GET - List all assets
+my.ts # GET - User's assets
+unlock.ts # POST - Unlock asset details
+
+auth/ # Authentication endpoints
+handcash.ts # HandCash OAuth callback
+paymail.ts # Paymail resolution
+
+402/ # HTTP 402 payment protocol
+initiate.ts # POST - Start 402 payment
+callback.ts # POST - Payment callback
+
+payment/ # Payment processing
+initiate.ts # POST - Create payment request
+verify.ts # POST - Verify transaction
+handcash.ts # POST - HandCash payment
+
+escrow/ # Escrow smart contracts
+create.ts # POST - Create escrow
+fund.ts # POST - Fund escrow
+confirm.ts # POST - Confirm funding
+status.ts # GET - Escrow status
+release.ts # POST - Release funds
+
+rentals/ # Rental management
+create.ts # POST - Create rental
+batch-create.ts # POST - Create multiple rentals
+my.ts # GET - User's rentals
+complete.ts # POST - Complete rental
+mint-proof.ts # POST - Mint rental proof
+submit-overlay.ts # POST - Submit to overlay
+
+user/ # User management
+profile.ts # GET/POST - User profile
+stats.ts # GET - User statistics
+
+lib/ # Utility libraries
+handcash.ts # HandCash SDK integration
+escrow.ts # Escrow contract logic
+http402.ts # HTTP 402 implementation
+mongodb.ts # MongoDB connection
+overlay.ts # BSV overlay network
+ordinals.ts # 1Sat ordinals integration
+pushdrop.ts # PushDrop token protocol
+storage.ts # In-memory storage (demo)
+
+models/ # MongoDB data schemas
+User.ts # User account schema
+RentalAsset.ts # Asset listing schema
+Rental.ts # Rental agreement schema
+Escrow.ts # Escrow contract schema
+
+context/ # React context providers
+AuthContext.tsx # Authentication state
+
+styles/ # Global styles
+globals.css # Tailwind CSS & custom styles
+
+types/ # TypeScript definitions
+index.ts # Shared type definitions
+
+public/ # Static assets
+favicon.ico # Website icon
+images/ # Image assets
+
+docs/ # Documentation
+QUICKSTART.md # Quick start guide
+architecture.md # Technical architecture
+api.md # API reference
+http402.md # HTTP 402 protocol docs
+wallet-integration.md # Wallet integration guide
+CONTRIBUTING.md # Contribution guidelines
+
+config/ # Configuration files
+deployment-info.json # Deployment metadata
+
+scripts/ # Utility scripts
+setup.sh # Setup automation script
+
+.env.example # Environment variables template
+.gitignore # Git ignore rules
+package.json # NPM dependencies
+package-lock.json # Locked dependencies
+next.config.js # Next.js configuration
+tailwind.config.js # Tailwind CSS configuration
+tsconfig.json # TypeScript configuration
+postcss.config.js # PostCSS configuration
+Dockerfile # Docker container setup
+docker-compose.yml # Docker Compose setup
+README.md # Main documentation
+PROJECT_SETUP.md # This file
+LICENSE # MIT License
+DEPLOYMENT_STATUS.md # Deployment information
 ```
 
 ### Key Directories Explained
@@ -181,47 +181,47 @@ Before setting up T0kenRent, ensure you have the following installed:
 ### Required Software
 
 1. **Node.js** (v18.0.0 or higher)
-   - Download: https://nodejs.org/
-   - Check version: `node --version`
-   - Required for running Next.js and npm
+- Download: https://nodejs.org/
+- Check version: `node --version`
+- Required for running Next.js and npm
 
 2. **npm** (v9.0.0 or higher)
-   - Comes bundled with Node.js
-   - Check version: `npm --version`
-   - Package manager for dependencies
+- Comes bundled with Node.js
+- Check version: `npm --version`
+- Package manager for dependencies
 
 3. **Git** (v2.30 or higher)
-   - Download: https://git-scm.com/
-   - Check version: `git --version`
-   - Version control system
+- Download: https://git-scm.com/
+- Check version: `git --version`
+- Version control system
 
 ### Optional Software
 
 4. **MongoDB** (v6.0 or higher) - Optional
-   - Download: https://www.mongodb.com/try/download/community
-   - Only needed if you want persistent storage
-   - App works perfectly without it using in-memory storage
+- Download: https://www.mongodb.com/try/download/community
+- Only needed if you want persistent storage
+- App works perfectly without it using in-memory storage
 
 5. **Docker** (v20.10 or higher) - Optional
-   - Download: https://www.docker.com/get-started
-   - For containerized deployment
-   - Includes Docker Compose
+- Download: https://www.docker.com/get-started
+- For containerized deployment
+- Includes Docker Compose
 
 ### BSV Wallet (Pick One)
 
 6. **HandCash Account** (Recommended)
-   - Sign up: https://handcash.io/
-   - Create app: https://dashboard.handcash.io/
-   - Best for beginners
+- Sign up: https://handcash.io/
+- Create app: https://dashboard.handcash.io/
+- Best for beginners
 
 7. **MetaNet Portal** (Advanced)
-   - Install: https://www.babbage.systems/
-   - Browser extension wallet
-   - For developers
+- Install: https://www.babbage.systems/
+- Browser extension wallet
+- For developers
 
 8. **Paymail Address**
-   - Any BSV paymail (e.g., user@handcash.io)
-   - Simplest option for testing
+- Any BSV paymail (e.g., user@handcash.io)
+- Simplest option for testing
 
 ---
 
@@ -353,23 +353,23 @@ NEXT_PUBLIC_APP_URL="http://localhost:3000"
 If you want to use real wallet integration:
 
 1. **Create HandCash Account**
-   - Go to https://handcash.io/
-   - Sign up for a free account
-   - Install the mobile app (iOS or Android)
+- Go to https://handcash.io/
+- Sign up for a free account
+- Install the mobile app (iOS or Android)
 
 2. **Create HandCash App**
-   - Visit https://dashboard.handcash.io/
-   - Click "Create New App"
-   - Fill in app details:
-     - Name: "T0kenRent Local Dev"
-     - Redirect URL: `http://localhost:3000`
-   - Save and copy your App ID and App Secret
+- Visit https://dashboard.handcash.io/
+- Click "Create New App"
+- Fill in app details:
+- Name: "T0kenRent Local Dev"
+- Redirect URL: `http://localhost:3000`
+- Save and copy your App ID and App Secret
 
 3. **Update .env.local**
-   ```bash
-   NEXT_PUBLIC_HANDCASH_APP_ID="your_copied_app_id"
-   HANDCASH_APP_SECRET="your_copied_app_secret"
-   ```
+```bash
+NEXT_PUBLIC_HANDCASH_APP_ID="your_copied_app_id"
+HANDCASH_APP_SECRET="your_copied_app_secret"
+```
 
 ### Step 5: Set Up MongoDB (Optional)
 
@@ -423,11 +423,11 @@ npm run dev
 > t0kenrent@1.0.0 dev
 > next dev
 
-▲ Next.js 14.2.33
-- Local:        http://localhost:3000
+Next.js 14.2.33
+- Local: http://localhost:3000
 
-✓ Starting...
-✓ Ready in 1886ms
+Starting...
+Ready in 1886ms
 ```
 
 **Access the Application:**
@@ -442,9 +442,9 @@ npm run dev
 npm run build
 
 # Expected output:
-# ✓ Compiled successfully
-# ✓ Collecting page data
-# ✓ Generating static pages
+# Compiled successfully
+# Collecting page data
+# Generating static pages
 
 # Start production server
 npm run start
@@ -486,59 +486,59 @@ docker-compose logs -f
 The easiest way to test all features without any setup:
 
 1. **Access Demo Mode**
-   - Click "Try Demo Mode" button on homepage
-   - Or navigate to: http://localhost:3000/?demo=true
+- Click "Try Demo Mode" button on homepage
+- Or navigate to: http://localhost:3000/?demo=true
 
 2. **Sample Assets Available**
-   - 📷 Canon EOS R5 Camera Kit - $75/day
-   - 🚴 Trek Mountain Bike - $45/day
-   - Milwaukee Power Tool Set - $35/day
-   - 🎬 Epson 4K Projector - $55/day
-   - 🚁 DJI Mavic 3 Pro Drone - $95/day
-   - 🏖️ Beachfront Villa - Malibu - $450/day
+- Canon EOS R5 Camera Kit - $75/day
+- Trek Mountain Bike - $45/day
+- Milwaukee Power Tool Set - $35/day
+- Epson 4K Projector - $55/day
+- DJI Mavic 3 Pro Drone - $95/day
+- Beachfront Villa - Malibu - $450/day
 
 3. **Test Features in Demo Mode**
-   - Browse marketplace
-   - Search and filter assets
-   - View asset details
-   - Create new asset listings
-   - Initiate rental agreements
-   - View rental dashboard
-   - Test multi-item rentals
-   - Experience full UI/UX
+- Browse marketplace
+- Search and filter assets
+- View asset details
+- Create new asset listings
+- Initiate rental agreements
+- View rental dashboard
+- Test multi-item rentals
+- Experience full UI/UX
 
 ### Testing with HandCash Wallet
 
 1. **Connect Wallet**
-   - Click "Connect Wallet" button
-   - Select "HandCash"
-   - Authorize in popup window
-   - Return to app (authenticated)
+- Click "Connect Wallet" button
+- Select "HandCash"
+- Authorize in popup window
+- Return to app (authenticated)
 
 2. **Create an Asset**
-   - Click "List Asset" button
-   - Fill in asset details:
-     - Name: "Test Camera"
-     - Description: "Professional camera for rent"
-     - Category: "Photography"
-     - Daily Rate: $50
-     - Deposit: $500
-   - Click "Create Asset"
+- Click "List Asset" button
+- Fill in asset details:
+- Name: "Test Camera"
+- Description: "Professional camera for rent"
+- Category: "Photography"
+- Daily Rate: $50
+- Deposit: $500
+- Click "Create Asset"
 
 3. **Test HTTP 402 Payment**
-   - Browse marketplace
-   - Find any asset
-   - Click "Unlock Contact Info"
-   - Approve micropayment (~$0.001)
-   - View unlocked details
+- Browse marketplace
+- Find any asset
+- Click "Unlock Contact Info"
+- Approve micropayment (~$0.001)
+- View unlocked details
 
 4. **Test Escrow Rental**
-   - Find unlocked asset
-   - Click "Rent Now"
-   - Select dates
-   - Review deposit + rental fee
-   - Fund escrow
-   - Rental activated!
+- Find unlocked asset
+- Click "Rent Now"
+- Select dates
+- Review deposit + rental fee
+- Fund escrow
+- Rental activated!
 
 ### Testing API Endpoints
 
@@ -548,14 +548,14 @@ curl http://localhost:3000/api/assets/list
 
 # Test asset creation API
 curl -X POST http://localhost:3000/api/assets/create \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Test Item",
-    "description": "Test Description",
-    "category": "electronics",
-    "rentalRatePerDay": 50,
-    "depositAmount": 500
-  }'
+-H "Content-Type: application/json" \
+-d '{
+"name": "Test Item",
+"description": "Test Description",
+"category": "electronics",
+"rentalRatePerDay": 50,
+"depositAmount": 500
+}'
 
 # Test health check
 curl http://localhost:3000/api/health
@@ -699,9 +699,9 @@ npm run dev
 **Solution:**
 - Check `OVERLAY_URL` in .env.local
 - Try different region:
-  - US: `https://overlay-us-1.bsvb.tech`
-  - EU: `https://overlay-eu-1.bsvb.tech`
-  - Asia: `https://overlay-asia-1.bsvb.tech`
+- US: `https://overlay-us-1.bsvb.tech`
+- EU: `https://overlay-eu-1.bsvb.tech`
+- Asia: `https://overlay-asia-1.bsvb.tech`
 - Or comment out overlay features for testing
 
 ### Debugging Tips
@@ -772,30 +772,30 @@ npm run dev
 After successfully setting up T0kenRent, you can:
 
 1. **Explore the Application**
-   - Try demo mode to understand the flow
-   - Create test assets
-   - Test the rental process
+- Try demo mode to understand the flow
+- Create test assets
+- Test the rental process
 
 2. **Customize for Your Needs**
-   - Modify UI components in `src/components/`
-   - Add new categories or features
-   - Adjust payment amounts
+- Modify UI components in `src/components/`
+- Add new categories or features
+- Adjust payment amounts
 
 3. **Deploy to Production**
-   - Choose hosting platform (Vercel, Netlify, AWS, etc.)
-   - Configure production environment variables
-   - Set up MongoDB for persistent storage
-   - Register production HandCash app
+- Choose hosting platform (Vercel, Netlify, AWS, etc.)
+- Configure production environment variables
+- Set up MongoDB for persistent storage
+- Register production HandCash app
 
 4. **Contribute**
-   - Read [CONTRIBUTING.md](docs/CONTRIBUTING.md)
-   - Fork the repository
-   - Submit pull requests
+- Read [CONTRIBUTING.md](docs/CONTRIBUTING.md)
+- Fork the repository
+- Submit pull requests
 
 5. **Learn More**
-   - Read technical architecture docs
-   - Understand HTTP 402 protocol
-   - Explore BSV blockchain integration
+- Read technical architecture docs
+- Understand HTTP 402 protocol
+- Explore BSV blockchain integration
 
 ---
 
@@ -833,23 +833,23 @@ Use this checklist to verify your setup is complete:
 If you encounter any issues not covered in this guide:
 
 1. **Check Existing Documentation**
-   - Review README.md and docs/ folder
-   - Search GitHub issues
+- Review README.md and docs/ folder
+- Search GitHub issues
 
 2. **Enable Debug Mode**
-   - Run with `DEBUG=* npm run dev`
-   - Check browser console (F12)
+- Run with `DEBUG=* npm run dev`
+- Check browser console (F12)
 
 3. **Ask for Help**
-   - Open GitHub issue with:
-     - Detailed error message
-     - Steps to reproduce
-     - Environment info (OS, Node version, etc.)
-     - Screenshots if applicable
+- Open GitHub issue with:
+- Detailed error message
+- Steps to reproduce
+- Environment info (OS, Node version, etc.)
+- Screenshots if applicable
 
 4. **Community Resources**
-   - BSV Discord community
-   - GitHub Discussions
+- BSV Discord community
+- GitHub Discussions
 
 ---
 
@@ -857,6 +857,6 @@ If you encounter any issues not covered in this guide:
 
 ---
 
-Last Updated: December 6, 2025  
-Version: 1.0.0  
+Last Updated: December 6, 2025 
+Version: 1.0.0 
 License: MIT

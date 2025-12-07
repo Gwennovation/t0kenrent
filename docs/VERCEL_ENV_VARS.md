@@ -57,10 +57,10 @@ NEXT_PUBLIC_APP_URL=https://t0kenrent.vercel.app
 5. Save changes
 
 **Required Permissions:**
-- ✅ Public profile (get $handle, display name, profile picture)
-- ✅ Pay (trigger payments)
-- ✅ Data signing (sign data)
-- ✅ Read balance (recommended)
+- Public profile (get $handle, display name, profile picture)
+- Pay (trigger payments)
+- Data signing (sign data)
+- Read balance (recommended)
 
 ## After Setting Environment Variables
 

@@ -123,22 +123,22 @@ Test T0kenRent without connecting a wallet - perfect for exploring features risk
 
 ```
 Frontend (Next.js)
-  - Marketplace: Browse and filter rental listings
-  - Dashboard: Manage rentals and view history
-  - Wallet Auth: HandCash, MetaNet, Paymail connections
-      |
+- Marketplace: Browse and filter rental listings
+- Dashboard: Manage rentals and view history
+- Wallet Auth: HandCash, MetaNet, Paymail connections
+|
 API Routes (Next.js)
-  - /api/auth/*: Authentication endpoints
-  - /api/assets/*: Asset management
-  - /api/402/*: Micropayment gateway
-  - /api/escrow/*: Smart contract escrow
-  - /api/payment/*: Payment processing
-  - /api/rentals/*: Rental management
-      |
+- /api/auth/*: Authentication endpoints
+- /api/assets/*: Asset management
+- /api/402/*: Micropayment gateway
+- /api/escrow/*: Smart contract escrow
+- /api/payment/*: Payment processing
+- /api/rentals/*: Rental management
+|
 Data Layer
-  - MongoDB: Production database
-  - In-Memory: Demo mode storage
-  - BSV Chain: On-chain records via overlay
+- MongoDB: Production database
+- In-Memory: Demo mode storage
+- BSV Chain: On-chain records via overlay
 ```
 
 ## Database Models
@@ -209,49 +209,49 @@ Data Layer
 
 ```
 t0kenrent/
-├── src/
-│   ├── components/           # React components
-│   │   ├── AssetCard.tsx
-│   │   ├── CreateAssetModal.tsx
-│   │   ├── EscrowModal.tsx
-│   │   ├── HTTP402Modal.tsx
-│   │   ├── RentalCard.tsx
-│   │   ├── RentalDashboard.tsx
-│   │   ├── RentalMarketplace.tsx
-│   │   ├── WalletSelector.tsx
-│   │   └── Portal.tsx
-│   ├── models/               # MongoDB schemas
-│   │   ├── User.ts
-│   │   ├── RentalAsset.ts
-│   │   ├── Rental.ts
-│   │   └── Escrow.ts
-│   ├── lib/                  # Utilities
-│   │   ├── handcash.ts
-│   │   ├── escrow.ts
-│   │   ├── http402.ts
-│   │   ├── mongodb.ts
-│   │   ├── overlay.ts
-│   │   ├── ordinals.ts
-│   │   ├── pushdrop.ts
-│   │   └── storage.ts
-│   ├── pages/
-│   │   ├── api/              # API routes
-│   │   ├── index.tsx
-│   │   ├── _app.tsx
-│   │   └── _document.tsx
-│   ├── context/
-│   └── styles/
-├── config/
-│   └── deployment-info.json
-├── docs/
-│   ├── CONTRIBUTING.md
-│   ├── QUICKSTART.md
-│   ├── api.md
-│   ├── architecture.md
-│   ├── http402.md
-│   └── wallet-integration.md
-├── public/
-└── scripts/
+src/
+components/ # React components
+AssetCard.tsx
+CreateAssetModal.tsx
+EscrowModal.tsx
+HTTP402Modal.tsx
+RentalCard.tsx
+RentalDashboard.tsx
+RentalMarketplace.tsx
+WalletSelector.tsx
+Portal.tsx
+models/ # MongoDB schemas
+User.ts
+RentalAsset.ts
+Rental.ts
+Escrow.ts
+lib/ # Utilities
+handcash.ts
+escrow.ts
+http402.ts
+mongodb.ts
+overlay.ts
+ordinals.ts
+pushdrop.ts
+storage.ts
+pages/
+api/ # API routes
+index.tsx
+_app.tsx
+_document.tsx
+context/
+styles/
+config/
+deployment-info.json
+docs/
+CONTRIBUTING.md
+QUICKSTART.md
+api.md
+architecture.md
+http402.md
+wallet-integration.md
+public/
+scripts/
 ```
 
 ## Wallet Integration
@@ -296,10 +296,10 @@ t0kenrent/
 ## Development Commands
 
 ```bash
-npm run dev          # Start development server
-npm run build        # Production build
-npm run start        # Start production server
-npm run lint         # Run ESLint
+npm run dev # Start development server
+npm run build # Production build
+npm run start # Start production server
+npm run lint # Run ESLint
 ```
 
 ## Documentation

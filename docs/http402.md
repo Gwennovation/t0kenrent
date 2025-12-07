@@ -25,31 +25,31 @@ HTTP 402 is a reserved status code originally intended for digital payments. T0k
 ### Standard Flow
 
 ```
-┌──────────┐           ┌──────────────┐           ┌─────────────┐
-│  Renter  │           │   T0kenRent  │           │ BSV Network │
-└────┬─────┘           └──────┬───────┘           └──────┬──────┘
-     │                        │                          │
-     │  1. GET /rental/xyz    │                          │
-     │───────────────────────▶│                          │
-     │                        │                          │
-     │  2. 402 Payment Required                          │
-     │◀───────────────────────│                          │
-     │    + payment details   │                          │
-     │                        │                          │
-     │  3. Create BSV tx      │                          │
-     │────────────────────────────────────────────────▶ │
-     │                        │                          │
-     │  4. POST /payment/verify                          │
-     │───────────────────────▶│                          │
-     │    + txid, reference   │                          │
-     │                        │  5. Verify tx            │
-     │                        │─────────────────────────▶│
-     │                        │◀─────────────────────────│
-     │                        │                          │
-     │  6. 200 OK + details   │                          │
-     │◀───────────────────────│                          │
-     │    + access token      │                          │
-     │                        │                          │
+
+Renter T0kenRent BSV Network 
+
+
+1. GET /rental/xyz 
+
+
+2. 402 Payment Required 
+
++ payment details 
+
+3. Create BSV tx 
+
+
+4. POST /payment/verify 
+
++ txid, reference 
+5. Verify tx 
+
+
+
+6. 200 OK + details 
+
++ access token 
+
 ```
 
 ### Request/Response Examples
@@ -73,15 +73,15 @@ Payment-Address: 1OwnerAddressXyz...
 Payment-Reference: pay_t0ken_123_1705312200_abc
 
 {
-  "error": "Payment required",
-  "message": "Access to rental details requires micropayment",
-  "payment": {
-    "currency": "BSV",
-    "amount": "0.0001",
-    "address": "1OwnerAddressXyz...",
-    "reference": "pay_t0ken_123_1705312200_abc",
-    "expires_in": 300
-  }
+"error": "Payment required",
+"message": "Access to rental details requires micropayment",
+"payment": {
+"currency": "BSV",
+"amount": "0.0001",
+"address": "1OwnerAddressXyz...",
+"reference": "pay_t0ken_123_1705312200_abc",
+"expires_in": 300
+}
 }
 ```
 
@@ -93,10 +93,10 @@ Host: tokenrent.io
 Content-Type: application/json
 
 {
-  "payment_reference": "pay_t0ken_123_1705312200_abc",
-  "transaction_id": "a1b2c3d4e5f6g7h8...",
-  "amount": "0.0001",
-  "from_address": "1RenterAddressAbc..."
+"payment_reference": "pay_t0ken_123_1705312200_abc",
+"transaction_id": "a1b2c3d4e5f6g7h8...",
+"amount": "0.0001",
+"from_address": "1RenterAddressAbc..."
 }
 ```
 
@@ -109,19 +109,19 @@ Payment-Verified: true
 Access-Token: access_1705312200_xyz
 
 {
-  "status": "verified",
-  "access_token": "access_1705312200_xyz",
-  "expires_in": 1800,
-  "rental_details": {
-    "pickup_location": {
-      "lat": 37.7749,
-      "lng": -122.4194,
-      "address": "123 Market St, San Francisco, CA"
-    },
-    "access_code": "CAMERA2024",
-    "owner_contact": "encrypted_contact_info",
-    "special_instructions": "Equipment is in blue case"
-  }
+"status": "verified",
+"access_token": "access_1705312200_xyz",
+"expires_in": 1800,
+"rental_details": {
+"pickup_location": {
+"lat": 37.7749,
+"lng": -122.4194,
+"address": "123 Market St, San Francisco, CA"
+},
+"access_code": "CAMERA2024",
+"owner_contact": "encrypted_contact_info",
+"special_instructions": "Equipment is in blue case"
+}
 }
 ```
 
@@ -131,27 +131,27 @@ Access-Token: access_1705312200_xyz
 
 ```typescript
 async function verifyPayment(txid: string, expectedAmount: number): Promise<boolean> {
-  // 1. Fetch transaction from BSV network
-  const tx = await overlayService.getTransaction(txid);
-  
-  // 2. Verify transaction exists and is confirmed
-  if (!tx || tx.confirmations < 1) {
-    return false;
-  }
-  
-  // 3. Verify payment amount
-  const outputAmount = decodePaymentAmount(tx.outputs);
-  if (outputAmount < expectedAmount) {
-    return false;
-  }
-  
-  // 4. Verify recipient address
-  const recipient = extractRecipient(tx.outputs);
-  if (recipient !== expectedOwnerAddress) {
-    return false;
-  }
-  
-  return true;
+// 1. Fetch transaction from BSV network
+const tx = await overlayService.getTransaction(txid);
+
+// 2. Verify transaction exists and is confirmed
+if (!tx || tx.confirmations < 1) {
+return false;
+}
+
+// 3. Verify payment amount
+const outputAmount = decodePaymentAmount(tx.outputs);
+if (outputAmount < expectedAmount) {
+return false;
+}
+
+// 4. Verify recipient address
+const recipient = extractRecipient(tx.outputs);
+if (recipient !== expectedOwnerAddress) {
+return false;
+}
+
+return true;
 }
 ```
 
@@ -170,12 +170,12 @@ async function verifyPayment(txid: string, expectedAmount: number): Promise<bool
 
 ```typescript
 interface AccessToken {
-  token: string;
-  assetId: string;
-  payerKey: string;
-  createdAt: Date;
-  expiresAt: Date;  // 30 minutes after creation
-  txid: string;
+token: string;
+assetId: string;
+payerKey: string;
+createdAt: Date;
+expiresAt: Date; // 30 minutes after creation
+txid: string;
 }
 ```
 
@@ -192,44 +192,44 @@ Access tokens:
 ```typescript
 // /api/payment/initiate.ts
 export async function handleHTTP402(assetId: string): Promise<HTTP402Response> {
-  const asset = await RentalAsset.findOne({ tokenId: assetId });
-  
-  if (!asset) {
-    throw new NotFoundError('Asset not found');
-  }
-  
-  // Generate payment reference
-  const reference = `pay_${assetId}_${Date.now()}_${randomString(6)}`;
-  
-  // Store payment request
-  await PaymentRequest.create({
-    reference,
-    assetId,
-    amount: asset.unlockFee,
-    ownerAddress: asset.ownerKey,
-    expiresAt: new Date(Date.now() + 5 * 60 * 1000),
-    status: 'pending'
-  });
-  
-  return {
-    statusCode: 402,
-    headers: {
-      'Accept-Payment': 'BSV',
-      'Payment-Amount': asset.unlockFee.toString(),
-      'Payment-Address': asset.ownerKey,
-      'Payment-Reference': reference
-    },
-    body: {
-      error: 'Payment required',
-      payment: {
-        currency: 'BSV',
-        amount: asset.unlockFee,
-        address: asset.ownerKey,
-        reference,
-        expiresIn: 300
-      }
-    }
-  };
+const asset = await RentalAsset.findOne({ tokenId: assetId });
+
+if (!asset) {
+throw new NotFoundError('Asset not found');
+}
+
+// Generate payment reference
+const reference = `pay_${assetId}_${Date.now()}_${randomString(6)}`;
+
+// Store payment request
+await PaymentRequest.create({
+reference,
+assetId,
+amount: asset.unlockFee,
+ownerAddress: asset.ownerKey,
+expiresAt: new Date(Date.now() + 5 * 60 * 1000),
+status: 'pending'
+});
+
+return {
+statusCode: 402,
+headers: {
+'Accept-Payment': 'BSV',
+'Payment-Amount': asset.unlockFee.toString(),
+'Payment-Address': asset.ownerKey,
+'Payment-Reference': reference
+},
+body: {
+error: 'Payment required',
+payment: {
+currency: 'BSV',
+amount: asset.unlockFee,
+address: asset.ownerKey,
+reference,
+expiresIn: 300
+}
+}
+};
 }
 ```
 
@@ -238,28 +238,28 @@ export async function handleHTTP402(assetId: string): Promise<HTTP402Response> {
 ```typescript
 // components/HTTP402Modal.tsx
 async function handlePayment() {
-  // 1. Get payment details from 402 response
-  const paymentDetails = await initiatePayment(assetId);
-  
-  // 2. Create BSV transaction via wallet
-  const tx = await babbageSDK.createAction({
-    description: `HTTP 402 payment for ${assetName}`,
-    outputs: [{
-      satoshis: Math.ceil(paymentDetails.amount * 100000000),
-      script: createPaymentScript(paymentDetails.address),
-      basket: 'HTTP 402 Payments'
-    }]
-  });
-  
-  // 3. Submit for verification
-  const result = await verifyPayment({
-    reference: paymentDetails.reference,
-    txid: tx.txid,
-    amount: paymentDetails.amount
-  });
-  
-  // 4. Return rental details
-  return result.rentalDetails;
+// 1. Get payment details from 402 response
+const paymentDetails = await initiatePayment(assetId);
+
+// 2. Create BSV transaction via wallet
+const tx = await babbageSDK.createAction({
+description: `HTTP 402 payment for ${assetName}`,
+outputs: [{
+satoshis: Math.ceil(paymentDetails.amount * 100000000),
+script: createPaymentScript(paymentDetails.address),
+basket: 'HTTP 402 Payments'
+}]
+});
+
+// 3. Submit for verification
+const result = await verifyPayment({
+reference: paymentDetails.reference,
+txid: tx.txid,
+amount: paymentDetails.amount
+});
+
+// 4. Return rental details
+return result.rentalDetails;
 }
 ```
 
