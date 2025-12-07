@@ -16,6 +16,9 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { storage, globalEscrowStore } from '@/lib/storage'
 import { EscrowContract } from '@/lib/escrow'
 import { logEscrowEvent } from '@/lib/overlay'
+import { getWhatsonchainApiBase } from '@/lib/bsv-network'
+
+const WOC_API_BASE = getWhatsonchainApiBase()
 
 // Use global escrow store for persistence
 const escrowStore = globalEscrowStore as Map<string, EscrowContract>
@@ -92,7 +95,7 @@ export default async function handler(
       // Attempt to verify on WhatsOnChain
       try {
         const response = await fetch(
-          `https://api.whatsonchain.com/v1/bsv/main/tx/${transactionId}`
+          `${WOC_API_BASE}/tx/${transactionId}`
         )
         if (!response.ok) {
           console.warn('Transaction not found on WhatsOnChain, proceeding anyway for hackathon')

@@ -14,7 +14,12 @@
  * 6. Client uses token to access resource
  */
 
+import { getBSVNetwork, getWhatsonchainApiBase } from './bsv-network'
+
 // UUID generation without external dependency
+
+const NETWORK = getBSVNetwork()
+const WOC_API_BASE = getWhatsonchainApiBase(NETWORK)
 
 // Configuration
 const PAYMENT_EXPIRY_MINUTES = 5
@@ -208,7 +213,7 @@ export async function verifyPayment(params: {
     
     // Verify on WhatsOnChain
     const response = await fetch(
-      `https://api.whatsonchain.com/v1/bsv/main/tx/${params.transactionId}`
+      `${WOC_API_BASE}/tx/${params.transactionId}`
     )
     
     if (!response.ok) {
@@ -286,7 +291,7 @@ export async function verifyPayment(params: {
  */
 export async function updateBSVPrice(): Promise<number> {
   try {
-    const response = await fetch('https://api.whatsonchain.com/v1/bsv/main/exchangerate')
+    const response = await fetch(`${WOC_API_BASE}/exchangerate`)
     if (response.ok) {
       const data = await response.json()
       cachedBSVPrice = data.rate || 50

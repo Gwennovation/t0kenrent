@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { getErrorMessage } from '@/lib/error-utils'
+import { getWhatsonchainExplorerBase } from '@/lib/bsv-network'
 import Portal from './Portal'
 
 interface Asset {
@@ -21,6 +22,7 @@ interface HTTP402ModalProps {
 
 // Simulated BSV price for conversion display
 const BSV_PRICE_USD = 50
+const WOC_EXPLORER_BASE = getWhatsonchainExplorerBase()
 
 export default function HTTP402Modal({ asset, userKey, demoMode = false, walletType = 'demo', onClose, onSuccess }: HTTP402ModalProps) {
   const [step, setStep] = useState<'info' | 'wallet_prompt' | 'paying' | 'verifying' | 'success' | 'error'>('info')
@@ -482,7 +484,7 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
               </div>
               
               <a
-                href={`https://whatsonchain.com/tx/${txid}`}
+                href={`${WOC_EXPLORER_BASE}/tx/${txid}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-sm text-accent-600 dark:text-accent-400 hover:text-accent-700 dark:hover:text-accent-300 transition-colors"

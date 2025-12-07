@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { getWhatsonchainExplorerBase } from '@/lib/bsv-network'
 
 interface EscrowContract {
   escrowId: string
@@ -36,6 +37,7 @@ export default function SmartContractStatus({
   onClose 
 }: SmartContractStatusProps) {
   const [contract, setContract] = useState<EscrowContract | null>(null)
+  const wocExplorerBase = getWhatsonchainExplorerBase()
   const [loading, setLoading] = useState(true)
   const [signing, setSigning] = useState(false)
   const [error, setError] = useState('')
@@ -402,7 +404,7 @@ export default function SmartContractStatus({
             <h4 className="font-medium text-surface-900 dark:text-white">Transaction History</h4>
             {contract.fundingTxId && (
               <a
-                href={`https://whatsonchain.com/tx/${contract.fundingTxId}`}
+                href={`${wocExplorerBase}/tx/${contract.fundingTxId}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-between p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700/50 transition-colors"
@@ -418,7 +420,7 @@ export default function SmartContractStatus({
             )}
             {contract.releaseTxId && (
               <a
-                href={`https://whatsonchain.com/tx/${contract.releaseTxId}`}
+                href={`${wocExplorerBase}/tx/${contract.releaseTxId}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center justify-between p-3 bg-surface-50 dark:bg-surface-800/50 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700/50 transition-colors"

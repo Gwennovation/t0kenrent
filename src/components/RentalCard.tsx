@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { getWhatsonchainExplorerBase } from '@/lib/bsv-network'
 import SmartContractStatus from './SmartContractStatus'
 
 interface Rental {
@@ -32,6 +33,7 @@ interface RentalCardProps {
 
 export default function RentalCard({ rental, userKey, demoMode = false, onUpdate }: RentalCardProps) {
   const [completing, setCompleting] = useState(false)
+  const wocExplorerBase = getWhatsonchainExplorerBase()
   const [showContractStatus, setShowContractStatus] = useState(false)
 
   const isRenter = rental.renterKey === userKey
@@ -185,7 +187,7 @@ export default function RentalCard({ rental, userKey, demoMode = false, onUpdate
             <span className="text-surface-500 dark:text-surface-400">On-Chain:</span>
             {rental.paymentTxId && (
               <a
-                href={`https://whatsonchain.com/tx/${rental.paymentTxId}`}
+                href={`${wocExplorerBase}/tx/${rental.paymentTxId}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 text-primary-600 dark:text-primary-400 hover:underline font-mono"
@@ -198,7 +200,7 @@ export default function RentalCard({ rental, userKey, demoMode = false, onUpdate
             )}
             {rental.escrowTxId && (
               <a
-                href={`https://whatsonchain.com/tx/${rental.escrowTxId}`}
+                href={`${wocExplorerBase}/tx/${rental.escrowTxId}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 text-primary-600 dark:text-primary-400 hover:underline font-mono"

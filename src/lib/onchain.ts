@@ -1,13 +1,18 @@
 import { PrivateKey, Address, Transaction, Script } from 'bsv'
+import {
+  getBSVNetwork,
+  getDefaultFeePerKb,
+  getMinInputSats,
+  getWhatsonchainApiBase,
+  isTestnetNetwork
+} from './bsv-network'
 
-const NETWORK = (process.env.BSV_NETWORK || 'main').toLowerCase()
-const IS_TESTNET = NETWORK.startsWith('test')
-const WOC_BASE = IS_TESTNET
-  ? 'https://api.whatsonchain.com/v1/bsv/test'
-  : 'https://api.whatsonchain.com/v1/bsv/main'
+const NETWORK = getBSVNetwork()
+const IS_TESTNET = isTestnetNetwork(NETWORK)
+const WOC_BASE = getWhatsonchainApiBase(NETWORK)
 
-const DEFAULT_FEE_PER_KB = Number(process.env.BSV_FEE_PER_KB || '500')
-const MIN_INPUT_SATS = Number(process.env.BSV_MIN_INPUT_SATS || '2000')
+const DEFAULT_FEE_PER_KB = getDefaultFeePerKb()
+const MIN_INPUT_SATS = getMinInputSats()
 
 export interface BroadcastResult {
   txid: string

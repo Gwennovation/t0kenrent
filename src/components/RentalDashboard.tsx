@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import QRCode from 'react-qr-code'
+import { getWhatsonchainExplorerBase } from '@/lib/bsv-network'
 
 interface Rental {
   id: string
@@ -52,6 +53,7 @@ interface RentalDashboardProps {
 
 export default function RentalDashboard({ userKey, demoMode = false, walletType = 'demo', walletBalance }: RentalDashboardProps) {
   const [activeRentals, setActiveRentals] = useState<Rental[]>([])
+  const wocExplorerBase = getWhatsonchainExplorerBase()
   const [pastRentals, setPastRentals] = useState<Rental[]>([])
   const [myAssets, setMyAssets] = useState<RentalAsset[]>([])
   const [transactions, setTransactions] = useState<Transaction[]>([])
@@ -346,7 +348,7 @@ export default function RentalDashboard({ userKey, demoMode = false, walletType 
                       <div className="flex items-center justify-between text-xs mt-2 pt-2 border-t border-surface-200/50 dark:border-surface-700/50">
                         <span className="text-surface-500 dark:text-surface-400">TX ID:</span>
                         <a
-                          href={`https://whatsonchain.com/tx/${tx.txId}`}
+                          href={`${wocExplorerBase}/tx/${tx.txId}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="font-mono text-primary-600 dark:text-primary-400 hover:underline truncate max-w-[200px]"
@@ -405,7 +407,7 @@ export default function RentalDashboard({ userKey, demoMode = false, walletType 
                           </td>
                           <td className="py-4 px-4">
                             <a
-                              href={`https://whatsonchain.com/tx/${rental.escrowId}`}
+                              href={`${wocExplorerBase}/tx/${rental.escrowId}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="font-mono text-xs text-primary-600 dark:text-primary-400 hover:underline"
@@ -484,7 +486,7 @@ export default function RentalDashboard({ userKey, demoMode = false, walletType 
                           </td>
                           <td className="py-4 px-4">
                             <a
-                              href={`https://whatsonchain.com/tx/${rental.escrowId}`}
+                              href={`${wocExplorerBase}/tx/${rental.escrowId}`}
                               target="_blank"
                               rel="noopener noreferrer"
                               className="font-mono text-xs text-primary-600 dark:text-primary-400 hover:underline"
@@ -609,7 +611,7 @@ export default function RentalDashboard({ userKey, demoMode = false, walletType 
                         </td>
                         <td className="py-4 px-4">
                           <a
-                            href={`https://whatsonchain.com/tx/${tx.txId}`}
+                            href={`${wocExplorerBase}/tx/${tx.txId}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="font-mono text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"

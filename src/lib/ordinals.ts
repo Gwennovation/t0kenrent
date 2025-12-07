@@ -5,8 +5,11 @@
  * Each rental listing can be linked to a 1Sat ordinal for on-chain proof of ownership.
  */
 
+import { getBSVNetwork, getWhatsonchainApiBase } from './bsv-network'
+
 const ONESAT_API_URL = 'https://ordinals.gorillapool.io/api'
-const WHATSONCHAIN_API = 'https://api.whatsonchain.com/v1/bsv/main'
+const NETWORK = getBSVNetwork()
+const WHATSONCHAIN_API = getWhatsonchainApiBase(NETWORK)
 
 export interface OrdinalInscription {
   id: string // inscription ID (txid_vout format)

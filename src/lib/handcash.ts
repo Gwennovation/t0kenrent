@@ -5,9 +5,13 @@
  * Reference: https://docs.handcash.io/v3/getting-started
  */
 
+import { getWhatsonchainApiBase } from './bsv-network'
+
 // HandCash Connect configuration
 const HANDCASH_APP_ID = process.env.NEXT_PUBLIC_HANDCASH_APP_ID || ''
 const HANDCASH_APP_SECRET = process.env.HANDCASH_APP_SECRET || ''
+
+const WOC_API_BASE = getWhatsonchainApiBase()
 
 // HandCash Connect endpoints
 const HANDCASH_AUTH_URL = 'https://app.handcash.io/#/authorizeApp'
@@ -265,7 +269,7 @@ export async function verifyTransaction(txId: string): Promise<{
   amount?: number
 }> {
   try {
-    const response = await fetch(`https://api.whatsonchain.com/v1/bsv/main/tx/${txId}`)
+    const response = await fetch(`${WOC_API_BASE}/tx/${txId}`)
     
     if (!response.ok) {
       return { valid: false, confirmations: 0 }
