@@ -66,13 +66,11 @@ async function connectDB() {
     cached.promise = null
     console.error('❌ MongoDB connection error:', e.message || e)
     
-    // In development, fall back to mock mode instead of crashing
-    if (process.env.NODE_ENV === 'development') {
-      console.log('📦 Falling back to MOCK MODE due to connection error')
-      cached.mockMode = true
-      return null
-    }
-    throw e
+    // Fall back to mock mode instead of crashing (both dev and production)
+    console.log('📦 Falling back to MOCK MODE due to connection error')
+    console.log('💡 App will use in-memory storage. Add valid MONGODB_URI to enable persistence.')
+    cached.mockMode = true
+    return null
   }
 
   return cached.conn
