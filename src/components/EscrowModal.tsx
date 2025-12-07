@@ -161,11 +161,50 @@ export default function EscrowModal({ asset, userKey, rentalDetails, demoMode = 
         })
       })
 
-      if (!confirmResponse.ok) {
-        throw new Error('Failed to confirm escrow funding')
+      const confirmResult = await confirmResponse.json()
+
+      if (!confirmResponse.ok || confirmResult?.success === false) {
+        throw new Error(confirmResult?.error || 'Failed to confirm escrow funding')
+      }
+
+      setEscrowId(confirmResult?.escrowId || escrowData.escrowId)
+      if (confirmResult?.escrowAddress) {
+        setEscrowAddress(confirmResult.escrowAddress)
+      }
+
+      // Record the rental so it appears in the renter dashboard
+      const rentalResponse = await fetch('/api/rentals/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          assetId: asset.id || asset.tokenId,
+          renterKey: userKey,
+          startDate: new Date(startDate).toISOString(),
+          endDate: new Date(endDate).toISOString(),
+          rentalDays,
+          rentalFee,
+          depositAmount,
+          totalAmount,
+          paymentTxId: fundingTxid,
+          escrowTxId: confirmResult?.fundingTxid || fundingTxid
+        })
+      })
+
+      const rentalResult = await rentalResponse.json()
+
+      if (!rentalResponse.ok || !rentalResult?.rental) {
+        throw new Error(rentalResult?.error || 'Failed to record rental after payment')
       }
 
       setStep('success')
+
+      setTimeout(() => {
+        onSuccess({
+          ...rentalResult.rental,
+          paymentTxId: fundingTxid,
+          escrowTxId: confirmResult?.fundingTxid || fundingTxid
+        })
+      }, 500)
 
     } catch (err) {
       console.error('Escrow creation error:', err)

@@ -115,7 +115,8 @@ export default async function handler(
       return res.status(404).json({ error: 'Asset not found in database' })
     }
 
-    if (asset.status !== 'available') {
+    const rentableStatuses = ['available', 'pending']
+    if (!rentableStatuses.includes(asset.status)) {
       return res.status(400).json({ error: 'Asset is not available for rent' })
     }
 
