@@ -4,6 +4,23 @@ import RentalAsset from '@/models/RentalAsset'
 import { getTransactionByTxid } from '@/lib/overlay'
 import { storage } from '@/lib/storage'
 
+function buildRentalDetails(asset: any, rentalDetails: any) {
+  const assetLocation = asset?.location || {}
+  const rentalLocation = rentalDetails?.pickupLocation || {}
+
+  return {
+    pickupLocation: {
+      address: rentalLocation.address || assetLocation.address || 'Pickup details available after contact',
+      city: rentalLocation.city || assetLocation.city || 'N/A',
+      state: rentalLocation.state || assetLocation.state || 'N/A',
+      coordinates: rentalLocation.coordinates || assetLocation.coordinates
+    },
+    accessCode: rentalDetails?.accessCode || null,
+    ownerContact: rentalDetails?.ownerContact || null,
+    specialInstructions: rentalDetails?.specialInstructions || 'Contact the asset owner for final instructions.'
+  }
+}
+
 /**
  * HTTP 402 Payment Verification Endpoint
  * 
@@ -90,6 +107,8 @@ export default async function handler(
       rentalDetails = asset.rentalDetails
     }
 
+    const normalizedRentalDetails = buildRentalDetails(asset, rentalDetails)
+
     // MongoDB-only: Check payment records
     if (!isMockMode() && asset.http402Payments) {
       const paymentIndex = asset.http402Payments.findIndex(
@@ -115,12 +134,7 @@ export default async function handler(
             status: 'already_verified',
             accessToken: payment.accessToken,
             expiresIn: Math.floor((new Date(payment.accessTokenExpiry).getTime() - Date.now()) / 1000),
-            rentalDetails: {
-              pickupLocation: rentalDetails.pickupLocation,
-              accessCode: rentalDetails.accessCode,
-              ownerContact: rentalDetails.ownerContact,
-              specialInstructions: rentalDetails.specialInstructions
-            }
+            rentalDetails: normalizedRentalDetails
           })
         }
       }
@@ -187,16 +201,7 @@ export default async function handler(
       accessToken,
       expiresIn: 1800, // 30 minutes
       transactionId,
-      rentalDetails: {
-        pickupLocation: rentalDetails.pickupLocation || {
-          address: 'N/A',
-          city: 'N/A',
-          state: 'N/A'
-        },
-        accessCode: rentalDetails.accessCode,
-        ownerContact: rentalDetails.ownerContact,
-        specialInstructions: rentalDetails.specialInstructions
-      }
+      rentalDetails: normalizedRentalDetails
     })
 
   } catch (error: any) {
