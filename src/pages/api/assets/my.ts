@@ -1,4 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
+import connectDB, { isMockMode } from '@/lib/mongodb'
+import { RentalAsset } from '@/models'
 import { storage } from '@/lib/storage'
 
 export default async function handler(
@@ -16,8 +18,26 @@ export default async function handler(
       return res.status(400).json({ error: 'Owner public key is required' })
     }
 
-    // Get user's assets from storage
-    const assets = storage.getAssetsByOwner(owner as string)
+    // Connect to MongoDB
+    await connectDB()
+
+    let assets: any[] = []
+
+    if (isMockMode()) {
+      // Get user's assets from in-memory storage
+      assets = storage.getAssetsByOwner(owner as string)
+    } else {
+      // Get user's assets from MongoDB
+      const dbAssets = await RentalAsset.find({ ownerKey: owner })
+        .sort({ createdAt: -1 })
+        .lean()
+      
+      // Transform MongoDB _id to id
+      assets = dbAssets.map((asset: any) => ({
+        ...asset,
+        id: asset._id?.toString() || asset.id
+      }))
+    }
 
     // Transform for response (include rental details since they're the owner)
     const transformedAssets = assets.map(asset => ({

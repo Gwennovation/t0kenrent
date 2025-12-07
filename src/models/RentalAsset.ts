@@ -21,8 +21,9 @@ const RentalDetailsSchema = new mongoose.Schema({
 const HTTP402PaymentSchema = new mongoose.Schema({
   paymentReference: {
     type: String,
-    required: true,
+    required: false,  // Only required when payment is made
     unique: true,
+    sparse: true,  // Only enforce uniqueness when value exists
     index: true
   },
   amount: {
