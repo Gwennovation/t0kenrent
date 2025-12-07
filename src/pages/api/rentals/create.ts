@@ -150,10 +150,13 @@ export default async function handler(
       assetId: asset._id.toString(),
       assetName: asset.name,
       renterKey,
+      renterId: renterKey, // Required field
       ownerKey: asset.ownerKey,
+      ownerId: asset.ownerKey, // Required field
       startDate,
       endDate,
-      rentalDays: calculatedRentalDays,
+      daysCount: calculatedRentalDays, // Required field (using correct name)
+      dailyRate: asset.rentalRatePerDay, // Required field
       rentalFee: calculatedRentalFee,
       depositAmount: calculatedDepositAmount,
       totalAmount: calculatedTotalAmount,
@@ -183,9 +186,13 @@ export default async function handler(
         escrowId: `escrow_${rental._id}`,
         assetId: rental.assetId,
         assetName: rental.assetName,
+        renterKey: rental.renterKey,
+        ownerKey: rental.ownerKey,
         startDate: rental.startDate,
         endDate: rental.endDate,
-        rentalDays: rental.rentalDays,
+        rentalDays: rental.daysCount,
+        daysCount: rental.daysCount,
+        dailyRate: rental.dailyRate,
         rentalFee: rental.rentalFee,
         depositAmount: rental.depositAmount,
         totalAmount: rental.totalAmount,
