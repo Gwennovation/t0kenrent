@@ -120,10 +120,15 @@ export default async function handler(
     }
 
     // Ensure renter exists
+    // Determine wallet type from renterKey format
+    const walletType = renterKey.startsWith('demo') ? 'demo' : 
+                      renterKey.includes('@') ? 'paymail' : 'handcash'
+    
     let renter = await User.findOne({ publicKey: renterKey })
     if (!renter) {
       renter = await User.create({
         publicKey: renterKey,
+        walletType,
         totalListings: 0,
         totalRentals: 0,
         totalEarnings: 0,

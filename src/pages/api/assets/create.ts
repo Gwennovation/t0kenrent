@@ -95,10 +95,15 @@ export default async function handler(
       console.log('💾 Using MongoDB for asset creation')
       
       // Ensure user exists in MongoDB
+      // Determine wallet type from ownerKey format
+      const walletType = ownerKey.startsWith('demo') ? 'demo' : 
+                        ownerKey.includes('@') ? 'paymail' : 'handcash'
+      
       let user = await User.findOne({ publicKey: ownerKey })
       if (!user) {
         user = await User.create({
           publicKey: ownerKey,
+          walletType,
           totalListings: 0,
           totalRentals: 0,
           totalEarnings: 0,
