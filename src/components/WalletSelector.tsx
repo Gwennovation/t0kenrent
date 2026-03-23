@@ -1,8 +1,33 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { getPublicKey, waitForAuthentication, isAuthenticated } from 'babbage-sdk'
 import { getErrorMessage } from '@/lib/error-utils'
 import { getHandCashAuthUrl } from '@/lib/handcash-client'
+
+// Lazy-load babbage-sdk so a missing MetaNet wallet never crashes the page
+async function tryGetBabbagePublicKey(): Promise<string | null> {
+  try {
+    const { getPublicKey } = await import('babbage-sdk')
+    return await getPublicKey({ protocolID: [2, 'T0kenRent'], keyID: '1', counterparty: 'self' })
+  } catch {
+    return null
+  }
+}
+async function tryIsAuthenticated(): Promise<boolean> {
+  try {
+    const { isAuthenticated } = await import('babbage-sdk')
+    return await isAuthenticated()
+  } catch {
+    return false
+  }
+}
+async function tryWaitForAuthentication(): Promise<void> {
+  try {
+    const { waitForAuthentication } = await import('babbage-sdk')
+    await waitForAuthentication()
+  } catch {
+    // no-op
+  }
+}
 
 type WalletConnectionType = 'handcash' | 'metanet' | 'paymail' | 'demo'
 
@@ -73,20 +98,15 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
   }
 
   async function checkMetaNetAuth() {
-    try {
-      const authed = await isAuthenticated()
-      if (authed) {
-        const pubKey = await getPublicKey({
-          protocolID: [2, 'T0kenRent'],
-          keyID: '1',
-          counterparty: 'self'
-        })
-        // For MetaNet, we use the public key as the handle
+    // Silently check – if MetaNet is not installed the SDK throws a
+    // net::ERR_CONNECTION_REFUSED trying to reach localhost:3301.
+    // We catch everything and simply do nothing; HandCash is the primary wallet.
+    const authed = await tryIsAuthenticated()
+    if (authed) {
+      const pubKey = await tryGetBabbagePublicKey()
+      if (pubKey) {
         onAuthenticated(pubKey, pubKey.slice(0, 12), 'metanet')
       }
-    } catch (err) {
-      // Not authenticated with MetaNet - this is expected
-      console.log('MetaNet wallet not detected or not authenticated')
     }
   }
 
@@ -117,29 +137,17 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
     setError('')
     
     try {
-      // Check if MetaNet/Babbage wallet is available
-      const authed = await isAuthenticated()
-      
+      const authed = await tryIsAuthenticated()
       if (!authed) {
-        // Wait for user to authenticate with their wallet
-        await waitForAuthentication()
+        await tryWaitForAuthentication()
       }
-      
-      // Get the user's public key
-      const pubKey = await getPublicKey({
-        protocolID: [2, 'T0kenRent'],
-        keyID: '1',
-        counterparty: 'self'
-      })
-      
+      const pubKey = await tryGetBabbagePublicKey()
+      if (!pubKey) {
+        throw new Error('MetaNet/Babbage wallet not detected. Please install the MetaNet desktop wallet or use HandCash instead.')
+      }
       onAuthenticated(pubKey, pubKey.slice(0, 12), 'metanet')
     } catch (err) {
-      const errorMsg = getErrorMessage(err)
-      if (errorMsg.includes('No wallet') || errorMsg.includes('not available') || errorMsg.includes('undefined')) {
-        setError('MetaNet/Babbage wallet not detected. Please install a compatible wallet extension.')
-      } else {
-        setError(errorMsg)
-      }
+      setError(getErrorMessage(err))
     } finally {
       setLoading(false)
     }

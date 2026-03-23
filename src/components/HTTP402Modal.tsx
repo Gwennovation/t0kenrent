@@ -89,8 +89,14 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
         txid = payResult.transactionId
 
       } else if (walletType === 'metanet') {
-        // MetaNet/Babbage payment via SDK
-        const { createAction } = await import('babbage-sdk')
+        // MetaNet/Babbage payment via SDK (only available if wallet is installed)
+        let createAction: any
+        try {
+          const sdk = await import('babbage-sdk')
+          createAction = sdk.createAction
+        } catch {
+          throw new Error('MetaNet wallet is not installed. Please use HandCash or Paymail instead.')
+        }
 
         const result = await createAction({
           description: `T0kenRent unlock: ${asset.name.substring(0, 8)}`,
@@ -123,18 +129,19 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
           paymentReference: paymentInfo.payment.reference,
           transactionId: txid,
           amount: asset.unlockFee,
-          resourceId: asset.tokenId
+          resourceId: asset.tokenId,
+          userKey
         })
       })
 
-      if (!verifyResponse.ok) {
-        throw new Error('Payment verification failed')
-      }
-
       const verifyResult = await verifyResponse.json()
 
-      if (verifyResult.status !== 'verified') {
-        throw new Error(verifyResult.message || 'Payment not verified')
+      if (!verifyResponse.ok || !verifyResult.verified) {
+        throw new Error(
+          verifyResult.error ||
+          verifyResult.message ||
+          `Payment verification failed (HTTP ${verifyResponse.status})`
+        )
       }
 
       setStep('success')

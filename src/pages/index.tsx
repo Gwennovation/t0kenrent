@@ -237,7 +237,7 @@ export default function Home() {
                 <div className="relative">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center transition-all duration-300 group-hover:scale-105">
                     <img 
-                      src="/wallets/t0kenrent logo.png" 
+                      src="/t0kenrent-logo.png" 
                       alt="T0kenRent Logo" 
                       className="w-full h-full object-contain"
                     />
@@ -670,7 +670,7 @@ export default function Home() {
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 bg-white dark:bg-surface-800 rounded-lg flex items-center justify-center shadow-md p-1.5">
                   <img 
-                    src="/t0kenrent logo.png" 
+                    src="/t0kenrent-logo.png" 
                     alt="t0kenrent Logo" 
                     className="w-full h-full object-contain"
                   />
