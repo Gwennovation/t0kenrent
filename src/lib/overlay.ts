@@ -5,11 +5,21 @@
  * Used for rental proofs, escrow events, and payment verification.
  */
 
-import { createAction } from 'babbage-sdk'
 import { Script } from '@bsv/sdk'
 import { Buffer } from 'buffer'
 
-import { broadcastOpReturn } from '@/lib/onchain'
+import { broadcastOpReturn, hasServiceWallet } from '@/lib/onchain'
+
+// Lazy-load babbage-sdk so a missing MetaNet wallet never crashes server-side code.
+// Returns null silently when the SDK / wallet is unavailable.
+async function tryCreateAction(params: any): Promise<any | null> {
+  try {
+    const { createAction } = await import('babbage-sdk')
+    return await createAction(params)
+  } catch {
+    return null
+  }
+}
 
 const OVERLAY_URL: string =
   process.env.OVERLAY_URL || 'https://overlay-us-1.bsvb.tech'
@@ -22,7 +32,7 @@ const TOPICS = {
 }
 
 const LOOKUP_SERVICE = 'ls_tokenrent'
-const HAS_SERVER_LOG_WALLET = Boolean(process.env.BSV_ESCROW_WIF || process.env.BSV_SERVICE_WIF)
+const HAS_SERVER_LOG_WALLET = hasServiceWallet()
 
 export interface OverlayTransactionOutput {
   vout: number
@@ -97,7 +107,14 @@ async function broadcastWithServerWallet(
   }
 
   try {
-    const { txid, rawTx } = await broadcastOpReturn(scriptHex, description)
+    const result = await broadcastOpReturn(scriptHex, description)
+
+    if (!result) {
+      // Service wallet not configured or broadcast failed gracefully
+      return null
+    }
+
+    const { txid, rawTx } = result
 
     try {
       await broadcastToOverlay(
@@ -177,7 +194,7 @@ export async function logRentalEvent(data: RentalEventData): Promise<string> {
   }
 
   try {
-    const result: any = await createAction({
+    const result: any = await tryCreateAction({
       description,
       outputs: [
         {
@@ -187,6 +204,11 @@ export async function logRentalEvent(data: RentalEventData): Promise<string> {
         }
       ]
     })
+
+    if (!result) {
+      console.warn('MetaNet not available for rental event logging; skipping.')
+      return 'skipped_no_metanet'
+    }
 
     await broadcastToOverlay(result, TOPICS.RENTAL, metadata)
 
@@ -269,7 +291,7 @@ export async function logEscrowEvent(data: EscrowEventData): Promise<string> {
   }
 
   try {
-    const result: any = await createAction({
+    const result: any = await tryCreateAction({
       description,
       outputs: [
         {
@@ -279,6 +301,11 @@ export async function logEscrowEvent(data: EscrowEventData): Promise<string> {
         }
       ]
     })
+
+    if (!result) {
+      console.warn('MetaNet not available for escrow event logging; skipping.')
+      return 'skipped_no_metanet'
+    }
 
     await broadcastToOverlay(result, TOPICS.ESCROW, metadata)
 
@@ -358,7 +385,7 @@ export async function logPaymentEvent(data: PaymentEventData): Promise<string> {
   }
 
   try {
-    const result: any = await createAction({
+    const result: any = await tryCreateAction({
       description,
       outputs: [
         {
@@ -368,6 +395,11 @@ export async function logPaymentEvent(data: PaymentEventData): Promise<string> {
         }
       ]
     })
+
+    if (!result) {
+      console.warn('MetaNet not available for payment event logging; skipping.')
+      return 'skipped_no_metanet'
+    }
 
     await broadcastToOverlay(result, TOPICS.PAYMENT, metadata)
 

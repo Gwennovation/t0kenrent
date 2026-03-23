@@ -2,7 +2,7 @@
 const nextConfig = {
   reactStrictMode: true,
   
-  // Standalone output for Docker
+  // Standalone output for Docker / Vercel
   output: 'standalone',
   
   // Performance optimizations
@@ -10,10 +10,23 @@ const nextConfig = {
   
   // Compress responses
   compress: true,
+
+  // Expose env vars to the browser bundle
+  env: {
+    NEXT_PUBLIC_BSV_NETWORK: process.env.NEXT_PUBLIC_BSV_NETWORK || process.env.BSV_NETWORK || process.env.NETWORK || 'test',
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'https://t0kenrent.vercel.app',
+    NEXT_PUBLIC_HANDCASH_APP_ID: process.env.NEXT_PUBLIC_HANDCASH_APP_ID || '',
+    NEXT_PUBLIC_HANDCASH_REDIRECT_URL: process.env.NEXT_PUBLIC_HANDCASH_REDIRECT_URL || 'https://t0kenrent.vercel.app',
+  },
   
   // Optimize images
   images: {
-    domains: ['images.unsplash.com', 'via.placeholder.com'],
+    domains: [
+      'images.unsplash.com',
+      'via.placeholder.com',
+      't0kenrent.vercel.app',
+      'cloud.handcash.io',
+    ],
     formats: ['image/avif', 'image/webp'],
     minimumCacheTTL: 60,
   },
