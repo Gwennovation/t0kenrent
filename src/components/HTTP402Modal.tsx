@@ -15,7 +15,7 @@ interface HTTP402ModalProps {
   asset: Asset
   userKey: string
   demoMode?: boolean
-  walletType?: 'handcash' | 'metanet' | 'paymail' | 'demo'
+  walletType?: 'handcash' | 'demo'
   onClose: () => void
   onSuccess: (details: any) => void
 }
@@ -88,28 +88,8 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
         const payResult = await payResponse.json()
         txid = payResult.transactionId
 
-      } else if (walletType === 'metanet') {
-        // MetaNet/Babbage payment via SDK
-        const { createAction } = await import('babbage-sdk')
-
-        const result = await createAction({
-          description: `T0kenRent unlock: ${asset.name.substring(0, 8)}`,
-          outputs: [
-            {
-              satoshis: Math.ceil(asset.unlockFee * 100000000),
-              script: paymentInfo.payment.script || await createPaymentScript(asset.ownerKey),
-              basket: 'HTTP 402 Payments'
-            }
-          ]
-        })
-        txid = result.txid
-
-      } else if (walletType === 'paymail') {
-        // Paymail - show QR code or redirect to wallet
-        // For now, use the generic payment flow
-        throw new Error('Please scan the QR code with your BSV wallet to complete payment')
       } else {
-        throw new Error('Unknown wallet type')
+        throw new Error('Please connect your HandCash wallet to make payments')
       }
 
       setTxid(txid)
@@ -336,14 +316,14 @@ export default function HTTP402Modal({ asset, userKey, demoMode = false, walletT
                 </svg>
                 {isDemoExperience
                   ? '🎭 Simulate Payment (Demo)' 
-                  : `Pay with ${walletType === 'handcash' ? 'HandCash' : walletType === 'metanet' ? 'MetaNet' : 'Paymail'}`
+                  : 'Pay with HandCash'
                 }
               </button>
 
               {/* Wallet indicator */}
               {!isDemoExperience && (
                 <p className="text-xs text-center text-surface-500 dark:text-surface-400 mt-2">
-                  Using: <span className="font-medium">{walletType === 'handcash' ? 'HandCash' : walletType === 'metanet' ? 'MetaNet/Babbage' : 'Paymail/QR'}</span>
+                  Using: <span className="font-medium">HandCash</span>
                 </p>
               )}
             </div>

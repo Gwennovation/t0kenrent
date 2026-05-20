@@ -66,6 +66,9 @@ export default function RentalCard({ rental, userKey, demoMode = false, onUpdate
   const endDate = new Date(rental.endDate)
   const now = new Date()
   const daysRemaining = Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+  const totalDuration = endDate.getTime() - startDate.getTime()
+  const elapsed = Math.min(now.getTime() - startDate.getTime(), totalDuration)
+  const progressPct = Math.max(0, Math.min(100, (elapsed / totalDuration) * 100))
 
   async function handleComplete() {
     setCompleting(true)
@@ -105,35 +108,41 @@ export default function RentalCard({ rental, userKey, demoMode = false, onUpdate
             </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-            <div>
-              <p className="text-surface-500 dark:text-surface-400">Dates</p>
-              <p className="font-medium text-surface-900 dark:text-white">
-                {startDate.toLocaleDateString()} - {endDate.toLocaleDateString()}
-              </p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm mt-3">
+            <div className="p-3 bg-surface-50 dark:bg-surface-800/60 rounded-xl">
+              <p className="text-[11px] font-medium text-surface-400 dark:text-surface-500 uppercase tracking-wider mb-1">Duration</p>
+              <p className="font-semibold text-surface-900 dark:text-white">{rental.rentalDays}d</p>
+              <p className="text-[11px] text-surface-400 dark:text-surface-500 mt-0.5">{startDate.toLocaleDateString([], { month: 'short', day: 'numeric' })} – {endDate.toLocaleDateString([], { month: 'short', day: 'numeric' })}</p>
             </div>
-            <div>
-              <p className="text-surface-500 dark:text-surface-400">Duration</p>
-              <p className="font-medium text-surface-900 dark:text-white">{rental.rentalDays} days</p>
+            <div className="p-3 bg-surface-50 dark:bg-surface-800/60 rounded-xl">
+              <p className="text-[11px] font-medium text-surface-400 dark:text-surface-500 uppercase tracking-wider mb-1">Total</p>
+              <p className="font-semibold text-primary-600 dark:text-primary-400">${rental.totalAmount.toFixed(2)}</p>
+              <p className="text-[11px] text-surface-400 dark:text-surface-500 mt-0.5">${rental.rentalFee.toFixed(2)} + ${rental.depositAmount.toFixed(2)} dep.</p>
             </div>
-            <div>
-              <p className="text-surface-500 dark:text-surface-400">Total Cost</p>
-              <p className="font-medium text-primary-600 dark:text-primary-400">${rental.totalAmount.toFixed(2)}</p>
+            <div className="p-3 bg-surface-50 dark:bg-surface-800/60 rounded-xl">
+              <p className="text-[11px] font-medium text-surface-400 dark:text-surface-500 uppercase tracking-wider mb-1">Role</p>
+              <p className="font-semibold text-surface-900 dark:text-white">{isRenter ? 'Renter' : 'Owner'}</p>
             </div>
-            <div>
-              <p className="text-surface-500 dark:text-surface-400">Role</p>
-              <p className="font-medium text-surface-900 dark:text-white">{isRenter ? 'Renter' : 'Owner'}</p>
+            <div className="p-3 bg-surface-50 dark:bg-surface-800/60 rounded-xl">
+              <p className="text-[11px] font-medium text-surface-400 dark:text-surface-500 uppercase tracking-wider mb-1">Escrow</p>
+              <p className="font-semibold text-surface-900 dark:text-white truncate text-xs font-mono">{rental.escrowId ? rental.escrowId.slice(0, 10) + '…' : '—'}</p>
             </div>
           </div>
 
           {rental.status === 'active' && daysRemaining >= 0 && (
-            <div className="mt-3 flex items-center gap-2 text-sm">
-              <svg className="w-4 h-4 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <span className="text-amber-600 dark:text-amber-400">
-                {daysRemaining === 0 ? 'Ends today' : `${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} remaining`}
-              </span>
+            <div className="mt-4">
+              <div className="flex items-center justify-between text-xs mb-1.5">
+                <span className="text-surface-500 dark:text-surface-400">Rental Progress</span>
+                <span className="font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  {daysRemaining === 0 ? 'Ends today' : `${daysRemaining}d left`}
+                </span>
+              </div>
+              <div className="rental-progress-track">
+                <div className="rental-progress-fill" style={{ width: `${progressPct}%` }} />
+              </div>
             </div>
           )}
 

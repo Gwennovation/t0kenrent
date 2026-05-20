@@ -41,7 +41,7 @@ interface AssetCardProps {
   userKey: string
   isOwner?: boolean
   demoMode?: boolean
-  walletType?: 'handcash' | 'metanet' | 'paymail' | 'demo'
+  walletType?: 'handcash' | 'demo'
   viewMode?: 'grid' | 'list'
   onRent: (rental?: any) => void
   onUpdate?: (asset: RentalAsset) => void
@@ -243,6 +243,9 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
                 <div className="min-w-0">
                   <h3 className="text-lg font-semibold text-surface-900 dark:text-white truncate">{asset.name}</h3>
                   <p className="text-sm text-surface-600 dark:text-surface-400 line-clamp-1 mt-0.5">{asset.description}</p>
+                  <span className="inline-block mt-1.5 text-[11px] font-medium px-2 py-0.5 bg-surface-100 dark:bg-surface-800 text-surface-500 dark:text-surface-400 rounded-full capitalize border border-surface-200 dark:border-surface-700">
+                    {asset.category === 'realestate' ? 'Real Estate' : asset.category}
+                  </span>
                 </div>
                 {asset.rating && (
                   <div className="flex items-center gap-1 flex-shrink-0">
@@ -369,7 +372,7 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
 
         {/* Content Section */}
         <div className="p-5">
-          <div className="flex items-start justify-between gap-2 mb-2">
+          <div className="flex items-start justify-between gap-2 mb-1.5">
             <h3 className="text-lg font-semibold text-surface-900 dark:text-white line-clamp-1 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
               {currentAsset.name}
             </h3>
@@ -380,6 +383,17 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
                 </svg>
                 <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">{currentAsset.rating.toFixed(1)}</span>
               </div>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-[11px] font-medium px-2 py-0.5 bg-surface-100 dark:bg-surface-800 text-surface-500 dark:text-surface-400 rounded-full capitalize border border-surface-200 dark:border-surface-700">
+              {currentAsset.category === 'realestate' ? 'Real Estate' : currentAsset.category}
+            </span>
+            {currentAsset.condition && (
+              <span className="text-[11px] font-medium px-2 py-0.5 bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400 rounded-full border border-primary-100 dark:border-primary-900/40 capitalize">
+                {currentAsset.condition}
+              </span>
             )}
           </div>
 

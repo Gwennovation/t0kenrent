@@ -47,7 +47,7 @@ interface Transaction {
 interface RentalDashboardProps {
   userKey: string
   demoMode?: boolean
-  walletType?: 'handcash' | 'metanet' | 'paymail' | 'demo'
+  walletType?: 'handcash' | 'demo'
   walletBalance?: number | null
 }
 
@@ -159,23 +159,28 @@ export default function RentalDashboard({ userKey, demoMode = false, walletType 
           {/* Wallet Info Card */}
           <div className="glass-card p-4 min-w-[280px]">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center">
+              <div className="w-12 h-12 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20 flex-shrink-0">
                 <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
                 </svg>
               </div>
-              <div>
-                <p className="text-sm text-surface-500 dark:text-surface-400">Connected Wallet</p>
-                <p className="font-mono text-sm font-medium text-surface-900 dark:text-white">
-                  {userKey.slice(0, 10)}...{userKey.slice(-6)}
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <p className="text-xs font-medium text-surface-500 dark:text-surface-400">HandCash Wallet</p>
+                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                </div>
+                <p className="font-mono text-sm font-medium text-surface-900 dark:text-white truncate">
+                  {userKey.startsWith('demo_') ? 'Demo User' : `${userKey.slice(0, 10)}...${userKey.slice(-6)}`}
                 </p>
                 {walletBalance !== null && walletBalance !== undefined && (
-                  <p className="text-lg font-bold text-primary-600 dark:text-primary-400">
-                    {walletBalance.toFixed(4)} BSV
-                    <span className="text-xs text-surface-500 ml-1">
-                      (~${(walletBalance * 50).toFixed(2)})
+                  <div className="flex items-baseline gap-1.5 mt-0.5">
+                    <p className="text-base font-bold text-primary-600 dark:text-primary-400">
+                      {walletBalance.toFixed(4)} BSV
+                    </p>
+                    <span className="text-xs text-surface-400 dark:text-surface-500">
+                      ~${(walletBalance * 50).toFixed(2)}
                     </span>
-                  </p>
+                  </div>
                 )}
               </div>
             </div>
@@ -370,137 +375,132 @@ export default function RentalDashboard({ userKey, demoMode = false, walletType 
         {activeTab === 'rentals' && (
           <div className="space-y-6">
             {/* Active Rentals Section */}
-            <div className="glass-card p-6">
+            <div>
               <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-4 flex items-center gap-2">
                 <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
-                Active Rentals ({activeRentals.length})
+                Active Rentals
+                <span className="ml-1 px-2 py-0.5 text-xs bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-full">{activeRentals.length}</span>
               </h3>
               {activeRentals.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-surface-200 dark:border-surface-700">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-surface-500 dark:text-surface-400">Item</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-surface-500 dark:text-surface-400">Dates</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-surface-500 dark:text-surface-400">Status</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-surface-500 dark:text-surface-400">Total</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-surface-500 dark:text-surface-400">TX ID</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-surface-500 dark:text-surface-400">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {activeRentals.map(rental => (
-                        <tr key={rental.id} className="border-b border-surface-100 dark:border-surface-800">
-                          <td className="py-4 px-4">
-                            <p className="font-medium text-surface-900 dark:text-white">{rental.assetName}</p>
-                          </td>
-                          <td className="py-4 px-4 text-sm text-surface-600 dark:text-surface-400">
-                            {new Date(rental.startDate).toLocaleDateString()} - {new Date(rental.endDate).toLocaleDateString()}
-                          </td>
-                          <td className="py-4 px-4">
-                            <span className="px-2.5 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 text-xs font-medium rounded-full">
-                              {rental.status}
+                <div className="grid gap-4">
+                  {activeRentals.map(rental => {
+                    const start = new Date(rental.startDate)
+                    const end = new Date(rental.endDate)
+                    const now = new Date()
+                    const daysLeft = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                    const pct = Math.max(0, Math.min(100, ((now.getTime() - start.getTime()) / (end.getTime() - start.getTime())) * 100))
+                    return (
+                      <div key={rental.id} className="glass-card-hover p-5">
+                        <div className="flex items-start justify-between gap-4 mb-4">
+                          <div>
+                            <h4 className="font-semibold text-surface-900 dark:text-white text-base">{rental.assetName}</h4>
+                            <p className="text-sm text-surface-500 dark:text-surface-400 mt-0.5">
+                              {start.toLocaleDateString([], { month: 'short', day: 'numeric' })} – {end.toLocaleDateString([], { month: 'short', day: 'numeric' })} · {rental.rentalDays}d
+                            </p>
+                          </div>
+                          <div className="text-right flex-shrink-0">
+                            <p className="text-lg font-bold text-primary-600 dark:text-primary-400">${rental.totalAmount.toFixed(2)}</p>
+                            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400 flex items-center justify-end gap-1 mt-0.5">
+                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse inline-block"></span>
+                              {daysLeft > 0 ? `${daysLeft}d left` : 'Ends today'}
                             </span>
-                          </td>
-                          <td className="py-4 px-4 font-medium text-primary-600 dark:text-primary-400">
-                            ${rental.totalAmount.toFixed(2)}
-                          </td>
-                          <td className="py-4 px-4">
-                            <a
-                              href={`${wocExplorerBase}/tx/${rental.escrowId}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="font-mono text-xs text-primary-600 dark:text-primary-400 hover:underline"
+                          </div>
+                        </div>
+                        <div className="rental-progress-track mb-4">
+                          <div className="rental-progress-fill" style={{ width: `${pct}%` }} />
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <a
+                            href={`https://whatsonchain.com/tx/${rental.escrowId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-mono text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
+                          >
+                            {rental.escrowId.slice(0, 10)}...
+                            <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </a>
+                          <div className="flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => { setSelectedRental(rental); setShowQRModal(true); }}
+                              className="px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 bg-primary-100 dark:bg-primary-900/30 hover:bg-primary-200 dark:hover:bg-primary-900/50 rounded-lg transition-colors flex items-center gap-1.5"
                             >
-                              {rental.escrowId.slice(0, 8)}...
-                            </a>
-                          </td>
-                          <td className="py-4 px-4">
-                            <div className="flex gap-2">
-                              <button
-                                type="button"
-                                onClick={() => { setSelectedRental(rental); setShowQRModal(true); }}
-                                className="p-2 text-primary-600 dark:text-primary-400 hover:bg-primary-100 dark:hover:bg-primary-900/30 rounded-lg transition-colors"
-                                title="Show QR Code"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-                                </svg>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleCompleteRental(rental.id)}
-                                className="px-3 py-1.5 bg-emerald-500 text-white text-xs font-medium rounded-lg hover:bg-emerald-600 transition-colors"
-                              >
-                                Complete
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                              </svg>
+                              QR
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleCompleteRental(rental.id)}
+                              className="px-3 py-1.5 text-xs font-medium bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg transition-colors flex items-center gap-1.5"
+                            >
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              Complete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  })}
                 </div>
               ) : (
-                <p className="text-surface-500 dark:text-surface-400 text-center py-8">No active rentals</p>
+                <div className="glass-card p-8 text-center">
+                  <svg className="w-12 h-12 text-surface-300 dark:text-surface-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <p className="text-surface-500 dark:text-surface-400">No active rentals</p>
+                </div>
               )}
             </div>
 
             {/* Past Rentals Section */}
-            <div className="glass-card p-6">
-              <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-4">
-                Past Rentals ({pastRentals.length})
+            <div>
+              <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-4 flex items-center gap-2">
+                Past Rentals
+                <span className="ml-1 px-2 py-0.5 text-xs bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 rounded-full">{pastRentals.length}</span>
               </h3>
               {pastRentals.length > 0 ? (
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="border-b border-surface-200 dark:border-surface-700">
-                        <th className="text-left py-3 px-4 text-sm font-medium text-surface-500 dark:text-surface-400">Item</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-surface-500 dark:text-surface-400">Dates</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-surface-500 dark:text-surface-400">Status</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-surface-500 dark:text-surface-400">Total</th>
-                        <th className="text-left py-3 px-4 text-sm font-medium text-surface-500 dark:text-surface-400">TX ID</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pastRentals.map(rental => (
-                        <tr key={rental.id} className="border-b border-surface-100 dark:border-surface-800">
-                          <td className="py-4 px-4">
-                            <p className="font-medium text-surface-900 dark:text-white">{rental.assetName}</p>
-                          </td>
-                          <td className="py-4 px-4 text-sm text-surface-600 dark:text-surface-400">
-                            {new Date(rental.startDate).toLocaleDateString()} - {new Date(rental.endDate).toLocaleDateString()}
-                          </td>
-                          <td className="py-4 px-4">
-                            <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${
-                              rental.status === 'completed' 
-                                ? 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400'
-                                : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                            }`}>
-                              {rental.status}
-                            </span>
-                          </td>
-                          <td className="py-4 px-4 font-medium text-surface-600 dark:text-surface-400">
-                            ${rental.totalAmount.toFixed(2)}
-                          </td>
-                          <td className="py-4 px-4">
-                            <a
-                              href={`${wocExplorerBase}/tx/${rental.escrowId}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="font-mono text-xs text-primary-600 dark:text-primary-400 hover:underline"
-                            >
-                              {rental.escrowId.slice(0, 8)}...
-                            </a>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="grid gap-3">
+                  {pastRentals.map(rental => (
+                    <div key={rental.id} className="glass-card p-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="min-w-0">
+                          <h4 className="font-medium text-surface-900 dark:text-white truncate">{rental.assetName}</h4>
+                          <p className="text-xs text-surface-500 dark:text-surface-400 mt-0.5">
+                            {new Date(rental.startDate).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })} – {new Date(rental.endDate).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <span className={`px-2.5 py-1 text-xs font-medium rounded-full capitalize ${
+                            rental.status === 'completed'
+                              ? 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400'
+                              : 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
+                          }`}>
+                            {rental.status}
+                          </span>
+                          <span className="font-semibold text-surface-700 dark:text-surface-300 text-sm">${rental.totalAmount.toFixed(2)}</span>
+                          <a
+                            href={`https://whatsonchain.com/tx/${rental.escrowId}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="font-mono text-xs text-primary-500 dark:text-primary-400 hover:underline hidden sm:inline"
+                          >
+                            {rental.escrowId.slice(0, 8)}...
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               ) : (
-                <p className="text-surface-500 dark:text-surface-400 text-center py-8">No past rentals</p>
+                <div className="glass-card p-8 text-center">
+                  <p className="text-surface-500 dark:text-surface-400">No past rentals</p>
+                </div>
               )}
             </div>
           </div>

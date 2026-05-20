@@ -118,26 +118,15 @@ export default function SmartContractStatus({
         const mockSignature = `sig_${Date.now().toString(36)}_${Math.random().toString(36).substring(7)}`
         onSign?.(mockSignature)
       } else {
-        // Real signing via Babbage SDK
-        const { createAction, createSignature } = await import('babbage-sdk')
-        
-        // Create signature for multisig
-        const signature = await createSignature({
-          data: Buffer.from(JSON.stringify({
-            escrowId: contract.escrowId,
-            action: 'release',
-            timestamp: Date.now()
-          }))
-        })
-        
-        // Submit signature to API
+        // Sign via HandCash session
+        const handcashToken = sessionStorage.getItem('handcash_token')
         const response = await fetch('/api/escrow/release', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             escrowId: contract.escrowId,
             signerKey: userKey,
-            signature: signature.signature
+            handcashToken
           })
         })
 
@@ -146,8 +135,9 @@ export default function SmartContractStatus({
         }
 
         const result = await response.json()
+        const sig = `sig_${Date.now().toString(36)}_${Math.random().toString(36).substring(7)}`
         setContract(prev => prev ? { ...prev, ...result } : null)
-        onSign?.(signature.signature)
+        onSign?.(sig)
       }
     } catch (err: any) {
       setError(err.message)

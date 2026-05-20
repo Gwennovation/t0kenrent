@@ -50,7 +50,7 @@ interface Rental {
 interface RentalMarketplaceProps {
   userKey: string
   demoMode?: boolean
-  walletType?: 'handcash' | 'metanet' | 'paymail' | 'demo'
+  walletType?: 'handcash' | 'demo'
 }
 
 export default function RentalMarketplace({ userKey, demoMode = false, walletType = 'demo' }: RentalMarketplaceProps) {
@@ -407,35 +407,35 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
           {/* Bulk Rent Toolbar */}
           {filteredAssets.some(a => a.status === 'available' && a.ownerKey !== userKey) && (
             <div className="glass-card p-4 mb-6 flex items-center justify-between gap-4">
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => {
                     setBulkRentMode(!bulkRentMode)
                     if (bulkRentMode) clearSelection()
                   }}
-                  className={`btn-${bulkRentMode ? 'secondary' : 'outline'} text-sm`}
+                  className={`${bulkRentMode ? 'btn-secondary' : 'btn-outline'} text-sm flex items-center gap-2`}
                 >
-                  <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
-                  {bulkRentMode ? 'Cancel Selection' : 'Rent Multiple Items'}
+                  {bulkRentMode ? 'Cancel' : 'Rent Multiple'}
                 </button>
                 {bulkRentMode && (
-                  <>
-                    <span className="text-sm text-surface-600 dark:text-surface-400">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-surface-700 dark:text-surface-300">
                       {selectedAssets.size} selected
                     </span>
                     {selectedAssets.size > 0 && (
                       <button
                         type="button"
                         onClick={clearSelection}
-                        className="text-sm text-surface-500 hover:text-surface-700 dark:hover:text-surface-300"
+                        className="text-xs text-surface-400 hover:text-surface-600 dark:hover:text-surface-300 underline underline-offset-2"
                       >
                         Clear
                       </button>
                     )}
-                  </>
+                  </div>
                 )}
               </div>
               {bulkRentMode && (
@@ -446,7 +446,7 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
                       onClick={selectAllVisibleAssets}
                       className="btn-outline text-sm"
                     >
-                      Select All Available
+                      Select All
                     </button>
                   )}
                   {selectedAssets.size > 0 && (
@@ -566,28 +566,22 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
           {/* Stats Summary */}
           {myAssets.length > 0 && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-              <div className="glass-card p-4 text-center">
-                <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">{myAssets.length}</p>
-                <p className="text-sm text-surface-600 dark:text-surface-400">Total Listings</p>
-              </div>
-              <div className="glass-card p-4 text-center">
-                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                  {myAssets.filter(a => a.status === 'available').length}
-                </p>
-                <p className="text-sm text-surface-600 dark:text-surface-400">Available</p>
-              </div>
-              <div className="glass-card p-4 text-center">
-                <p className="text-2xl font-bold text-amber-600 dark:text-amber-400">
-                  {myAssets.filter(a => a.status === 'rented').length}
-                </p>
-                <p className="text-sm text-surface-600 dark:text-surface-400">Rented Out</p>
-              </div>
-              <div className="glass-card p-4 text-center">
-                <p className="text-2xl font-bold text-surface-900 dark:text-white">
-                  ${myAssets.reduce((sum, a) => sum + (a.totalEarnings || 0), 0).toFixed(0)}
-                </p>
-                <p className="text-sm text-surface-600 dark:text-surface-400">Total Earned</p>
-              </div>
+              {[
+                { value: myAssets.length, label: 'Total Listings', color: 'text-primary-600 dark:text-primary-400', iconBg: 'bg-primary-100 dark:bg-primary-900/40', icon: 'M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' },
+                { value: myAssets.filter(a => a.status === 'available').length, label: 'Available', color: 'text-emerald-600 dark:text-emerald-400', iconBg: 'bg-emerald-100 dark:bg-emerald-900/40', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+                { value: myAssets.filter(a => a.status === 'rented').length, label: 'Rented Out', color: 'text-amber-600 dark:text-amber-400', iconBg: 'bg-amber-100 dark:bg-amber-900/40', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' },
+                { value: `$${myAssets.reduce((sum, a) => sum + (a.totalEarnings || 0), 0).toFixed(0)}`, label: 'Total Earned', color: 'text-surface-900 dark:text-white', iconBg: 'bg-surface-100 dark:bg-surface-800', icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+              ].map((stat, i) => (
+                <div key={i} className="glass-card p-4">
+                  <div className={`w-9 h-9 ${stat.iconBg} rounded-xl flex items-center justify-center mb-3`}>
+                    <svg className={`w-4.5 h-4.5 ${stat.color}`} style={{ width: '1.125rem', height: '1.125rem' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={stat.icon} />
+                    </svg>
+                  </div>
+                  <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                  <p className="text-xs text-surface-500 dark:text-surface-400 mt-0.5">{stat.label}</p>
+                </div>
+              ))}
             </div>
           )}
 

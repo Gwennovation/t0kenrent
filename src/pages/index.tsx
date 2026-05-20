@@ -16,7 +16,7 @@ export default function Home() {
   const [authenticated, setAuthenticated] = useState(false)
   const [userKey, setUserKey] = useState('')
   const [userHandle, setUserHandle] = useState('')
-  const [walletType, setWalletType] = useState<'handcash' | 'metanet' | 'paymail' | 'demo'>('demo')
+  const [walletType, setWalletType] = useState<'handcash' | 'demo'>('demo')
   const [demoMode, setDemoMode] = useState(false)
   const [showMarketplace, setShowMarketplace] = useState(false)
   const [activeView, setActiveView] = useState<'marketplace' | 'dashboard'>('marketplace')
@@ -123,48 +123,23 @@ export default function Home() {
     }
   }
 
-  function handleAuthenticated(
-    publicKey: string,
-    handle: string,
-    wallet: 'handcash' | 'metanet' | 'paymail' | 'demo' = 'demo',
-    balance?: number
-  ) {
-    console.log('🎉 Setting authenticated state:', { publicKey, handle, wallet, balance })
+  function handleAuthenticated(publicKey: string, handle: string, wallet: string = 'demo', balance?: number) {
     setUserKey(publicKey)
-
-    const normalizedHandle = handle?.trim() ? handle : publicKey.slice(0, 10)
-    setUserHandle(normalizedHandle)
-    setWalletType(wallet)
+    setUserHandle(handle || publicKey.slice(0, 10))
+    setWalletType(wallet as 'handcash' | 'demo')
     setAuthenticated(true)
     setShowMarketplace(true)
 
     const isDemo = wallet === 'demo'
     setDemoMode(isDemo)
 
-    if (typeof window !== 'undefined') {
-      if (isDemo) {
-        Object.values(WALLET_SESSION_KEYS).forEach((key) => sessionStorage.removeItem(key))
-      } else {
-        sessionStorage.setItem(WALLET_SESSION_KEYS.type, wallet)
-        sessionStorage.setItem(WALLET_SESSION_KEYS.key, publicKey)
-        sessionStorage.setItem(WALLET_SESSION_KEYS.handle, normalizedHandle)
-        if (typeof balance === 'number' && !Number.isNaN(balance)) {
-          sessionStorage.setItem(WALLET_SESSION_KEYS.balance, balance.toString())
-        } else {
-          sessionStorage.removeItem(WALLET_SESSION_KEYS.balance)
-        }
-      }
-    }
-
     if (isDemo) {
       setWalletBalance(Math.random() * 10 + 0.5)
-    } else if (typeof balance === 'number' && !Number.isNaN(balance)) {
+    } else if (balance !== undefined) {
       setWalletBalance(balance)
     } else {
       setWalletBalance(null)
     }
-
-    console.log('✅ Marketplace should now be visible, showMarketplace=true')
   }
 
   function enableDemoMode() {
@@ -277,11 +252,11 @@ export default function Home() {
                       <div className="flex items-center gap-2 px-3 py-2 bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-xl">
                         <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
                         <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium uppercase ${
-                          demoMode 
+                          demoMode
                             ? 'bg-amber-200 dark:bg-amber-800 text-amber-700 dark:text-amber-300'
                             : 'bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300'
                         }`}>
-                          {demoMode ? 'DEMO' : walletType === 'handcash' ? 'HC' : walletType === 'metanet' ? 'MN' : 'PM'}
+                          {demoMode ? 'DEMO' : 'HC'}
                         </span>
                         <span className="hidden sm:inline text-xs font-medium text-emerald-700 dark:text-emerald-400 truncate max-w-[120px]">
                           {demoMode ? 'Demo User' : userHandle || `${userKey.slice(0, 6)}...${userKey.slice(-4)}`}
@@ -461,12 +436,17 @@ export default function Home() {
                 {/* Wallet Connection Options */}
                 <div className="max-w-md mx-auto mb-8 animate-slide-up animation-delay-200">
                   <div className="glass-card p-6">
-                    <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-4 flex items-center gap-2">
-                      <svg className="w-5 h-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                      </svg>
-                      Connect Your BSV Wallet
-                    </h3>
+                    <div className="flex items-center gap-3 mb-5">
+                      <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20">
+                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="text-base font-semibold text-surface-900 dark:text-white leading-tight">Connect Your Wallet</h3>
+                        <p className="text-xs text-surface-500 dark:text-surface-400">Sign in with HandCash to get started</p>
+                      </div>
+                    </div>
                     <WalletSelector onAuthenticated={handleAuthenticated} />
                   </div>
                 </div>
@@ -523,37 +503,45 @@ export default function Home() {
                     icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
                     title: 'Smart Contract Escrow',
                     description: '2-of-2 multisig escrow protects both parties. Funds released only when both agree.',
-                    color: 'primary'
+                    iconBg: 'bg-primary-100 dark:bg-primary-900/40',
+                    iconColor: 'text-primary-600 dark:text-primary-400',
+                    border: 'hover:border-primary-200 dark:hover:border-primary-800/50',
                   },
                   {
                     icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z',
                     title: 'HTTP 402 Payments',
                     description: 'Pay tiny micropayments to unlock rental details. Near-zero fees on BSV.',
-                    color: 'accent'
+                    iconBg: 'bg-emerald-100 dark:bg-emerald-900/40',
+                    iconColor: 'text-emerald-600 dark:text-emerald-400',
+                    border: 'hover:border-emerald-200 dark:hover:border-emerald-800/50',
                   },
                   {
                     icon: 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z',
                     title: '1Sat Ordinal Tokens',
                     description: 'Link your assets to 1Sat ordinals for on-chain proof of ownership.',
-                    color: 'primary'
+                    iconBg: 'bg-accent-100 dark:bg-accent-900/40',
+                    iconColor: 'text-accent-600 dark:text-accent-400',
+                    border: 'hover:border-accent-200 dark:hover:border-accent-800/50',
                   },
                   {
                     icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01',
                     title: 'On-Chain Logging',
                     description: 'Every transaction logged on BSV. Immutable rental history and receipts.',
-                    color: 'accent'
+                    iconBg: 'bg-amber-100 dark:bg-amber-900/40',
+                    iconColor: 'text-amber-600 dark:text-amber-400',
+                    border: 'hover:border-amber-200 dark:hover:border-amber-800/50',
                   }
                 ].map((feature, i) => (
-                  <div key={i} className="feature-card animate-slide-up" style={{ animationDelay: `${(i + 1) * 100}ms` }}>
-                    <div className={`icon-wrapper ${feature.color === 'accent' ? 'bg-accent-100 dark:bg-accent-900/30' : ''}`}>
-                      <svg className={`w-7 h-7 ${feature.color === 'accent' ? 'text-accent-500' : 'text-primary-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div key={i} className={`feature-card animate-slide-up border border-transparent transition-colors duration-300 ${feature.border}`} style={{ animationDelay: `${(i + 1) * 100}ms` }}>
+                    <div className={`icon-wrapper ${feature.iconBg}`}>
+                      <svg className={`w-7 h-7 ${feature.iconColor}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={feature.icon} />
                       </svg>
                     </div>
                     <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
                       {feature.title}
                     </h3>
-                    <p className="text-sm text-surface-600 dark:text-surface-400">
+                    <p className="text-sm text-surface-600 dark:text-surface-400 leading-relaxed">
                       {feature.description}
                     </p>
                   </div>
@@ -573,7 +561,7 @@ export default function Home() {
 
                 <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
                   {[
-                    { step: '01', title: 'Connect Wallet', desc: 'Sign in with HandCash, Relysia, or any BSV wallet.' },
+                    { step: '01', title: 'Connect Wallet', desc: 'Sign in securely with your HandCash wallet using your $handle.' },
                     { step: '02', title: 'Pay to Unlock', desc: 'HTTP 402 micropayment reveals pickup location and contact.' },
                     { step: '03', title: 'Fund Escrow', desc: 'Deposit + rental fee locked in 2-of-2 multisig contract.' },
                     { step: '04', title: 'Complete & Release', desc: 'Both parties sign to release funds. On-chain proof created.' },
@@ -603,24 +591,29 @@ export default function Home() {
               {/* Stats */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 mb-16 sm:mb-24">
                 {[
-                  { value: '~$0.001', label: 'Unlock Fee', color: 'primary' },
-                  { value: '2-of-2', label: 'Multisig Escrow', color: 'accent' },
-                  { value: '100%', label: 'On-Chain', color: 'primary' },
-                  { value: 'Global', label: 'P2P Rentals', color: 'accent' },
+                  { value: '~$0.001', label: 'Unlock Fee', gradient: 'from-primary-500 to-primary-600', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
+                  { value: '2-of-2', label: 'Multisig Escrow', gradient: 'from-accent-500 to-accent-600', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
+                  { value: '100%', label: 'On-Chain', gradient: 'from-primary-500 to-primary-600', icon: 'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z' },
+                  { value: 'Global', label: 'P2P Rentals', gradient: 'from-emerald-500 to-emerald-600', icon: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
                 ].map((stat, i) => (
-                  <div 
-                    key={i} 
-                    className="glass-card p-6 sm:p-8 text-center animate-slide-up"
+                  <div
+                    key={i}
+                    className="stat-card animate-slide-up transition-transform duration-300"
                     style={{ animationDelay: `${(i + 5) * 100}ms` }}
                   >
-                    <div className={`text-2xl sm:text-3xl font-bold mb-2 bg-gradient-to-r ${
-                      stat.color === 'primary' 
-                        ? 'from-primary-500 to-primary-600' 
-                        : 'from-accent-500 to-accent-600'
-                    } bg-clip-text text-transparent`}>
+                    <svg className={`w-6 h-6 mx-auto mb-3 bg-gradient-to-r ${stat.gradient} bg-clip-text`} fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'transparent', stroke: `url(#grad${i})` }}>
+                      <defs>
+                        <linearGradient id={`grad${i}`} x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor={i % 2 === 0 ? '#0ea5e9' : i === 3 ? '#10b981' : '#d946ef'} />
+                          <stop offset="100%" stopColor={i % 2 === 0 ? '#0284c7' : i === 3 ? '#059669' : '#c026d3'} />
+                        </linearGradient>
+                      </defs>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={stat.icon} />
+                    </svg>
+                    <div className={`text-2xl sm:text-3xl font-bold mb-1.5 bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}>
                       {stat.value}
                     </div>
-                    <div className="text-xs sm:text-sm text-surface-600 dark:text-surface-400">
+                    <div className="text-xs sm:text-sm text-surface-600 dark:text-surface-400 font-medium">
                       {stat.label}
                     </div>
                   </div>

@@ -10,7 +10,7 @@ interface Stage {
 interface PaymentModalProps {
   stage: Stage
   chainId: string
-  walletType: 'handcash' | 'metanet' | 'paymail' | 'demo'
+  walletType: 'handcash' | 'demo'
   demoMode?: boolean
   onClose: () => void
   onPay: (data: { txid?: string; paidBy: string }) => void
@@ -18,7 +18,7 @@ interface PaymentModalProps {
 }
 
 export default function PaymentModal({ stage, chainId, walletType, demoMode = false, onClose, onPay, loading = false }: PaymentModalProps) {
-  const [selectedWallet, setSelectedWallet] = useState<'handcash' | 'metanet' | 'paymail' | 'demo'>(walletType === 'demo' ? 'handcash' : walletType)
+  const [selectedWallet, setSelectedWallet] = useState<'handcash' | 'demo'>(walletType === 'demo' ? 'handcash' : walletType)
   const [processing, setProcessing] = useState(false)
   const [step, setStep] = useState<'select' | 'processing' | 'success'>('select')
   const [txid, setTxid] = useState('')
@@ -35,28 +35,6 @@ export default function PaymentModal({ stage, chainId, walletType, demoMode = fa
       ),
       color: 'from-emerald-500 to-emerald-600'
     },
-    {
-      id: 'metanet' as const,
-      name: 'MetaNet (Babbage)',
-      description: 'Pay with MetaNet wallet',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
-        </svg>
-      ),
-      color: 'from-blue-500 to-blue-600'
-    },
-    {
-      id: 'paymail' as const,
-      name: 'Paymail / QR Code',
-      description: 'Pay via paymail or scan QR',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
-        </svg>
-      ),
-      color: 'from-purple-500 to-purple-600'
-    }
   ]
 
   async function handlePayment() {
@@ -81,17 +59,7 @@ export default function PaymentModal({ stage, chainId, walletType, demoMode = fa
       // Real payment flow based on wallet type
       let paymentTxid = ''
       
-      if (selectedWallet === 'handcash') {
-        // HandCash payment flow
-        // In production, this would use the HandCash Connect API
-        paymentTxid = await simulateHandCashPayment(stage.rentAmount || 0)
-      } else if (selectedWallet === 'metanet') {
-        // MetaNet/Babbage payment flow
-        paymentTxid = await simulateMetaNetPayment(stage.rentAmount || 0)
-      } else {
-        // Generic QR code payment
-        paymentTxid = await simulateGenericPayment(stage.rentAmount || 0)
-      }
+      paymentTxid = await simulateHandCashPayment(stage.rentAmount || 0)
 
       setTxid(paymentTxid)
       setStep('success')
@@ -115,18 +83,8 @@ export default function PaymentModal({ stage, chainId, walletType, demoMode = fa
     return `hc_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
   }
 
-  async function simulateMetaNetPayment(amount: number): Promise<string> {
-    // In production, use babbage-sdk createAction
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    return `mn_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
-  }
 
-  async function simulateGenericPayment(amount: number): Promise<string> {
-    await new Promise(resolve => setTimeout(resolve, 2000))
-    return `qr_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`
-  }
-
-  return (
+return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && !processing && onClose()}>
       <div className="modal-content max-w-md animate-scale-in">
         {/* Header */}
