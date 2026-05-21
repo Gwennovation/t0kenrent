@@ -5,7 +5,6 @@ import { getHandCashAuthUrl } from '@/lib/handcash-client'
 
 type WalletConnectionType = 'handcash' | 'metanet' | 'paymail' | 'demo'
 
-
 interface WalletSelectorProps {
   onAuthenticated: (publicKey: string, handle: string, walletType: WalletConnectionType, balance?: number) => void
   compact?: boolean
@@ -31,7 +30,7 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
       const response = await fetch('/api/auth/handcash', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ authToken })
+        body: JSON.stringify({ authToken }),
       })
       const data = await response.json()
       if (response.ok && data.success) {
@@ -69,66 +68,59 @@ export default function WalletSelector({ onAuthenticated, compact = false }: Wal
         type="button"
         onClick={connectHandCash}
         disabled={loading}
-        className="p-2 rounded-xl transition-all duration-200 bg-white/80 dark:bg-surface-800/80 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 border border-surface-200 dark:border-surface-700 hover:border-emerald-400"
+        className="p-2 rounded-xl bg-surface-800 border border-surface-700 hover:border-surface-600 hover:bg-surface-700 transition-colors disabled:opacity-50"
         title="Connect HandCash"
       >
         {loading ? (
-          <svg className="w-7 h-7 text-emerald-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <svg className="w-6 h-6 text-primary-500 animate-spin" viewBox="0 0 24 24" fill="none">
             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
           </svg>
         ) : (
-          <Image src="/wallets/HandCash Logo.png" alt="HandCash" width={28} height={28} className="rounded-lg" />
+          <Image src="/wallets/HandCash Logo.png" alt="HandCash" width={24} height={24} className="rounded" />
         )}
       </button>
     )
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <button
         type="button"
         onClick={connectHandCash}
         disabled={loading}
-        className="group w-full flex items-center gap-4 p-4 rounded-xl border-2 border-surface-200 dark:border-surface-700 hover:border-emerald-400 dark:hover:border-emerald-600 hover:bg-emerald-50/50 dark:hover:bg-emerald-900/10 transition-all duration-300"
+        className="group w-full flex items-center gap-3 p-3.5 rounded-xl border border-surface-700 hover:border-surface-600 bg-surface-900/50 hover:bg-surface-800/50 transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white dark:bg-surface-800 overflow-hidden group-hover:shadow-lg group-hover:shadow-emerald-500/30 transition-all">
+        <div className="w-10 h-10 rounded-lg bg-surface-800 border border-surface-700 flex items-center justify-center shrink-0 overflow-hidden">
           {loading ? (
-            <svg className="w-6 h-6 text-emerald-500 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-primary-500 animate-spin" viewBox="0 0 24 24" fill="none">
               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
               <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
             </svg>
           ) : (
-            <Image src="/wallets/HandCash Logo.png" alt="HandCash" width={40} height={40} className="rounded-lg" />
+            <Image src="/wallets/HandCash Logo.png" alt="HandCash" width={36} height={36} className="rounded-md" />
           )}
         </div>
         <div className="flex-1 text-left">
-          <div className="flex items-center gap-2">
-            <span className="font-semibold text-surface-900 dark:text-white group-hover:text-emerald-700 dark:group-hover:text-emerald-300">
-              {loading ? 'Connecting...' : 'Connect with HandCash'}
-            </span>
-            <span className="text-[10px] px-2 py-0.5 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-full font-medium">
-              RECOMMENDED
-            </span>
-          </div>
-          <p className="text-sm text-surface-500 dark:text-surface-400">
-            Sign in with your $handle — fast and secure
-          </p>
+          <span className="block text-sm font-medium text-surface-200 group-hover:text-white transition-colors">
+            {loading ? 'Redirecting…' : 'Continue with HandCash'}
+          </span>
+          <span className="text-xs text-surface-500">
+            {loading ? 'Opening HandCash…' : 'Sign in with your $handle'}
+          </span>
         </div>
-        <svg className="w-5 h-5 text-surface-400 -translate-x-2 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-        </svg>
+        {!loading && (
+          <svg className="w-4 h-4 text-surface-600 group-hover:text-surface-400 transition-colors shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+        )}
       </button>
 
       {error && (
-        <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl">
-          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+        <div className="p-3 bg-red-950/60 border border-red-900/50 rounded-lg">
+          <p className="text-xs text-red-400">{error}</p>
         </div>
       )}
-
-      <p className="text-xs text-center text-surface-500 dark:text-surface-400">
-        Your keys stay in your wallet — we never see your private keys.
-      </p>
     </div>
   )
 }

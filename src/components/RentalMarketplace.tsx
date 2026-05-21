@@ -391,8 +391,8 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
                   onClick={() => setSelectedCategory(cat.id)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all duration-200 ${
                     selectedCategory === cat.id
-                      ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25'
-                      : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 hover:bg-surface-200 dark:hover:bg-surface-700 border border-surface-200 dark:border-surface-700'
+                      ? 'bg-primary-600 text-white'
+                      : 'bg-surface-900 text-surface-400 hover:bg-surface-800 hover:text-surface-200 border border-surface-800'
                   }`}
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -487,7 +487,7 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
             </div>
           ) : (
             <div className="empty-state animate-slide-up animation-delay-200">
-              <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-surface-100 to-surface-200 dark:from-surface-800 dark:to-surface-700 flex items-center justify-center">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-surface-800 border border-surface-700 flex items-center justify-center">
                 <svg className="w-12 h-12 text-surface-400 dark:text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                 </svg>
@@ -524,8 +524,8 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
                     onClick={() => setMyListingsFilter('all')}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
                       myListingsFilter === 'all'
-                        ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25'
-                        : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 hover:bg-surface-200 dark:hover:bg-surface-700 border border-surface-200 dark:border-surface-700'
+                        ? 'bg-primary-600 text-white'
+                        : 'bg-surface-900 text-surface-400 hover:bg-surface-800 hover:text-surface-200 border border-surface-800'
                     }`}
                   >
                     All ({myAssets.length})
@@ -535,8 +535,8 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
                     onClick={() => setMyListingsFilter('available')}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
                       myListingsFilter === 'available'
-                        ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/25'
-                        : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 hover:bg-surface-200 dark:hover:bg-surface-700 border border-surface-200 dark:border-surface-700'
+                        ? 'bg-emerald-800 text-emerald-200'
+                        : 'bg-surface-900 text-surface-400 hover:bg-surface-800 hover:text-surface-200 border border-surface-800'
                     }`}
                   >
                     <span className={`w-2 h-2 rounded-full ${
@@ -549,8 +549,8 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
                     onClick={() => setMyListingsFilter('rented')}
                     className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
                       myListingsFilter === 'rented'
-                        ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/25'
-                        : 'bg-surface-100 dark:bg-surface-800 text-surface-600 dark:text-surface-400 hover:bg-surface-200 dark:hover:bg-surface-700 border border-surface-200 dark:border-surface-700'
+                        ? 'bg-amber-900/60 text-amber-300'
+                        : 'bg-surface-900 text-surface-400 hover:bg-surface-800 hover:text-surface-200 border border-surface-800'
                     }`}
                   >
                     <span className={`w-2 h-2 rounded-full ${
@@ -608,7 +608,7 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
           ) : myAssets.length > 0 ? (
             /* No items match filter */
             <div className="empty-state">
-              <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-surface-100 to-surface-200 dark:from-surface-800 dark:to-surface-700 flex items-center justify-center">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-surface-800 border border-surface-700 flex items-center justify-center">
                 <svg className="w-12 h-12 text-surface-400 dark:text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
                 </svg>
@@ -628,7 +628,7 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
           ) : (
             /* No items at all */
             <div className="empty-state">
-              <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-surface-100 to-surface-200 dark:from-surface-800 dark:to-surface-700 flex items-center justify-center">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-surface-800 border border-surface-700 flex items-center justify-center">
                 <svg className="w-12 h-12 text-surface-400 dark:text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                 </svg>
@@ -683,7 +683,7 @@ export default function RentalMarketplace({ userKey, demoMode = false, walletTyp
             </div>
           ) : (
             <div className="empty-state">
-              <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-surface-100 to-surface-200 dark:from-surface-800 dark:to-surface-700 flex items-center justify-center">
+              <div className="w-24 h-24 mx-auto mb-6 rounded-2xl bg-surface-800 border border-surface-700 flex items-center justify-center">
                 <svg className="w-12 h-12 text-surface-400 dark:text-surface-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>

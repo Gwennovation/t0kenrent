@@ -219,7 +219,7 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
         >
           <div className="flex gap-4 sm:gap-6">
             {/* Image */}
-            <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 rounded-xl overflow-hidden bg-gradient-to-br from-surface-100 to-surface-200 dark:from-surface-800 dark:to-surface-700">
+            <div className="relative w-24 h-24 sm:w-32 sm:h-32 flex-shrink-0 rounded-xl overflow-hidden bg-surface-800">
               {asset.imageUrl ? (
                 <img
                   src={asset.imageUrl}
@@ -279,7 +279,7 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
                   <button
                     type="button"
                     onClick={handleRentClick}
-                    className={`btn-primary text-sm py-2 ${unlocked ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700' : ''}`}
+                    className={`text-sm ${unlocked ? 'btn-accent' : 'btn-primary'}`}
                   >
                     {unlocked ? 'Rent Now' : `Unlock ~$${(asset.unlockFee * 50).toFixed(2)}`}
                   </button>
@@ -327,7 +327,7 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
         onMouseLeave={() => setIsHovered(false)}
       >
         {/* Image Section */}
-        <div className="relative h-52 overflow-hidden bg-gradient-to-br from-surface-100 to-surface-200 dark:from-surface-800 dark:to-surface-700">
+        <div className="relative h-52 overflow-hidden bg-surface-800">
           {asset.imageUrl ? (
             <img
               src={asset.imageUrl}
@@ -351,7 +351,7 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
 
           {/* Unlock Fee Badge */}
           {!unlocked && !isOwner && (
-            <div className="absolute bottom-3 left-3 px-3 py-1.5 bg-accent-500/90 dark:bg-accent-600/90 backdrop-blur-sm text-white rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-lg shadow-accent-500/25">
+            <div className="absolute bottom-3 left-3 px-3 py-1.5 bg-surface-900/85 backdrop-blur-sm text-white rounded-lg text-xs font-medium flex items-center gap-1.5 border border-surface-700/60">
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
@@ -361,7 +361,7 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
 
           {/* Unlocked Badge */}
           {unlocked && (
-            <div className="absolute bottom-3 left-3 px-3 py-1.5 bg-emerald-500/90 dark:bg-emerald-600/90 backdrop-blur-sm text-white rounded-full text-xs font-semibold flex items-center gap-1.5 shadow-lg shadow-emerald-500/25">
+            <div className="absolute bottom-3 left-3 px-3 py-1.5 bg-emerald-900/85 backdrop-blur-sm text-emerald-300 rounded-lg text-xs font-medium flex items-center gap-1.5 border border-emerald-800/60">
               <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
@@ -447,7 +447,7 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
                 <button 
                   type="button" 
                   onClick={() => setShowEditModal(true)}
-                  className="flex-1 px-4 py-2.5 bg-surface-100 dark:bg-surface-800 hover:bg-primary-100 dark:hover:bg-primary-900/30 text-surface-700 dark:text-surface-300 hover:text-primary-700 dark:hover:text-primary-400 font-medium rounded-xl transition-all duration-200 text-sm border border-surface-200 dark:border-surface-700 hover:border-primary-300 dark:hover:border-primary-700 flex items-center justify-center gap-1.5"
+                  className="flex-1 px-4 py-2.5 bg-surface-800 hover:bg-surface-700 text-surface-300 hover:text-white font-medium rounded-xl transition-colors duration-150 text-sm border border-surface-700 hover:border-surface-600 flex items-center justify-center gap-1.5"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -457,7 +457,7 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
                 <button 
                   type="button" 
                   onClick={() => setShowStatsModal(true)}
-                  className="flex-1 px-4 py-2.5 bg-surface-100 dark:bg-surface-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/30 text-surface-700 dark:text-surface-300 hover:text-emerald-700 dark:hover:text-emerald-400 font-medium rounded-xl transition-all duration-200 text-sm border border-surface-200 dark:border-surface-700 hover:border-emerald-300 dark:hover:border-emerald-700 flex items-center justify-center gap-1.5"
+                  className="flex-1 px-4 py-2.5 bg-surface-800 hover:bg-surface-700 text-surface-300 hover:text-white font-medium rounded-xl transition-colors duration-150 text-sm border border-surface-700 hover:border-surface-600 flex items-center justify-center gap-1.5"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -469,11 +469,7 @@ export default function AssetCard({ asset, userKey, isOwner = false, demoMode = 
               <button
                 type="button"
                 onClick={handleRentClick}
-                className={`w-full px-4 py-3 font-semibold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 ${
-                  unlocked
-                    ? 'bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 text-white shadow-lg shadow-emerald-500/25 hover:shadow-xl hover:shadow-emerald-500/30 hover:-translate-y-0.5'
-                    : 'bg-gradient-to-r from-primary-500 to-primary-600 hover:from-primary-600 hover:to-primary-700 text-white shadow-lg shadow-primary-500/25 hover:shadow-xl hover:shadow-primary-500/30 hover:-translate-y-0.5'
-                }`}
+                className={`w-full flex items-center justify-center gap-2 ${unlocked ? 'btn-accent' : 'btn-primary'}`}
               >
                 {unlocked ? (
                   <>

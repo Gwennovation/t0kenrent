@@ -9,11 +9,16 @@ const WALLET_SESSION_KEYS = {
   type: 't0kenrent_wallet_type',
   key: 't0kenrent_wallet_key',
   handle: 't0kenrent_wallet_handle',
-  balance: 't0kenrent_wallet_balance'
+  balance: 't0kenrent_wallet_balance',
 } as const
 
+const BRAND_POINTS = [
+  'Pay ~$0.001 to unlock pickup details',
+  'Deposit held in 2-of-2 multisig escrow',
+  'Both sign to release — immutable on-chain proof',
+] as const
+
 export default function Home() {
-  const [authenticated, setAuthenticated] = useState(false)
   const [userKey, setUserKey] = useState('')
   const [userHandle, setUserHandle] = useState('')
   const [walletType, setWalletType] = useState<'handcash' | 'demo'>('demo')
@@ -26,18 +31,15 @@ export default function Home() {
   const [authError, setAuthError] = useState<string | null>(null)
 
   const hasRealWallet = walletType !== 'demo'
+  const handcashAuthUrl = `https://app.handcash.io/#/authorizeApp?appId=${process.env.NEXT_PUBLIC_HANDCASH_APP_ID || ''}`
 
   function restoreWalletSession() {
-    if (typeof window === 'undefined') {
-      return false
-    }
+    if (typeof window === 'undefined') return false
 
-    const storedWalletType = sessionStorage.getItem(WALLET_SESSION_KEYS.type) as ('handcash' | 'metanet' | 'paymail' | 'demo' | null)
+    const storedWalletType = sessionStorage.getItem(WALLET_SESSION_KEYS.type) as 'handcash' | 'metanet' | 'paymail' | 'demo' | null
     const storedPublicKey = sessionStorage.getItem(WALLET_SESSION_KEYS.key)
 
-    if (!storedWalletType || storedWalletType === 'demo' || !storedPublicKey) {
-      return false
-    }
+    if (!storedWalletType || storedWalletType === 'demo' || !storedPublicKey) return false
 
     const storedHandle = sessionStorage.getItem(WALLET_SESSION_KEYS.handle) || storedPublicKey.slice(0, 10)
     const storedBalanceRaw = sessionStorage.getItem(WALLET_SESSION_KEYS.balance)
@@ -47,7 +49,7 @@ export default function Home() {
       storedPublicKey,
       storedHandle,
       storedWalletType,
-      parsedBalance !== undefined && !Number.isNaN(parsedBalance) ? parsedBalance : undefined
+      parsedBalance !== undefined && !Number.isNaN(parsedBalance) ? parsedBalance : undefined,
     )
 
     return true
@@ -56,14 +58,12 @@ export default function Home() {
   useEffect(() => {
     setIsLoaded(true)
 
-    if (typeof window === 'undefined') {
-      return
-    }
+    if (typeof window === 'undefined') return
 
     const currentUrl = new URL(window.location.href)
     const urlParams = currentUrl.searchParams
-
     const authToken = urlParams.get('authToken')
+
     if (authToken) {
       handleHandCashCallback(authToken)
       return
@@ -85,39 +85,29 @@ export default function Home() {
   }, [])
 
   async function handleHandCashCallback(authToken: string) {
-    console.log('🔐 Starting HandCash authentication...')
-    // Show loading state
     setIsAuthenticating(true)
     setAuthError(null)
-    
-    // Clean URL immediately to prevent re-triggering on refresh
+
     const url = new URL(window.location.href)
     url.searchParams.delete('authToken')
     window.history.replaceState({}, '', url.pathname + url.search)
-    
+
     try {
-      console.log('📡 Calling /api/auth/handcash...')
       const response = await fetch('/api/auth/handcash', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ authToken })
+        body: JSON.stringify({ authToken }),
       })
-      
+
       const data = await response.json()
-      console.log('📥 Auth response:', response.status, data)
-      
+
       if (response.ok && data.success) {
-        console.log('✅ Authentication successful!')
         handleAuthenticated(data.publicKey, data.handle, 'handcash', data.balance)
       } else {
-        // Handle API error response
-        const errorMessage = data.error || 'Authentication failed. Please try again.'
-        console.error('❌ HandCash auth failed:', errorMessage)
-        setAuthError(errorMessage)
+        setAuthError(data.error || 'Authentication failed. Please try again.')
       }
     } catch (error: any) {
-      console.error('❌ HandCash callback error:', error)
-      setAuthError(error.message || 'Network error during authentication. Please check your connection and try again.')
+      setAuthError(error.message || 'Network error. Check your connection and try again.')
     } finally {
       setIsAuthenticating(false)
     }
@@ -127,7 +117,6 @@ export default function Home() {
     setUserKey(publicKey)
     setUserHandle(handle || publicKey.slice(0, 10))
     setWalletType(wallet as 'handcash' | 'demo')
-    setAuthenticated(true)
     setShowMarketplace(true)
 
     const isDemo = wallet === 'demo'
@@ -162,7 +151,6 @@ export default function Home() {
     setUserKey('')
     setUserHandle('')
     setWalletType('demo')
-    setAuthenticated(false)
     setDemoMode(false)
     setShowMarketplace(false)
     setWalletBalance(null)
@@ -179,530 +167,280 @@ export default function Home() {
   return (
     <>
       <Head>
-        <title>T0kenRent - Decentralized Rental Platform on BSV</title>
-        <meta name="description" content="Rent everyday items from people near you with secure BSV payments, smart contract escrow, and on-chain proof of rentals." />
+        <title>T0kenRent — Peer-to-peer rentals on BSV</title>
+        <meta name="description" content="Rent everyday items peer-to-peer. BSV escrow protects every deposit. No middleman, no platform fees." />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <div className={`min-h-screen transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
-        {/* Animated Background */}
-        <div className="fixed inset-0 -z-10 overflow-hidden">
-          <div className="absolute -top-1/2 -left-1/2 w-full h-full bg-gradient-to-br from-primary-500/10 via-transparent to-transparent rounded-full blur-3xl animate-float" />
-          <div className="absolute -bottom-1/2 -right-1/2 w-full h-full bg-gradient-to-tl from-accent-500/10 via-transparent to-transparent rounded-full blur-3xl animate-float animation-delay-300" />
-          <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-primary-500/5 rounded-full blur-3xl animate-pulse-slow" />
-        </div>
+
+        {/* HandCash callback overlay */}
+        {isAuthenticating && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="glass-card p-8 max-w-xs mx-4 text-center animate-scale-in">
+              <svg className="animate-spin w-10 h-10 text-primary-500 mx-auto mb-4" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-20" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+                <path className="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <p className="text-sm font-semibold text-white mb-1">Verifying with HandCash</p>
+              <p className="text-xs text-surface-400">Confirming your wallet details…</p>
+            </div>
+          </div>
+        )}
 
         {/* Header */}
-        <header className="sticky top-0 z-50 backdrop-blur-xl bg-white/80 dark:bg-surface-900/80 border-b border-surface-200/50 dark:border-surface-700/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16 sm:h-20">
-              {/* Logo */}
-              <div
-                className="flex items-center gap-3 group cursor-pointer"
+        <header className="sticky top-0 z-50 border-b border-surface-800/60 bg-surface-950/80 backdrop-blur-xl">
+          <div className="max-w-6xl mx-auto px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+
+              <button
+                type="button"
                 onClick={() => {
-                  if (hasRealWallet) {
-                    setShowMarketplace(true)
-                  } else {
-                    setShowMarketplace(false)
-                  }
+                  if (!hasRealWallet) setShowMarketplace(false)
                   setDemoMode(false)
                   setActiveView('marketplace')
                 }}
+                className="flex items-center gap-2.5 group"
               >
-                <div className="relative">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center transition-all duration-300 group-hover:scale-105">
-                    <img 
-                      src="/wallets/t0kenrent logo.png" 
-                      alt="T0kenRent Logo" 
-                      className="w-full h-full object-contain"
-                    />
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-white dark:border-surface-900 animate-pulse" />
-                </div>
-                <div className="hidden sm:block">
-                  <h1 className="text-xl font-bold bg-gradient-to-r from-surface-900 to-surface-600 dark:from-white dark:to-surface-400 bg-clip-text text-transparent">
-                    T0kenRent
-                  </h1>
-                  <p className="text-xs text-surface-500 dark:text-surface-400 -mt-0.5">
-                    Decentralized Rentals on BSV
-                  </p>
-                </div>
-              </div>
+                <img
+                  src="/wallets/t0kenrent logo.png"
+                  alt="T0kenRent"
+                  className="w-8 h-8 object-contain"
+                />
+                <span className="text-base font-semibold text-white tracking-tight group-hover:text-surface-200 transition-colors">
+                  T0kenRent
+                </span>
+              </button>
 
-              {/* Right Section */}
-              <div className="flex items-center gap-3 sm:gap-4">
-                {/* Theme Toggle */}
+              <div className="flex items-center gap-2">
                 <ThemeToggle />
 
-                {/* Demo Badge */}
-                {demoMode && (
-                  <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-amber-100 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-full">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-                    </span>
-                    <span className="text-xs font-semibold text-amber-700 dark:text-amber-400">Demo Mode</span>
-                  </div>
+                {showMarketplace && (
+                  <>
+                    <div className="flex items-center gap-2 h-9 px-3 bg-surface-900 border border-surface-800 rounded-xl">
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${demoMode ? 'bg-amber-400' : 'bg-emerald-500'}`} />
+                      {demoMode && (
+                        <span className="text-[10px] font-semibold text-amber-400 tracking-wide">DEMO</span>
+                      )}
+                      <span className="text-sm text-surface-300 truncate max-w-[100px]">
+                        {demoMode ? 'Demo mode' : userHandle || `${userKey.slice(0, 6)}…`}
+                      </span>
+                      {walletBalance !== null && (
+                        <span className="hidden sm:inline font-mono-financial text-xs text-primary-400 ml-1">
+                          {walletBalance.toFixed(4)} BSV
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={disconnectWallet}
+                      className="p-2 rounded-xl text-surface-500 hover:text-surface-200 hover:bg-surface-800 border border-transparent hover:border-surface-700 transition-colors"
+                      title="Disconnect wallet"
+                      aria-label="Disconnect wallet"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                    </button>
+                  </>
                 )}
-
-                {/* Wallet Status */}
-                <div className="w-auto">
-                  {showMarketplace ? (
-                    <div className="flex items-center gap-2">
-                      <div className="flex items-center gap-2 px-3 py-2 bg-emerald-100 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800 rounded-xl">
-                        <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                        <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium uppercase ${
-                          demoMode
-                            ? 'bg-amber-200 dark:bg-amber-800 text-amber-700 dark:text-amber-300'
-                            : 'bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300'
-                        }`}>
-                          {demoMode ? 'DEMO' : 'HC'}
-                        </span>
-                        <span className="hidden sm:inline text-xs font-medium text-emerald-700 dark:text-emerald-400 truncate max-w-[120px]">
-                          {demoMode ? 'Demo User' : userHandle || `${userKey.slice(0, 6)}...${userKey.slice(-4)}`}
-                        </span>
-                        {walletBalance !== null && (
-                          <span className="hidden md:inline text-xs font-bold text-primary-600 dark:text-primary-400 ml-1">
-                            {walletBalance.toFixed(4)} BSV
-                          </span>
-                        )}
-                      </div>
-                      <button 
-                        type="button"
-                        onClick={disconnectWallet}
-                        className="p-2 rounded-lg bg-surface-100 dark:bg-surface-800 hover:bg-red-100 dark:hover:bg-red-900/30 text-surface-600 dark:text-surface-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
-                        title="Disconnect"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                        </svg>
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="hidden sm:flex items-center gap-2">
-                      <WalletSelector onAuthenticated={handleAuthenticated} compact />
-                    </div>
-                  )}
-                </div>
               </div>
+
             </div>
           </div>
         </header>
 
-        {/* Authentication Loading Overlay */}
-        {isAuthenticating && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm">
-            <div className="glass-card p-8 text-center max-w-sm mx-4 animate-slide-up">
-              <div className="relative mx-auto w-16 h-16 mb-4">
-                <div className="absolute inset-0 rounded-full border-4 border-primary-200 dark:border-primary-800"></div>
-                <div className="absolute inset-0 rounded-full border-4 border-primary-500 border-t-transparent animate-spin"></div>
-              </div>
-              <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
-                Authenticating with HandCash
-              </h3>
-              <p className="text-sm text-surface-600 dark:text-surface-400">
-                Please wait while we verify your wallet...
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Authentication Error Alert */}
-        {authError && !isAuthenticating && (
-          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[90] max-w-md mx-4 animate-slide-down">
-            <div className="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-xl p-4 shadow-lg">
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0">
-                  <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div className="flex-1">
-                  <h4 className="text-sm font-semibold text-red-800 dark:text-red-300 mb-1">
-                    Authentication Failed
-                  </h4>
-                  <p className="text-sm text-red-700 dark:text-red-400">
-                    {authError}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setAuthError(null)}
-                  className="flex-shrink-0 p-1 rounded-lg hover:bg-red-100 dark:hover:bg-red-800/50 transition-colors"
-                >
-                  <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
-              <div className="mt-3 flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setAuthError(null)}
-                  className="flex-1 px-3 py-1.5 text-sm font-medium text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-800/50 rounded-lg hover:bg-red-200 dark:hover:bg-red-800 transition-colors"
-                >
-                  Dismiss
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAuthError(null)
-                    // Redirect to HandCash auth again
-                    const handcashAuthUrl = `https://app.handcash.io/#/authorizeApp?appId=${process.env.NEXT_PUBLIC_HANDCASH_APP_ID || ''}`
-                    window.location.href = handcashAuthUrl
-                  }}
-                  className="flex-1 px-3 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  Try Again
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Main Content */}
-        <main className="relative">
+        {/* Main */}
+        <main>
           {showMarketplace ? (
+
             <div className="animate-fade-in">
-              {/* View Toggle */}
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
-                <div className="flex items-center justify-center gap-2 p-1 bg-surface-100 dark:bg-surface-800 rounded-xl w-fit mx-auto">
+              {/* View toggle */}
+              <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-6 pb-2">
+                <div className="inline-flex p-1 bg-surface-900 border border-surface-800 rounded-xl">
                   <button
                     type="button"
                     onClick={() => setActiveView('marketplace')}
-                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                    className={`px-5 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150 ${
                       activeView === 'marketplace'
-                        ? 'bg-white dark:bg-surface-700 text-primary-600 dark:text-primary-400 shadow-sm'
-                        : 'text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
+                        ? 'bg-surface-800 text-white'
+                        : 'text-surface-500 hover:text-surface-300'
                     }`}
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
-                    </svg>
                     Marketplace
                   </button>
                   <button
                     type="button"
                     onClick={() => setActiveView('dashboard')}
-                    className={`px-6 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-2 ${
+                    className={`px-5 py-1.5 text-sm font-medium rounded-lg transition-colors duration-150 ${
                       activeView === 'dashboard'
-                        ? 'bg-white dark:bg-surface-700 text-primary-600 dark:text-primary-400 shadow-sm'
-                        : 'text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white'
+                        ? 'bg-surface-800 text-white'
+                        : 'text-surface-500 hover:text-surface-300'
                     }`}
                   >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-                    </svg>
                     Dashboard
                   </button>
                 </div>
               </div>
-              
+
               {activeView === 'marketplace' ? (
                 <RentalMarketplace userKey={userKey} demoMode={demoMode} walletType={walletType} />
               ) : (
                 <RentalDashboard userKey={userKey} demoMode={demoMode} walletType={walletType} walletBalance={walletBalance} />
               )}
             </div>
+
           ) : (
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
-              {/* Hero Section */}
-              <div className="text-center max-w-4xl mx-auto mb-16 sm:mb-24">
-                <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-100 dark:bg-primary-900/30 border border-primary-200 dark:border-primary-800 rounded-full mb-6 animate-slide-down">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-500 opacity-75"></span>
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500"></span>
-                  </span>
-                  <span className="text-sm font-medium text-primary-700 dark:text-primary-400">
-                    Built on BSV Blockchain
-                  </span>
-                </div>
 
-                <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 animate-slide-up">
-                  <span className="bg-gradient-to-r from-surface-900 via-surface-700 to-surface-900 dark:from-white dark:via-surface-300 dark:to-white bg-clip-text text-transparent">
-                    Rent Anything,
-                  </span>
-                  <br />
-                  <span className="bg-gradient-to-r from-primary-500 via-accent-500 to-primary-500 bg-clip-text text-transparent">
-                    Trust the Chain
-                  </span>
-                </h1>
+            /* Two-zone landing */
+            <div className="min-h-[calc(100vh-65px)] flex items-center">
+              <div className="w-full max-w-6xl mx-auto px-6 lg:px-8 py-16">
+                <div className="grid lg:grid-cols-[1fr_400px] gap-12 lg:gap-20 items-center">
 
-                <p className="text-lg sm:text-xl text-surface-600 dark:text-surface-400 mb-10 max-w-2xl mx-auto animate-slide-up animation-delay-100">
-                  Peer-to-peer rentals with HTTP 402 micropayments, smart contract escrow, 
-                  and on-chain proof of every transaction.
-                </p>
-
-                {/* Wallet Connection Options */}
-                <div className="max-w-md mx-auto mb-8 animate-slide-up animation-delay-200">
-                  <div className="glass-card p-6">
-                    <div className="flex items-center gap-3 mb-5">
-                      <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-accent-500 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/20">
-                        <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                        </svg>
-                      </div>
-                      <div>
-                        <h3 className="text-base font-semibold text-surface-900 dark:text-white leading-tight">Connect Your Wallet</h3>
-                        <p className="text-xs text-surface-500 dark:text-surface-400">Sign in with HandCash to get started</p>
-                      </div>
+                  {/* Left: Brand copy */}
+                  <div className="animate-slide-up">
+                    <div className="inline-flex items-center gap-2 mb-8">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      <span className="text-xs font-mono text-surface-500 tracking-widest uppercase">
+                        Testnet active · BSV
+                      </span>
                     </div>
-                    <WalletSelector onAuthenticated={handleAuthenticated} />
-                  </div>
-                </div>
 
-                {/* Demo Mode Button */}
-                {hasRealWallet ? (
-                  <div className="flex flex-col items-center gap-3 animate-slide-up animation-delay-300">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowMarketplace(true)
-                        setActiveView('marketplace')
-                      }}
-                      className="btn-primary text-base px-6 py-3 flex items-center justify-center gap-2"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                      Enter Marketplace
-                    </button>
-                    <p className="text-sm text-surface-500 dark:text-surface-500 text-center">
-                      Demo mode is disabled while a wallet is connected. Disconnect to explore the simulation.
+                    <h1 className="text-5xl lg:text-6xl xl:text-7xl font-bold tracking-tight leading-[1.05] mb-6">
+                      <span className="text-white">Rent anything.</span>
+                      <br />
+                      <span className="text-primary-400">No middleman.</span>
+                    </h1>
+
+                    <p className="text-lg text-surface-400 mb-10 max-w-lg leading-relaxed">
+                      Peer-to-peer rentals secured by BSV blockchain escrow.
+                      Listers and renters transact directly, no platform taking a cut.
+                    </p>
+
+                    <ul className="space-y-3.5 mb-10">
+                      {BRAND_POINTS.map((point) => (
+                        <li key={point} className="flex items-start gap-3">
+                          <span className="mt-0.5 font-mono text-sm text-primary-600 select-none shrink-0" aria-hidden>—</span>
+                          <span className="text-sm text-surface-300 leading-relaxed">{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <p className="text-xs text-surface-600">
+                      No account required. No platform fees. Your keys stay in your wallet.
                     </p>
                   </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-3 animate-slide-up animation-delay-300">
-                    <div className="flex items-center gap-4">
-                      <div className="h-px w-16 bg-surface-300 dark:bg-surface-700" />
-                      <span className="text-sm text-surface-500 dark:text-surface-400">or</span>
-                      <div className="h-px w-16 bg-surface-300 dark:bg-surface-700" />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={enableDemoMode}
-                      className="btn-secondary text-base px-6 py-3 flex items-center justify-center gap-2"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      Try Demo Mode
-                    </button>
-                    <p className="text-sm text-surface-500 dark:text-surface-500">
-                      Explore the full experience without connecting a wallet
-                    </p>
-                  </div>
-                )}
-              </div>
 
-              {/* Feature Cards */}
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16 sm:mb-24">
-                {[
-                  {
-                    icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z',
-                    title: 'Smart Contract Escrow',
-                    description: '2-of-2 multisig escrow protects both parties. Funds released only when both agree.',
-                    iconBg: 'bg-primary-100 dark:bg-primary-900/40',
-                    iconColor: 'text-primary-600 dark:text-primary-400',
-                    border: 'hover:border-primary-200 dark:hover:border-primary-800/50',
-                  },
-                  {
-                    icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z',
-                    title: 'HTTP 402 Payments',
-                    description: 'Pay tiny micropayments to unlock rental details. Near-zero fees on BSV.',
-                    iconBg: 'bg-emerald-100 dark:bg-emerald-900/40',
-                    iconColor: 'text-emerald-600 dark:text-emerald-400',
-                    border: 'hover:border-emerald-200 dark:hover:border-emerald-800/50',
-                  },
-                  {
-                    icon: 'M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z',
-                    title: '1Sat Ordinal Tokens',
-                    description: 'Link your assets to 1Sat ordinals for on-chain proof of ownership.',
-                    iconBg: 'bg-accent-100 dark:bg-accent-900/40',
-                    iconColor: 'text-accent-600 dark:text-accent-400',
-                    border: 'hover:border-accent-200 dark:hover:border-accent-800/50',
-                  },
-                  {
-                    icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01',
-                    title: 'On-Chain Logging',
-                    description: 'Every transaction logged on BSV. Immutable rental history and receipts.',
-                    iconBg: 'bg-amber-100 dark:bg-amber-900/40',
-                    iconColor: 'text-amber-600 dark:text-amber-400',
-                    border: 'hover:border-amber-200 dark:hover:border-amber-800/50',
-                  }
-                ].map((feature, i) => (
-                  <div key={i} className={`feature-card animate-slide-up border border-transparent transition-colors duration-300 ${feature.border}`} style={{ animationDelay: `${(i + 1) * 100}ms` }}>
-                    <div className={`icon-wrapper ${feature.iconBg}`}>
-                      <svg className={`w-7 h-7 ${feature.iconColor}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={feature.icon} />
-                      </svg>
-                    </div>
-                    <h3 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
-                      {feature.title}
-                    </h3>
-                    <p className="text-sm text-surface-600 dark:text-surface-400 leading-relaxed">
-                      {feature.description}
-                    </p>
-                  </div>
-                ))}
-              </div>
-
-              {/* How It Works */}
-              <div className="glass-card p-8 sm:p-12 mb-16 sm:mb-24 animate-slide-up animation-delay-400">
-                <div className="text-center mb-10">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-surface-900 dark:text-white mb-3">
-                    How It Works
-                  </h2>
-                  <p className="text-surface-600 dark:text-surface-400">
-                    Four steps to trustless peer-to-peer rentals
-                  </p>
-                </div>
-
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                  {[
-                    { step: '01', title: 'Connect Wallet', desc: 'Sign in securely with your HandCash wallet using your $handle.' },
-                    { step: '02', title: 'Pay to Unlock', desc: 'HTTP 402 micropayment reveals pickup location and contact.' },
-                    { step: '03', title: 'Fund Escrow', desc: 'Deposit + rental fee locked in 2-of-2 multisig contract.' },
-                    { step: '04', title: 'Complete & Release', desc: 'Both parties sign to release funds. On-chain proof created.' },
-                  ].map((item, i) => (
-                    <div key={i} className="relative">
-                      <div className="text-6xl font-bold text-primary-500/10 dark:text-primary-500/20 mb-2">
-                        {item.step}
+                  {/* Right: Wallet connect card */}
+                  <div className="animate-slide-up" style={{ animationDelay: '80ms' }}>
+                    <div className="glass-card p-6">
+                      <div className="mb-5">
+                        <h2 className="text-sm font-semibold text-white">Connect to get started</h2>
+                        <p className="text-xs text-surface-500 mt-0.5">Sign in with your BSV wallet</p>
                       </div>
-                      <h4 className="text-lg font-semibold text-surface-900 dark:text-white mb-2">
-                        {item.title}
-                      </h4>
-                      <p className="text-sm text-surface-600 dark:text-surface-400">
-                        {item.desc}
-                      </p>
-                      {i < 3 && (
-                        <div className="hidden lg:block absolute top-8 -right-4 text-surface-300 dark:text-surface-600">
-                          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                          </svg>
+
+                      {authError && !isAuthenticating && (
+                        <div className="mb-4 p-3 bg-red-950/60 border border-red-900/50 rounded-lg">
+                          <p className="text-xs text-red-400 mb-2">{authError}</p>
+                          <div className="flex gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setAuthError(null)}
+                              className="text-xs text-surface-500 hover:text-surface-300 transition-colors"
+                            >
+                              Dismiss
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAuthError(null)
+                                window.location.href = handcashAuthUrl
+                              }}
+                              className="text-xs text-primary-500 hover:text-primary-400 font-medium transition-colors"
+                            >
+                              Try again
+                            </button>
+                          </div>
                         </div>
                       )}
-                    </div>
-                  ))}
-                </div>
-              </div>
 
-              {/* Stats */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 sm:gap-6 mb-16 sm:mb-24">
-                {[
-                  { value: '~$0.001', label: 'Unlock Fee', gradient: 'from-primary-500 to-primary-600', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' },
-                  { value: '2-of-2', label: 'Multisig Escrow', gradient: 'from-accent-500 to-accent-600', icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z' },
-                  { value: '100%', label: 'On-Chain', gradient: 'from-primary-500 to-primary-600', icon: 'M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z' },
-                  { value: 'Global', label: 'P2P Rentals', gradient: 'from-emerald-500 to-emerald-600', icon: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
-                ].map((stat, i) => (
-                  <div
-                    key={i}
-                    className="stat-card animate-slide-up transition-transform duration-300"
-                    style={{ animationDelay: `${(i + 5) * 100}ms` }}
-                  >
-                    <svg className={`w-6 h-6 mx-auto mb-3 bg-gradient-to-r ${stat.gradient} bg-clip-text`} fill="none" stroke="currentColor" viewBox="0 0 24 24" style={{ color: 'transparent', stroke: `url(#grad${i})` }}>
-                      <defs>
-                        <linearGradient id={`grad${i}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                          <stop offset="0%" stopColor={i % 2 === 0 ? '#0ea5e9' : i === 3 ? '#10b981' : '#d946ef'} />
-                          <stop offset="100%" stopColor={i % 2 === 0 ? '#0284c7' : i === 3 ? '#059669' : '#c026d3'} />
-                        </linearGradient>
-                      </defs>
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d={stat.icon} />
-                    </svg>
-                    <div className={`text-2xl sm:text-3xl font-bold mb-1.5 bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}>
-                      {stat.value}
+                      <WalletSelector onAuthenticated={handleAuthenticated} />
+
+                      {!hasRealWallet && (
+                        <>
+                          <div className="flex items-center gap-3 my-4">
+                            <div className="flex-1 h-px bg-surface-800" />
+                            <span className="text-xs text-surface-600">or</span>
+                            <div className="flex-1 h-px bg-surface-800" />
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={enableDemoMode}
+                            className="w-full py-2.5 px-4 text-sm font-medium text-surface-400 hover:text-surface-200 border border-surface-800 hover:border-surface-700 rounded-xl transition-colors duration-150"
+                          >
+                            Try demo mode
+                          </button>
+                        </>
+                      )}
+
+                      {hasRealWallet && (
+                        <button
+                          type="button"
+                          onClick={() => { setShowMarketplace(true); setActiveView('marketplace') }}
+                          className="mt-4 w-full btn-primary"
+                        >
+                          Open Marketplace
+                        </button>
+                      )}
                     </div>
-                    <div className="text-xs sm:text-sm text-surface-600 dark:text-surface-400 font-medium">
-                      {stat.label}
+
+                    <div className="mt-3 flex items-center justify-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500/60" />
+                      <span className="text-xs text-surface-600">Testnet · no real funds required</span>
                     </div>
                   </div>
-                ))}
-              </div>
 
-              {/* CTA Section */}
-              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-500 to-accent-600 p-8 sm:p-12 text-center animate-slide-up animation-delay-500">
-                <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRoLTJ2LTRoMnY0em0wLTZ2LTJoLTJ2Mmgyem0tNiAwaC0ydjJoMnYtMnptMCA2aC0ydjRoMnYtNHptLTYtNmgtMnYyaDJ2LTJ6bTAgNmgtMnY0aDJ2LTR6bTEyLTEydi0ySDI0djJoMTJ6bTAgMTJ2LTJIMjR2MmgxMnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30" />
-                <div className="relative">
-                  <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">
-                    Ready to rent trustlessly?
-                  </h2>
-                  <p className="text-white/80 mb-8 max-w-xl mx-auto">
-                    List your items, rent what you need, all secured by BSV blockchain technology.
-                  </p>
-                  {hasRealWallet ? (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowMarketplace(true)
-                        setActiveView('marketplace')
-                      }}
-                      className="px-8 py-4 bg-white text-primary-600 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
-                    >
-                      Open Marketplace
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={enableDemoMode}
-                      className="px-8 py-4 bg-white text-primary-600 font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-0.5"
-                    >
-                      Launch Demo
-                    </button>
-                  )}
                 </div>
               </div>
             </div>
+
           )}
         </main>
 
         {/* Footer */}
-        <footer className="border-t border-surface-200 dark:border-surface-800 mt-auto">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <footer className="border-t border-surface-800 mt-auto">
+          <div className="max-w-6xl mx-auto px-6 lg:px-8 py-6">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-white dark:bg-surface-800 rounded-lg flex items-center justify-center shadow-md p-1.5">
-                  <img 
-                    src="/t0kenrent logo.png" 
-                    alt="t0kenrent Logo" 
-                    className="w-full h-full object-contain"
-                  />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-surface-900 dark:text-white">
-                    T0kenRent
-                  </p>
-                  <p className="text-xs text-surface-500 dark:text-surface-400">
-                    Decentralized Rentals on BSV
-                  </p>
-                </div>
+              <div className="flex items-center gap-2.5">
+                <img src="/t0kenrent logo.png" alt="T0kenRent" className="w-6 h-6 object-contain" />
+                <span className="text-sm text-surface-500">T0kenRent</span>
               </div>
-
-              <div className="flex items-center gap-6">
-                <a 
-                  href="https://github.com/Gwennovation/t0kenrent" 
+              <div className="flex items-center gap-5">
+                <a
+                  href="https://github.com/Gwennovation/t0kenrent"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-surface-600 dark:text-surface-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
+                  className="text-surface-600 hover:text-surface-400 transition-colors"
+                  aria-label="GitHub repository"
                 >
-                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
                     <path fillRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" clipRule="evenodd" />
                   </svg>
                 </a>
-                <div className="flex items-center gap-4">
-                  <a 
-                    href="https://bsvblockchain.org" 
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm text-surface-600 dark:text-surface-400 hover:text-primary-500 dark:hover:text-primary-400 transition-colors"
-                  >
-                    Powered by BSV
-                  </a>
-                </div>
+                <a
+                  href="https://bsvblockchain.org"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-surface-600 hover:text-surface-400 transition-colors"
+                >
+                  Powered by BSV
+                </a>
               </div>
             </div>
           </div>
         </footer>
+
       </div>
     </>
   )

@@ -195,25 +195,28 @@ export default function CreateAssetModal({ onClose, onCreate, categories, demoMo
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="bg-white dark:bg-surface-900 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto animate-scale-in border border-surface-200/50 dark:border-surface-700/50">
         {/* Header */}
-        <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary-500 to-primary-700 dark:from-primary-600 dark:to-primary-800" />
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4wNSI+PHBhdGggZD0iTTM2IDM0aC0ydi00aDJ2NHptMC02di0yaC0ydjJoMnptLTYgMGgtMnYyaDJ2LTJ6bTAgNmgtMnY0aDJ2LTR6bS02LTZoLTJ2Mmgydi0yem0wIDZoLTJ2NGgydi00em0xMi0xMnYtMkgyNHYyaDEyem0wIDEydi0ySDI0djJoMTJ6Ii8+PC9nPjwvZz48L3N2Zz4=')] opacity-50" />
-          <div className="relative px-6 py-5">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold text-white">List New Asset</h2>
-                <p className="text-primary-200 text-sm">Add your item to the marketplace</p>
-              </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+        <div className="px-6 py-5 border-b border-surface-700">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 flex items-center justify-center bg-surface-800 border border-surface-700 rounded-xl">
+                <svg className="w-5 h-5 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                 </svg>
-              </button>
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-white">List New Asset</h2>
+                <p className="text-sm text-surface-400">Add your item to the marketplace</p>
+              </div>
             </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-surface-500 hover:text-surface-200 hover:bg-surface-800 transition-colors"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -259,7 +262,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories, demoMo
               <div key={s.num} className="flex items-center">
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-semibold text-sm transition-all duration-300 ${
                   step >= s.num
-                    ? 'bg-gradient-to-r from-primary-500 to-primary-600 text-white shadow-lg shadow-primary-500/25'
+                    ? 'bg-primary-600 text-white'
                     : 'bg-surface-200 dark:bg-surface-700 text-surface-500 dark:text-surface-400'
                 }`}>
                   {step > s.num ? (
@@ -364,7 +367,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories, demoMo
                       onClick={() => updateFormData('condition', condition)}
                       className={`py-2.5 px-4 rounded-xl text-sm font-medium capitalize transition-all duration-200 ${
                         formData.condition === condition
-                          ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/25'
+                          ? 'bg-primary-600 text-white'
                           : 'bg-surface-100 dark:bg-surface-800 text-surface-700 dark:text-surface-300 hover:bg-surface-200 dark:hover:bg-surface-700 border border-surface-200 dark:border-surface-700'
                       }`}
                     >
@@ -737,7 +740,7 @@ export default function CreateAssetModal({ onClose, onCreate, categories, demoMo
               type="button"
               onClick={handleSubmit}
               disabled={loading}
-              className="px-6 py-3 bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700 disabled:from-surface-300 disabled:to-surface-300 dark:disabled:from-surface-700 dark:disabled:to-surface-700 text-white font-semibold rounded-xl transition-all duration-300 flex items-center gap-2 shadow-lg shadow-emerald-500/25 disabled:shadow-none"
+              className="btn-primary flex items-center gap-2 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
