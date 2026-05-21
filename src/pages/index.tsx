@@ -169,7 +169,7 @@ export default function Home() {
       <Head>
         <title>T0kenRent — Peer-to-peer rentals on BSV</title>
         <meta name="description" content="Rent everyday items peer-to-peer. BSV escrow protects every deposit. No middleman, no platform fees." />
-        <link rel="icon" href="/favicon.ico" />
+        <link rel="icon" href="/favicon.png" type="image/png" />
       </Head>
 
       <div className={`min-h-screen transition-opacity duration-500 ${isLoaded ? 'opacity-100' : 'opacity-0'}`}>
@@ -203,7 +203,7 @@ export default function Home() {
                 className="flex items-center gap-2.5 group"
               >
                 <img
-                  src="/wallets/t0kenrent logo.png"
+                  src="/t0kenrent-logo.png"
                   alt="T0kenRent"
                   className="w-8 h-8 object-contain"
                 />
@@ -413,7 +413,7 @@ export default function Home() {
           <div className="max-w-6xl mx-auto px-6 lg:px-8 py-6">
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
               <div className="flex items-center gap-2.5">
-                <img src="/t0kenrent logo.png" alt="T0kenRent" className="w-6 h-6 object-contain" />
+                <img src="/t0kenrent-logo.png" alt="T0kenRent" className="w-6 h-6 object-contain" />
                 <span className="text-sm text-surface-500">T0kenRent</span>
               </div>
               <div className="flex items-center gap-5">
