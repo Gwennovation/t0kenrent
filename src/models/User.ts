@@ -4,6 +4,7 @@ import mongoose, { Document, Model, Schema } from 'mongoose'
 export interface IUser extends Document {
   publicKey: string
   walletType: 'handcash' | 'metanet' | 'paymail' | 'demo'
+  role: 'user' | 'admin'
   handle?: string
   displayName?: string
   email?: string
@@ -59,6 +60,14 @@ const UserSchema = new Schema<IUser>({
     type: String,
     enum: ['handcash', 'metanet', 'paymail', 'demo'],
     required: true
+  },
+
+  // RBAC role — default 'user'; set 'admin' directly in DB for privileged accounts
+  role: {
+    type: String,
+    enum: ['user', 'admin'],
+    default: 'user',
+    index: true,
   },
   
   // User display info

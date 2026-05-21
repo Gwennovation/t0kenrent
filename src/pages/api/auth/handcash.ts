@@ -1,98 +1,104 @@
 /**
  * HandCash Authentication API
  * POST /api/auth/handcash
- * 
- * Handles HandCash Connect callback and exchanges auth token for access token.
- * Creates or updates user record in MongoDB database.
+ *
+ * Exchanges a HandCash authToken for a verified session.
+ * On success, sets an HTTP-only __session JWT cookie.
+ * Never returns the raw authToken or HandCash access token to the client.
  */
-
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { getHandCashProfileServer, getBalanceServer } from '@/lib/handcash-server'
 import connectDB, { isMockMode } from '@/lib/mongodb'
 import { User } from '@/models'
 import { storage } from '@/lib/storage'
+import { signJWT } from '@/lib/jwt'
+import { buildSessionCookie } from '@/lib/auth-middleware'
+import { withRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { validate, HandCashAuthSchema } from '@/lib/schemas'
 
 interface AuthResponse {
   success: boolean
-  publicKey?: string
   handle?: string
   displayName?: string
   paymail?: string
   balance?: number
-  accessToken?: string
   error?: string
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<AuthResponse>
-) {
+async function handler(req: NextApiRequest, res: NextApiResponse<AuthResponse>) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, error: 'Method not allowed' })
   }
 
+  const body = validate(HandCashAuthSchema, req.body, res)
+  if (!body) return
+
   try {
-    const { authToken } = req.body
+    const { authToken } = body
 
-    if (!authToken) {
-      return res.status(400).json({ success: false, error: 'Auth token required' })
-    }
+    // Exchange authToken with HandCash servers (server-side only)
+    const profile = await getHandCashProfileServer(authToken)
+    const balanceInfo = await getBalanceServer(authToken)
+    const balance = balanceInfo.spendableSatoshiBalance / 100_000_000
 
-    // The authToken from HandCash callback IS the access token
-    const accessToken = authToken
-    
-    // Get user profile (server-side only)
-    const profile = await getHandCashProfileServer(accessToken)
-    
-    // Get wallet balance (server-side only)
-    const balanceInfo = await getBalanceServer(accessToken)
-    const balance = balanceInfo.spendableSatoshiBalance / 100000000 // Convert to BSV
-
-    // Connect to MongoDB
+    // Persist / update user record
     await connectDB()
-    
-    // Check if using mock mode or real MongoDB
+
+    let role: 'user' | 'admin' = 'user'
+
     if (isMockMode()) {
-      // Fallback to in-memory storage for demo
-      console.log('📦 Using in-memory storage (MongoDB not connected)')
       let user = storage.getUserByKey(profile.id)
       if (!user) {
         user = storage.createUser(profile.id, {
           displayName: profile.displayName,
           email: undefined,
-          avatar: profile.avatarUrl
+          avatar: profile.avatarUrl,
         })
       } else {
         storage.updateUser(profile.id, {
           displayName: profile.displayName,
-          avatar: profile.avatarUrl
+          avatar: profile.avatarUrl,
         })
       }
     } else {
-      // Use MongoDB
-      console.log('✅ Using MongoDB for user storage')
-      await User.findOrCreate(profile.id, 'handcash', {
+      const user = await User.findOrCreate(profile.id, 'handcash', {
         handle: profile.id,
         displayName: profile.displayName,
         avatarUrl: profile.avatarUrl,
-        paymail: profile.paymail
+        paymail: profile.paymail,
       })
+      role = (user as any).role ?? 'user'
     }
 
+    // Issue a signed JWT — identity lives here, not in the response body
+    const jwt = await signJWT({
+      sub: profile.id,
+      handle: profile.id,
+      displayName: profile.displayName,
+      paymail: profile.paymail,
+      role,
+    })
+
+    // Set HTTP-only session cookie — JS cannot read this
+    res.setHeader('Set-Cookie', buildSessionCookie(jwt))
+
+    // Return only display-safe data (no tokens, no private keys)
     return res.status(200).json({
       success: true,
-      publicKey: profile.id, // Use id as public key
       handle: profile.id,
       displayName: profile.displayName,
       paymail: profile.paymail,
       balance,
-      accessToken // Client stores this for future API calls
     })
   } catch (error: any) {
-    console.error('HandCash auth error:', error)
+    console.error('HandCash auth error:', error?.message)
+    // Never expose internal error details to clients
     return res.status(500).json({
       success: false,
-      error: error.message || 'Authentication failed'
+      error: 'Authentication failed. Please try again.',
     })
   }
 }
+
+// Apply rate limiting: max 10 auth attempts per minute per IP
+export default withRateLimit(handler, RATE_LIMITS.auth)

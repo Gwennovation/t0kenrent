@@ -1,33 +1,18 @@
 /**
  * Asset Creation Endpoint
  * POST /api/assets/create
- * 
- * Creates a new rental asset listing with optional 1Sat ordinal linking.
- * 
- * Request body: {
- *   name: string,
- *   description: string,
- *   category: string,
- *   imageUrl?: string,
- *   rentalRatePerDay: number,
- *   depositAmount: number,
- *   currency?: string,
- *   location: { city, state, address },
- *   accessCode?: string,
- *   specialInstructions?: string,
- *   ownerContact?: { name, phone, email },
- *   unlockFee?: number,
- *   condition?: string,
- *   accessories?: string[],
- *   ownerKey: string,
- *   ordinalId?: string  // Optional: Link to 1Sat ordinal for proof of ownership
- * }
+ *
+ * Creates a new rental asset listing. Caller must be authenticated.
+ * The ownerKey is derived from the verified JWT session — it cannot be
+ * spoofed via request body.
  */
-
 import type { NextApiRequest, NextApiResponse } from 'next'
+import { withAuth } from '@/lib/auth-middleware'
+import { withRateLimit, RATE_LIMITS } from '@/lib/rate-limit'
+import { validate, CreateAssetSchema } from '@/lib/schemas'
 import connectDB, { isMockMode } from '@/lib/mongodb'
 import { RentalAsset, User } from '@/models'
-import { storage, StoredAsset } from '@/lib/storage'
+import { storage, type StoredAsset } from '@/lib/storage'
 import { verifyOrdinalExists, verifyOrdinalOwnership, createDemoOrdinal } from '@/lib/ordinals'
 
 interface CreateAssetResponse {
@@ -40,7 +25,7 @@ interface CreateAssetResponse {
   message?: string
 }
 
-export default async function handler(
+async function handler(
   req: NextApiRequest,
   res: NextApiResponse<CreateAssetResponse>
 ) {
@@ -48,103 +33,61 @@ export default async function handler(
     return res.status(405).json({ success: false, error: 'Method not allowed' })
   }
 
+  // Validate all inputs via Zod before touching the DB
+  const body = validate(CreateAssetSchema, req.body, res)
+  if (!body) return
+
+  // Identity comes from the verified JWT — never trust body/query for this
+  const ownerKey = req.user!.sub
+  const isDemoUser = ownerKey.startsWith('demo_')
+
+  const {
+    name, description, category, imageUrl, rentalRatePerDay, depositAmount,
+    currency, location, accessCode, specialInstructions, unlockFee,
+    condition, accessories, paymentAddress,
+  } = body
+
+  // Legacy field: ownerContact is not in CreateAssetSchema — skip it for now
+  const ownerContact = undefined
+
   try {
-    const {
-      name,
-      description,
-      category,
-      imageUrl,
-      rentalRatePerDay,
-      depositAmount,
-      currency = 'USD',
-      location,
-      accessCode,
-      specialInstructions,
-      ownerContact,
-      unlockFee = 0.0001,
-      condition = 'excellent',
-      accessories = [],
-      ownerKey,
-      ordinalId
-    } = req.body
-
-    // Validate required fields
-    if (!name || !description || !category || !ownerKey) {
-      return res.status(400).json({ 
-        success: false,
-        error: 'Missing required fields: name, description, category, ownerKey' 
-      })
-    }
-
-    if (!location?.city || !location?.state || !location?.address) {
-      return res.status(400).json({ 
-        success: false,
-        error: 'Location information is required (city, state, address)' 
-      })
-    }
-
-    // Connect to MongoDB
     await connectDB()
 
     if (isMockMode()) {
-      console.log('📦 Using in-memory storage for asset creation')
-      
-      // Ensure user exists
       storage.getOrCreateUser(ownerKey)
     } else {
-      console.log('💾 Using MongoDB for asset creation')
-      
-      // Ensure user exists in MongoDB
-      // Determine wallet type from ownerKey format
-      const walletType = ownerKey.startsWith('demo') ? 'demo' : 
-                        ownerKey.includes('@') ? 'paymail' : 'handcash'
-      
-      let user = await User.findOne({ publicKey: ownerKey })
-      if (!user) {
-        user = await User.create({
-          publicKey: ownerKey,
-          walletType,
-          totalListings: 0,
-          totalRentals: 0,
-          totalEarnings: 0,
-          totalSpent: 0
-        })
-      }
+      const walletType = isDemoUser ? 'demo' : ownerKey.includes('@') ? 'paymail' : 'handcash'
+      await User.findOneAndUpdate(
+        { publicKey: ownerKey },
+        { $setOnInsert: { publicKey: ownerKey, walletType, totalListings: 0, totalRentals: 0, totalEarnings: 0, totalSpent: 0 } },
+        { upsert: true }
+      )
     }
 
-    // Handle 1Sat ordinal linking
+    // Optional: link a 1Sat ordinal for proof of ownership
+    const ordinalId = typeof req.body.ordinalId === 'string'
+      ? req.body.ordinalId.trim().slice(0, 200) : undefined
+
     let verifiedOrdinalId: string | undefined
     let ordinalVerified = false
     let ordinalMessage: string | undefined
 
     if (ordinalId) {
-      // User provided an ordinal ID - verify it
-      const isDemoMode = ownerKey.startsWith('demo_')
-      
-      if (isDemoMode) {
-        // Demo mode - accept ordinal without verification
+      if (isDemoUser) {
         verifiedOrdinalId = ordinalId
         ordinalVerified = true
         ordinalMessage = 'Ordinal accepted (demo mode)'
       } else {
-        // Production - verify ordinal exists
         const verification = await verifyOrdinalExists(ordinalId)
-        
         if (verification.exists) {
-          // Optionally verify ownership (if owner address is known)
-          // const ownership = await verifyOrdinalOwnership(ordinalId, ownerKey)
-          
           verifiedOrdinalId = ordinalId
           ordinalVerified = true
           ordinalMessage = 'Ordinal verified on-chain'
         } else {
-          // Ordinal not found - continue without linking
-          ordinalMessage = `Ordinal not found: ${verification.error}`
-          console.warn('Ordinal verification failed:', verification.error)
+          ordinalMessage = 'Ordinal not found — listing created without on-chain link'
         }
       }
-    } else if (ownerKey.startsWith('demo_')) {
-      // Demo mode without ordinal - create a mock ordinal
+    } else if (isDemoUser) {
       const demoOrdinal = createDemoOrdinal(Date.now().toString(), name)
       verifiedOrdinalId = demoOrdinal.id
       ordinalVerified = true
@@ -155,80 +98,35 @@ export default async function handler(
     let asset: any
 
     if (isMockMode()) {
-      // Use in-memory storage
+      // Use in-memory storage — Zod already parsed values so no parseFloat needed
       asset = storage.createAsset({
-        name,
-        description,
-        category,
-        imageUrl,
-        rentalRatePerDay: parseFloat(rentalRatePerDay) || 0,
-        depositAmount: parseFloat(depositAmount) || 0,
-        currency,
-        location: {
-          city: location.city,
-          state: location.state
-        },
+        name, description, category, imageUrl,
+        rentalRatePerDay, depositAmount, currency,
+        location: { city: location.city, state: location.state },
         rentalDetails: {
-          pickupLocation: {
-            address: location.address,
-            city: location.city,
-            state: location.state
-          },
+          pickupLocation: { address: location.address, city: location.city, state: location.state },
           accessCode,
           specialInstructions,
-          ...(ownerContact && {
-            ownerContact: {
-              name: ownerContact.name,
-              phone: ownerContact.phone,
-              email: ownerContact.email
-            }
-          })
         },
         status: 'available',
-        unlockFee: parseFloat(String(unlockFee)) || 0.0001,
-        ownerKey,
-        condition,
-        accessories
+        unlockFee,
+        ownerKey, condition, accessories,
       })
     } else {
-      // Use MongoDB
-      const tokenId = `token_${Date.now()}_${Math.random().toString(36).substring(7)}`
-      
+      const tokenId = `token_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`
+
       const rentalAsset = await RentalAsset.create({
-        tokenId,
-        name,
-        description,
-        category,
-        imageUrl,
-        rentalRatePerDay: parseFloat(rentalRatePerDay) || 0,
-        depositAmount: parseFloat(depositAmount) || 0,
-        currency,
-        location: {
-          city: location.city,
-          state: location.state,
-          coordinates: location.coordinates
-        },
+        tokenId, name, description, category, imageUrl,
+        rentalRatePerDay, depositAmount, currency,
+        location: { city: location.city, state: location.state },
         rentalDetails: {
-          pickupLocation: {
-            address: location.address,
-            city: location.city,
-            state: location.state
-          },
+          pickupLocation: { address: location.address, city: location.city, state: location.state },
           accessCode,
           specialInstructions,
-          ...(ownerContact && {
-            ownerContact: {
-              name: ownerContact.name,
-              phone: ownerContact.phone,
-              email: ownerContact.email
-            }
-          })
         },
         status: 'available',
-        unlockFee: parseFloat(String(unlockFee)) || 0.0001,
-        ownerKey,
-        condition,
-        accessories,
+        unlockFee,
+        ownerKey, condition, accessories,
         totalRentals: 0,
         totalEarnings: 0,
         rating: 0
@@ -295,11 +193,9 @@ export default async function handler(
     })
 
   } catch (error: any) {
-    console.error('Asset creation error:', error)
-    return res.status(500).json({ 
-      success: false,
-      error: 'Failed to create asset',
-      message: error.message 
-    })
+    console.error('Asset creation error:', error?.message)
+    return res.status(500).json({ success: false, error: 'Failed to create asset' })
   }
 }
+
+export default withRateLimit(withAuth(handler), RATE_LIMITS.api)
